@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Softball Pitch Charting & Scorebook</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .strike-zone-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            aspect-ratio: 1;
+        }
+        .strike-zone-grid button {
+            border: 1px dashed rgba(255,255,255,0.2);
+            transition: all 0.15s ease;
+        }
+        .strike-zone-grid button:hover {
+            background-color: rgba(239, 68, 68, 0.25);
+            border-color: #ef4444;
+        }
+        .field-svg {
+            cursor: crosshair;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .print-break { page-break-before: always; }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex flex-wrap justify-between items-center no-print">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-baseball-bat-ball text-red-500 text-2xl"></i>
+            <h1 class="text-xl font-bold tracking-wide">Softball Pitch Analytics & Scorebook</h1>
+        </div>
+        <div class="flex gap-2 mt-2 sm:mt-0">
+            <button id="navSetupBtn" onclick="switchTab('setup')" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-slate-700 hover:bg-slate-600">
+                <i class="fa-solid fa-gear mr-1.5"></i> Setup Game
+            </button>
+            <button id="navChartBtn" onclick="switchTab('charting')" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-red-600 hover:bg-red-500 text-white font-semibold">
+                <i class="fa-solid fa-bullseye mr-1.5"></i> Live Charting
+            </button>
+            <button id="navStatsBtn" onclick="switchTab('analytics')" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-slate-700 hover:bg-slate-600">
+                <i class="fa-solid fa-chart-pie mr-1.5"></i> Pitch Breakdown
+            </button>
+            <button id="navScorebookBtn" onclick="switchTab('scorebook')" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-slate-700 hover:bg-slate-600">
+                <i class="fa-solid fa-print mr-1.5"></i> Export Scorebook
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
+
+        <!-- SETUP SECTION -->
+        <section id="tab-setup" class="space-y-6">
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                <h2 class="text-xl font-semibold mb-4 text-red-400 border-b border-slate-700 pb-2">
+                    <i class="fa-solid fa-trophy mr-2"></i>Game Details
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Away Team</label>
+                        <input id="awayTeamName" type="text" value="Eagles" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Home Team</label>
+                        <input id="homeTeamName" type="text" value="Panthers" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Date</label>
+                        <input id="gameDate" type="date" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lineups Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Away Lineup -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                        <h3 class="text-lg font-semibold text-sky-400"><span id="awayLabel">Away</span> Lineup & Pitchers</h3>
+                        <button onclick="addBatter('away')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Batter
+                        </button>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Starting Pitcher</label>
+                        <input id="awayPitcher" type="text" value="Sarah Jenkins (#12 - RHP)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+
+                    <p class="text-xs font-semibold text-slate-400 uppercase mb-2">Batting Order</p>
+                    <div id="awayLineupList" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+                </div>
+
+                <!-- Home Lineup -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                        <h3 class="text-lg font-semibold text-emerald-400"><span id="homeLabel">Home</span> Lineup & Pitchers</h3>
+                        <button onclick="addBatter('home')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Batter
+                        </button>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Starting Pitcher</label>
+                        <input id="homePitcher" type="text" value="Mia Martinez (#24 - LHP)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+
+                    <p class="text-xs font-semibold text-slate-400 uppercase mb-2">Batting Order</p>
+                    <div id="homeLineupList" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="switchTab('charting')" class="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-lg shadow-lg flex items-center gap-2">
+                    Start Pitch Charting <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- LIVE CHARTING SECTION -->
+        <section id="tab-charting" class="hidden space-y-6">
+            
+            <!-- Game Status & Scoreboard Bar -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-xl">
+                <div class="flex items-center gap-6">
+                    <div class="text-center border-r border-slate-700 pr-6">
+                        <span class="text-xs uppercase text-slate-400 font-semibold block">Inning</span>
+                        <div class="flex items-center justify-center gap-1.5 text-xl font-bold text-amber-400">
+                            <i id="inningHalfIcon" class="fa-solid fa-caret-up"></i>
+                            <span id="inningDisplay">1st</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs uppercase text-slate-400 font-semibold">Matchup</div>
+                        <div class="text-sm font-bold">
+                            <span class="text-sky-400" id="currentPitcherDisplay">Sarah Jenkins</span> (P) 
+                            <span class="text-slate-500">vs</span> 
+                            <span class="text-emerald-400" id="currentBatterDisplay">#10 Taylor Smith</span> 
+                            <span id="batterSideDisplay" class="text-xs bg-slate-700 px-2 py-0.5 rounded text-amber-300 ml-1">R</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Count & Out Displays -->
+                <div class="flex items-center gap-6">
+                    <div class="flex gap-4 items-center bg-slate-900 px-4 py-2 rounded-lg border border-slate-700">
+                        <div class="text-center">
+                            <span class="text-[10px] uppercase text-slate-400 block font-bold">Balls</span>
+                            <span id="ballsCount" class="text-2xl font-black text-sky-400">0</span>
+                        </div>
+                        <span class="text-slate-600 text-xl font-bold">-</span>
+                        <div class="text-center">
+                            <span class="text-[10px] uppercase text-slate-400 block font-bold">Strikes</span>
+                            <span id="strikesCount" class="text-2xl font-black text-red-500">0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-center">
+                        <span class="text-[10px] uppercase text-slate-400 block font-bold">Outs</span>
+                        <div class="flex gap-1.5 mt-1" id="outsContainer">
+                            <span class="w-3.5 h-3.5 rounded-full bg-slate-700 border border-slate-600 inline-block"></span>
+                            <span class="w-3.5 h-3.5 rounded-full bg-slate-700 border border-slate-600 inline-block"></span>
+                        </div>
+                    </div>
+
+                    <!-- Runner Bases Diamond -->
+                    <div class="relative w-12 h-12 flex items-center justify-center">
+                        <button onclick="toggleBase(2)" id="base2" class="absolute top-0 w-4 h-4 rotate-45 border-2 border-slate-500 bg-slate-800 hover:border-amber-400"></button>
+                        <button onclick="toggleBase(3)" id="base3" class="absolute left-0 w-4 h-4 rotate-45 border-2 border-slate-500 bg-slate-800 hover:border-amber-400"></button>
+                        <button onclick="toggleBase(1)" id="base1" class="absolute right-0 w-4 h-4 rotate-45 border-2 border-slate-500 bg-slate-800 hover:border-amber-400"></button>
+                    </div>
+
+                    <button onclick="undoLastPitch()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg text-xs flex items-center gap-1 font-semibold">
+                        <i class="fa-solid fa-rotate-left"></i> Undo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pitch Entry & Zone Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Control Column: Pitch Controls -->
+                <div class="lg:col-span-7 bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-5">
+                    
+                    <!-- Pitch Type Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">1. Pitch Type</label>
+                        <div class="grid grid-cols-4 sm:grid-cols-7 gap-2" id="pitchTypeButtons">
+                            <button onclick="selectPitchType('Fastball')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Fastball</button>
+                            <button onclick="selectPitchType('Rise')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Rise</button>
+                            <button onclick="selectPitchType('Drop')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Drop</button>
+                            <button onclick="selectPitchType('Curve')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Curve</button>
+                            <button onclick="selectPitchType('Screw')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Screw</button>
+                            <button onclick="selectPitchType('Changeup')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Changeup</button>
+                            <button onclick="selectPitchType('Offspeed')" class="pt-btn bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-xs font-bold text-center border border-slate-600">Offspeed</button>
+                        </div>
+                    </div>
+
+                    <!-- Velocity Entry -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">2. Pitch Velocity (MPH)</label>
+                            <div class="relative">
+                                <input id="pitchSpeed" type="number" placeholder="62" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-lg font-bold text-white focus:outline-none focus:border-red-500">
+                                <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-bold">MPH</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end gap-1 pb-1">
+                            <button onclick="adjustSpeed(1)" class="bg-slate-700 hover:bg-slate-600 px-3 py-2.5 rounded-lg font-bold text-sm">+1</button>
+                            <button onclick="adjustSpeed(-1)" class="bg-slate-700 hover:bg-slate-600 px-3 py-2.5 rounded-lg font-bold text-sm">-1</button>
+                        </div>
+                    </div>
+
+                    <!-- Pitch Outcome Buttons -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">3. Outcome</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button onclick="setOutcome('Ball')" class="outcome-btn bg-sky-950 border border-sky-700 text-sky-200 hover:bg-sky-900 p-3 rounded-lg text-xs font-bold">Ball</button>
+                            <button onclick="setOutcome('Called Strike')" class="outcome-btn bg-red-950 border border-red-700 text-red-200 hover:bg-red-900 p-3 rounded-lg text-xs font-bold">Called Strike</button>
+                            <button onclick="setOutcome('Swinging Strike')" class="outcome-btn bg-rose-950 border border-rose-700 text-rose-200 hover:bg-rose-900 p-3 rounded-lg text-xs font-bold">Swinging Strike</button>
+                            <button onclick="setOutcome('Foul')" class="outcome-btn bg-amber-950 border border-amber-700 text-amber-200 hover:bg-amber-900 p-3 rounded-lg text-xs font-bold">Foul Ball</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                            <button onclick="setOutcome('In Play')" class="outcome-btn bg-emerald-950 border border-emerald-700 text-emerald-200 hover:bg-emerald-900 p-3 rounded-lg text-xs font-bold">In Play (Hit / Out)</button>
+                            <button onclick="setOutcome('HBP')" class="outcome-btn bg-slate-700 border border-slate-600 hover:bg-slate-600 p-3 rounded-lg text-xs font-bold">Hit By Pitch</button>
+                            <button onclick="setOutcome('Illegal Pitch')" class="outcome-btn bg-slate-700 border border-slate-600 hover:bg-slate-600 p-3 rounded-lg text-xs font-bold">Illegal Pitch</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Strike Zone Matrix -->
+                <div class="lg:col-span-5 bg-slate-800 border border-slate-700 rounded-xl p-6 flex flex-col items-center">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-3 text-center">4. Click Pitch Location on Strike Zone</label>
+                    
+                    <div class="relative bg-slate-950 p-6 rounded-xl border border-slate-700 w-full max-w-xs flex justify-center">
+                        <!-- Strike Zone Box -->
+                        <div class="strike-zone-grid w-56 h-56 border-4 border-slate-300 relative bg-slate-900/60 rounded">
+                            <button onclick="plotZone(1)" class="p-zone" data-zone="1"></button>
+                            <button onclick="plotZone(2)" class="p-zone" data-zone="2"></button>
+                            <button onclick="plotZone(3)" class="p-zone" data-zone="3"></button>
+                            <button onclick="plotZone(4)" class="p-zone" data-zone="4"></button>
+                            <button onclick="plotZone(5)" class="p-zone" data-zone="5"></button>
+                            <button onclick="plotZone(6)" class="p-zone" data-zone="6"></button>
+                            <button onclick="plotZone(7)" class="p-zone" data-zone="7"></button>
+                            <button onclick="plotZone(8)" class="p-zone" data-zone="8"></button>
+                            <button onclick="plotZone(9)" class="p-zone" data-zone="9"></button>
+                        </div>
+                    </div>
+                    
+                    <p class="text-[11px] text-slate-400 mt-3">Clicking a location auto-logs the pitch if type & outcome are set.</p>
+                </div>
+            </div>
+
+            <!-- Pitch Log / Sequence Table -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                <h3 class="text-sm font-semibold uppercase text-slate-400 mb-3"><i class="fa-solid fa-list-ol mr-2"></i>In-Game Pitch History</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 uppercase">
+                            <tr>
+                                <th class="p-2.5">#</th>
+                                <th class="p-2.5">Inning</th>
+                                <th class="p-2.5">Pitcher</th>
+                                <th class="p-2.5">Batter</th>
+                                <th class="p-2.5">Type</th>
+                                <th class="p-2.5">Speed</th>
+                                <th class="p-2.5">Zone</th>
+                                <th class="p-2.5">Outcome</th>
+                                <th class="p-2.5">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pitchLogTable" class="divide-y divide-slate-700">
+                            <!-- Rows inserted dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYTICS / BREAKDOWN SECTION -->
+        <section id="tab-analytics" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Summary Card -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-5">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase mb-2">Total Pitches Thrown</h3>
+                    <div id="statTotalPitches" class="text-3xl font-extrabold text-white">0</div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-5">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase mb-2">Overall Strike %</h3>
+                    <div id="statStrikePct" class="text-3xl font-extrabold text-emerald-400">0%</div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-5">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase mb-2">First-Pitch Strike % (FPS)</h3>
+                    <div id="statFPSPct" class="text-3xl font-extrabold text-amber-400">0%</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Pitch Usage Chart -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                    <h3 class="text-md font-bold mb-4 text-slate-200">Pitch Type Usage %</h3>
+                    <div class="w-full max-w-xs mx-auto">
+                        <canvas id="pitchUsageChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Velocity & Zone Distribution -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                    <h3 class="text-md font-bold mb-4 text-slate-200">Pitch Velocity by Type</h3>
+                    <canvas id="speedChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCOREBOOK / EXPORT SECTION -->
+        <section id="tab-scorebook" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700 no-print">
+                <div>
+                    <h3 class="font-bold text-lg">Printable Pitch Charting Sheet</h3>
+                    <p class="text-xs text-slate-400">Formatted scorebook chart ready for coaches, scouting, and post-game review.</p>
+                </div>
+                <button onclick="window.print()" class="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> Print / Save PDF
+                </button>
+            </div>
+
+            <!-- Printable Layout -->
+            <div class="bg-white text-slate-900 p-6 rounded-xl shadow-lg border border-slate-200 space-y-6">
+                <div class="border-b-2 border-slate-900 pb-3 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-black uppercase tracking-wider">Softball Game Pitch Log</h2>
+                        <p class="text-sm font-semibold text-slate-600" id="printGameMeta">Eagles vs Panthers</p>
+                    </div>
+                    <div class="text-right text-xs font-bold text-slate-700">
+                        <p id="printGameDate">Date: --</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-slate-900 bg-slate-100 text-slate-800 uppercase font-black">
+                                <th class="p-2 border border-slate-300">Pitch #</th>
+                                <th class="p-2 border border-slate-300">Inning</th>
+                                <th class="p-2 border border-slate-300">Pitcher</th>
+                                <th class="p-2 border border-slate-300">Batter</th>
+                                <th class="p-2 border border-slate-300">Type</th>
+                                <th class="p-2 border border-slate-300">Speed</th>
+                                <th class="p-2 border border-slate-300">Zone #</th>
+                                <th class="p-2 border border-slate-300">Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="printableLogTable">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Spray Chart Hit Location Modal -->
+    <div id="sprayChartModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-emerald-400"><i class="fa-solid fa-location-crosshairs mr-2"></i>Record Hit Location</h3>
+            <p class="text-xs text-slate-400">Click on the diamond where the ball was hit.</p>
+
+            <!-- SVG Diamond Field -->
+            <div class="relative bg-emerald-950/40 rounded-xl border border-emerald-800/50 p-2 flex justify-center">
+                <svg id="softballField" class="w-full h-64 field-svg" viewBox="0 0 300 300" onclick="recordHitLocation(event)">
+                    <!-- Outfield Grass -->
+                    <path d="M 150 280 L 20 150 A 170 170 0 0 1 280 150 Z" fill="#064e3b" stroke="#047857" stroke-width="2"/>
+                    <!-- Infield Dirt -->
+                    <polygon points="150,260 80,190 150,120 220,190" fill="#78350f" stroke="#92400e" stroke-width="2"/>
+                    <!-- Bases -->
+                    <polygon points="150,260 145,265 150,270 155,265" fill="white"/> <!-- Home -->
+                    <polygon points="220,190 225,185 220,180 215,185" fill="white"/> <!-- 1B -->
+                    <polygon points="150,120 155,115 150,110 145,115" fill="white"/> <!-- 2B -->
+                    <polygon points="80,190 75,185 80,180 85,185" fill="white"/> <!-- 3B -->
+                    <!-- Hit Location Marker -->
+                    <circle id="hitMarker" cx="-10" cy="-10" r="6" fill="#ef4444" stroke="white" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <!-- Hit Result Options -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Hit Trajectory</label>
+                    <select id="hitTypeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                        <option value="Ground Ball">Ground Ball</option>
+                        <option value="Line Drive">Line Drive</option>
+                        <option value="Fly Ball">Fly Ball</option>
+                        <option value="Pop-up">Pop-up</option>
+                        <option value="Bunt">Bunt</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Play Result</label>
+                    <select id="hitResultSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                        <option value="Single">Single</option>
+                        <option value="Double">Double</option>
+                        <option value="Triple">Triple</option>
+                        <option value="Home Run">Home Run</option>
+                        <option value="Out">Out</option>
+                        <option value="Error">Error</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="confirmHitLocation()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-bold py-2 rounded-lg text-sm">Save Hit</button>
+                <button onclick="closeHitModal()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // State Management
+        let gameState = {
+            inning: 1,
+            isTopInning: true,
+            balls: 0,
+            strikes: 0,
+            outs: 0,
+            bases: [false, false, false], // 1B, 2B, 3B
+            awayLineup: ["1. Johnson (#4 - L)", "2. Davis (#12 - R)", "3. Miller (#8 - L)"],
+            homeLineup: ["1. Smith (#10 - R)", "2. Williams (#5 - L)", "3. Brown (#22 - R)"],
+            awayBatterIdx: 0,
+            homeBatterIdx: 0,
+            selectedPitchType: 'Fastball',
+            selectedOutcome: 'Ball',
+            lastHitCoords: null,
+            pitches: []
+        };
+
+        let pitchChartInstance = null;
+        let speedChartInstance = null;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLineups();
+            updateUI();
+            initCharts();
+            document.getElementById('gameDate').valueAsDate = new Date();
+        });
+
+        // Tab Switching
+        function switchTab(tabName) {
+            ['setup', 'charting', 'analytics', 'scorebook'].forEach(tab => {
+                document.getElementById(`tab-${tab}`).classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            if (tabName === 'analytics') updateCharts();
+            if (tabName === 'scorebook') renderPrintableLog();
+        }
+
+        // Lineup Rendering
+        function renderLineups() {
+            const awayList = document.getElementById('awayLineupList');
+            const homeList = document.getElementById('homeLineupList');
+
+            awayList.innerHTML = gameState.awayLineup.map((b, i) => `
+                <div class="flex items-center gap-2">
+                    <input type="text" value="${b}" onchange="gameState.awayLineup[${i}]=this.value" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                </div>
+            `).join('');
+
+            homeList.innerHTML = gameState.homeLineup.map((b, i) => `
+                <div class="flex items-center gap-2">
+                    <input type="text" value="${b}" onchange="gameState.homeLineup[${i}]=this.value" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                </div>
+            `).join('');
+        }
+
+        function addBatter(team) {
+            if (team === 'away') {
+                gameState.awayLineup.push(`${gameState.awayLineup.length + 1}. Player Name (#0 - R)`);
+            } else {
+                gameState.homeLineup.push(`${gameState.homeLineup.length + 1}. Player Name (#0 - R)`);
+            }
+            renderLineups();
+        }
+
+        // Selection Handlers
+        function selectPitchType(type) {
+            gameState.selectedPitchType = type;
+            document.querySelectorAll('.pt-btn').forEach(btn => {
+                if (btn.innerText === type) {
+                    btn.classList.add('bg-red-600', 'border-red-500', 'text-white');
+                    btn.classList.remove('bg-slate-700');
+                } else {
+                    btn.classList.remove('bg-red-600', 'border-red-500', 'text-white');
+                    btn.classList.add('bg-slate-700');
+                }
+            });
+        }
+
+        function setOutcome(outcome) {
+            gameState.selectedOutcome = outcome;
+            if (outcome === 'In Play') {
+                document.getElementById('sprayChartModal').classList.remove('hidden');
+                document.getElementById('sprayChartModal').classList.add('flex');
+            }
+        }
+
+        function adjustSpeed(amount) {
+            const input = document.getElementById('pitchSpeed');
+            let current = parseInt(input.value) || 60;
+            input.value = Math.max(30, Math.min(80, current + amount));
+        }
+
+        function toggleBase(baseNum) {
+            gameState.bases[baseNum - 1] = !gameState.bases[baseNum - 1];
+            const btn = document.getElementById(`base${baseNum}`);
+            if (gameState.bases[baseNum - 1]) {
+                btn.classList.add('bg-amber-400', 'border-amber-500');
+            } else {
+                btn.classList.remove('bg-amber-400', 'border-amber-500');
+            }
+        }
+
+        // Plot Pitch and Calculate Game Logic
+        function plotZone(zoneNum) {
+            const speed = parseInt(document.getElementById('pitchSpeed').value) || 60;
+            const currentPitcher = gameState.isTopInning ? document.getElementById('homePitcher').value : document.getElementById('awayPitcher').value;
+            const currentBatter = gameState.isTopInning ? gameState.awayLineup[gameState.awayBatterIdx] : gameState.homeLineup[gameState.homeBatterIdx];
+
+            const pitchRecord = {
+                id: Date.now(),
+                pitchNumber: gameState.pitches.length + 1,
+                inning: `${gameState.isTopInning ? 'Top' : 'Bot'} ${gameState.inning}`,
+                pitcher: currentPitcher,
+                batter: currentBatter,
+                type: gameState.selectedPitchType,
+                speed: speed,
+                zone: zoneNum,
+                outcome: gameState.selectedOutcome,
+                countBefore: `${gameState.balls}-${gameState.strikes}`,
+                hitDetails: gameState.lastHitCoords
+            };
+
+            gameState.pitches.unshift(pitchRecord);
+
+            // Update Counts
+            if (gameState.selectedOutcome === 'Ball') {
+                gameState.balls++;
+                if (gameState.balls >= 4) advanceBatter('Walk');
+            } else if (gameState.selectedOutcome === 'Called Strike' || gameState.selectedOutcome === 'Swinging Strike') {
+                gameState.strikes++;
+                if (gameState.strikes >= 3) advanceBatter('Strikeout');
+            } else if (gameState.selectedOutcome === 'Foul') {
+                if (gameState.strikes < 2) gameState.strikes++;
+            } else if (gameState.selectedOutcome === 'In Play' || gameState.selectedOutcome === 'HBP') {
+                advanceBatter(gameState.selectedOutcome);
+            }
+
+            gameState.lastHitCoords = null;
+            updateUI();
+            renderTableLog();
+        }
+
+        function advanceBatter(reason) {
+            if (reason === 'Strikeout') {
+                gameState.outs++;
+            }
+            
+            gameState.balls = 0;
+            gameState.strikes = 0;
+
+            if (gameState.outs >= 3) {
+                gameState.outs = 0;
+                gameState.bases = [false, false, false];
+                if (!gameState.isTopInning) gameState.inning++;
+                gameState.isTopInning = !gameState.isTopInning;
+            } else {
+                if (gameState.isTopInning) {
+                    gameState.awayBatterIdx = (gameState.awayBatterIdx + 1) % gameState.awayLineup.length;
+                } else {
+                    gameState.homeBatterIdx = (gameState.homeBatterIdx + 1) % gameState.homeLineup.length;
+                }
+            }
+        }
+
+        function undoLastPitch() {
+            if (gameState.pitches.length > 0) {
+                gameState.pitches.shift();
+                renderTableLog();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('ballsCount').innerText = gameState.balls;
+            document.getElementById('strikesCount').innerText = gameState.strikes;
+            
+            // Inning
+            document.getElementById('inningHalfIcon').className = gameState.isTopInning ? "fa-solid fa-caret-up" : "fa-solid fa-caret-down";
+            document.getElementById('inningDisplay').innerText = `${gameState.inning}${getOrdinal(gameState.inning)}`;
+
+            // Matchup
+            document.getElementById('currentPitcherDisplay').innerText = gameState.isTopInning ? document.getElementById('homePitcher').value : document.getElementById('awayPitcher').value;
+            document.getElementById('currentBatterDisplay').innerText = gameState.isTopInning ? gameState.awayLineup[gameState.awayBatterIdx] : gameState.homeLineup[gameState.homeBatterIdx];
+
+            // Outs
+            const outsContainer = document.getElementById('outsContainer');
+            outsContainer.innerHTML = [1, 2].map(i => `
+                <span class="w-3.5 h-3.5 rounded-full ${i <= gameState.outs ? 'bg-red-500 border-red-600' : 'bg-slate-700 border-slate-600'} inline-block"></span>
+            `).join('');
+        }
+
+        function getOrdinal(n) {
+            return ["th", "st", "nd", "rd"][((n % 100) - 20) % 10 || (n % 100) || 0] || "th";
+        }
+
+        // Spray Chart Modal Controls
+        function recordHitLocation(e) {
+            const svg = document.getElementById('softballField');
+            const rect = svg.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 300;
+            const y = ((e.clientY - rect.top) / rect.height) * 300;
+
+            const marker = document.getElementById('hitMarker');
+            marker.setAttribute('cx', x);
+            marker.setAttribute('cy', y);
+
+            gameState.lastHitCoords = { x, y };
+        }
+
+        function confirmHitLocation() {
+            closeHitModal();
+        }
+
+        function closeHitModal() {
+            document.getElementById('sprayChartModal').classList.add('hidden');
+            document.getElementById('sprayChartModal').classList.remove('flex');
+        }
+
+        // Render Pitch Log Table
+        function renderTableLog() {
+            const table = document.getElementById('pitchLogTable');
+            table.innerHTML = gameState.pitches.map(p => `
+                <tr class="hover:bg-slate-700/50">
+                    <td class="p-2.5 font-bold">${p.pitchNumber}</td>
+                    <td class="p-2.5">${p.inning}</td>
+                    <td class="p-2.5">${p.pitcher}</td>
+                    <td class="p-2.5">${p.batter}</td>
+                    <td class="p-2.5"><span class="bg-slate-700 px-2 py-0.5 rounded font-semibold text-slate-200">${p.type}</span></td>
+                    <td class="p-2.5 font-bold text-amber-400">${p.speed} mph</td>
+                    <td class="p-2.5 font-bold">Zone ${p.zone}</td>
+                    <td class="p-2.5">${p.outcome}</td>
+                    <td class="p-2.5 text-slate-400">${p.countBefore}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPrintableLog() {
+            document.getElementById('printGameMeta').innerText = `${document.getElementById('awayTeamName').value} vs ${document.getElementById('homeTeamName').value}`;
+            document.getElementById('printGameDate').innerText = `Date: ${document.getElementById('gameDate').value}`;
+
+            const table = document.getElementById('printableLogTable');
+            table.innerHTML = gameState.pitches.map(p => `
+                <tr class="border-b border-slate-200">
+                    <td class="p-2 border border-slate-300 font-bold">${p.pitchNumber}</td>
+                    <td class="p-2 border border-slate-300">${p.inning}</td>
+                    <td class="p-2 border border-slate-300">${p.pitcher}</td>
+                    <td class="p-2 border border-slate-300">${p.batter}</td>
+                    <td class="p-2 border border-slate-300">${p.type}</td>
+                    <td class="p-2 border border-slate-300">${p.speed} mph</td>
+                    <td class="p-2 border border-slate-300">${p.zone}</td>
+                    <td class="p-2 border border-slate-300">${p.outcome}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Chart.js Analytics
+        function initCharts() {
+            const ctx1 = document.getElementById('pitchUsageChart').getContext('2d');
+            pitchChartInstance = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fastball', 'Rise', 'Drop', 'Curve', 'Changeup'],
+                    datasets: [{
+                        data: [1, 1, 1, 1, 1],
+                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: { plugins: { legend: { labels: { color: 'white' } } } }
+            });
+
+            const ctx2 = document.getElementById('speedChart').getContext('2d');
+            speedChartInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Fastball', 'Rise', 'Drop', 'Curve', 'Changeup'],
+                    datasets: [{
+                        label: 'Avg Speed (MPH)',
+                        data: [62, 60, 59, 58, 48],
+                        backgroundColor: '#38bdf8'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { ticks: { color: 'white' } },
+                        x: { ticks: { color: 'white' } }
+                    },
+                    plugins: { legend: { labels: { color: 'white' } } }
+                }
+            });
+        }
+
+        function updateCharts() {
+            document.getElementById('statTotalPitches').innerText = gameState.pitches.length;
+            
+            if (gameState.pitches.length === 0) return;
+
+            const strikes = gameState.pitches.filter(p => p.outcome.includes('Strike') || p.outcome === 'Foul' || p.outcome === 'In Play').length;
+            document.getElementById('statStrikePct').innerText = `${Math.round((strikes / gameState.pitches.length) * 100)}%`;
+
+            // Count occurrences of each pitch type
+            const counts = {};
+            gameState.pitches.forEach(p => counts[p.type] = (counts[p.type] || 0) + 1);
+
+            pitchChartInstance.data.labels = Object.keys(counts);
+            pitchChartInstance.data.datasets[0].data = Object.values(counts);
+            pitchChartInstance.update();
+        }
+    </script>
+</body>
+</html>
