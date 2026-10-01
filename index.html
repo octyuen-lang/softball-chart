@@ -2,7 +2,8 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cal Softball Pitch Chart</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.jpg"><link rel="apple-touch-icon" href="logo.jpg">
 <style>
 :root{--bg:#EEF2F7;--panel:#fff;--ink:#003262;--mut:#42597A;--line:#B7C3D3;--acc:#FDB515;--accInk:#003262;--bad:#C42B2B;--grass:#3E9B55;--dirt:#C99A6B;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06162B;--panel:#0C2445;--ink:#F1F5FA;--mut:#A9BBD3;--line:#24406B;--bad:#FF7070}}
@@ -11,7 +12,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
 h3{margin:.2em 0 .4em}small{color:var(--mut)}
 header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;background:#003262;color:#fff;border-bottom:4px solid #FDB515;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
-header b{display:flex;align-items:center;gap:10px;font:700 26px "Barlow Condensed",Impact,sans-serif;letter-spacing:1px;margin-right:auto;color:#FDB515}header b small{color:#fff;opacity:.85;font-size:16px}#logo{height:40px;width:auto}
+header b{display:flex;align-items:center;gap:10px;font:700 26px "Inter",sans-serif;letter-spacing:1px;margin-right:auto;color:#FDB515}header b small{color:#fff;opacity:.85;font-size:16px}#logo{height:40px;width:auto}
 header button{min-height:44px;padding:0 14px;border-radius:8px;border:2px solid rgba(255,255,255,.7);background:transparent;color:#fff;font-weight:700;cursor:pointer}
 header button.on{background:#FDB515;color:#003262;border-color:#FDB515}
 button,select,input{font:inherit;color:inherit}
@@ -28,10 +29,10 @@ main{padding:12px;max-width:1500px;margin:auto}
 @media(max-width:640px){#live{grid-template-columns:1fr}.pe{grid-template-columns:1fr}.pe #zwrap{margin:8px auto}}
 .tm{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:2px solid transparent}
 .tm.at{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 18%,transparent)}
-.tm span:first-child{flex:1;font-weight:700}.tm b{font:700 34px "Barlow Condensed",sans-serif}
+.tm span:first-child{flex:1;font-weight:700}.tm b{font:700 34px "Inter",sans-serif}
 .adj button{width:36px;height:36px;border-radius:8px;border:2px solid var(--line);background:var(--panel);font-weight:700}
-.inn{font:700 22px "Barlow Condensed",sans-serif;margin:8px 0}
-.cnt{display:flex;gap:16px;align-items:end}.cnt b{display:block;font:700 46px/1 "Barlow Condensed",sans-serif}
+.inn{font:700 22px "Inter",sans-serif;margin:8px 0}
+.cnt{display:flex;gap:16px;align-items:end}.cnt b{display:block;font:700 46px/1 "Inter",sans-serif}
 .oc{display:flex;align-items:center;gap:6px}.oc button{width:38px;height:38px;border-radius:8px;border:2px solid var(--line);background:var(--panel);font-size:20px;font-weight:700;cursor:pointer}.oc b{min-width:26px;text-align:center}
 .dot{width:32px;height:32px;border-radius:50%;border:3px solid var(--ink);background:transparent;margin-right:6px}.dot.on{background:var(--bad);border-color:var(--bad)}
 .base{fill:var(--panel);stroke:var(--ink);stroke-width:3;cursor:pointer}.base.on{fill:var(--acc)}
@@ -55,17 +56,84 @@ dialog{border:0;border-radius:14px;width:min(940px,96vw);max-height:92vh;padding
 #msg{color:var(--bad);font-weight:700;min-height:1.4em}
 #book{background:#fff;color:#000;padding:16px;--panel:#fff;--ink:#000;--line:#888;--mut:#333}
 #book{-webkit-print-color-adjust:exact;print-color-adjust:exact}#book h2,#book h3{color:#003262}#book h2{margin:0}#book th{background:#003262;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.abgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:6px 0 14px}.ab{border:1px solid #888;border-radius:6px;padding:5px;break-inside:avoid;font-size:12px}.ab b{font-size:13px}.seq{font-size:11px;line-height:1.3;margin:3px 0}
-#book .brand{display:flex;align-items:center;gap:10px;border-bottom:4px solid #FDB515;padding-bottom:6px;margin-bottom:8px;font:700 20px "Barlow Condensed",Impact,sans-serif;letter-spacing:1px;color:#003262}#book table{margin:6px 0 14px;page-break-inside:auto}#book tr{break-inside:avoid}
+#book .brand{display:flex;align-items:center;gap:10px;border-bottom:4px solid #FDB515;padding-bottom:6px;margin-bottom:8px;font:700 20px "Inter",sans-serif;letter-spacing:1px;color:#003262}#book table{margin:6px 0 14px;page-break-inside:auto}#book tr{break-inside:avoid}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 [hidden]{display:none!important}
 @media print{header,#setup,#live,dialog,.noprint{display:none!important}body{background:#fff}#book{display:block!important;padding:0}@page{margin:12mm}.brk{break-before:page}.abgrid{grid-template-columns:repeat(4,1fr)}}
-</style></head><body>
-<header><b><svg id="lb" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#FDB515" stroke="#fff" stroke-width="2"/><path d="M9 9C15 16 15 24 9 31M31 9C25 16 25 24 31 31" fill="none" stroke="#003262" stroke-width="2"/><text x="20" y="25" font-size="13" font-weight="700" text-anchor="middle" fill="#003262" font-family="Barlow Condensed,Impact,sans-serif">CAL</text></svg><img id="logo" src="logo.png" alt="Cal Softball" hidden onload="this.hidden=false;document.getElementById('lb').hidden=true"><span>CAL SOFTBALL <small>PITCH CHART</small></span></b>
+</style><style id="pro">
+:root{--bg:#F3F5F8;--panel:#fff;--ink:#003262;--tx:#1B2533;--mut:#5B6778;--line:#DDE2E9;--pri:#003262;--on:#fff;--acc:#FDB515;--accInk:#003262;--bad:#C42B2B;--grass:#4F9A60;--dirt:#C9A27A}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1424;--panel:#121C2E;--ink:#E8EEF7;--tx:#E6ECF4;--mut:#9AA9BD;--line:#26364D;--pri:#3F74B8;--bad:#FF7B7B}}
+:root[data-theme="dark"]{--bg:#0B1424;--panel:#121C2E;--ink:#E8EEF7;--tx:#E6ECF4;--mut:#9AA9BD;--line:#26364D;--pri:#3F74B8;--bad:#FF7B7B}
+body{font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--tx);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+main{padding:16px}h3{margin:0 0 10px}small{font-size:12px}
+label{font-size:13px;font-weight:600;color:var(--mut)}
+header{background:var(--panel);color:var(--tx);border-bottom:1px solid var(--line);box-shadow:0 1px 3px rgba(16,24,40,.06);padding:8px 16px;gap:4px}
+header b{color:var(--ink);font:700 17px Inter,system-ui,sans-serif;letter-spacing:.01em;gap:12px}
+header b small{color:var(--mut);font-weight:500;font-size:13px;opacity:1}
+header button{border:0;background:transparent;color:var(--mut);border-radius:6px;font-weight:600;font-size:14px;min-height:40px;padding:0 12px}
+header button:hover{background:var(--bg);color:var(--tx)}
+header button.on{background:transparent;color:var(--ink);box-shadow:inset 0 -3px 0 var(--acc);border-radius:0}
+#logo,.hero img{background:#fff;border-radius:8px;padding:3px;height:44px;width:auto}
+.hero{display:flex;align-items:center;gap:16px;margin:0 0 14px}.hero img{height:72px}.hero h1{margin:0;font-size:22px;color:var(--ink)}.hero p{margin:2px 0 0;color:var(--mut)}
+.b{border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--tx);font-weight:600;box-shadow:0 1px 1px rgba(16,24,40,.05);transition:background .12s}
+.b:hover{background:color-mix(in srgb,var(--ink) 6%,var(--panel))}
+.b.on,.b.go{background:var(--pri);color:var(--on);border-color:var(--pri)}
+.b.on:hover,.b.go:hover{background:var(--pri);filter:brightness(1.12)}
+.b:active{transform:none;filter:brightness(.94)}
+input,select,textarea{border:1px solid var(--line);border-radius:8px;padding:0 10px}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--pri) 40%,transparent);border-color:var(--pri)}
+.card{border:1px solid var(--line);border-top:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.card h3,dialog h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
+#tb h3,#srost h3,#rrost h3{font-size:16px;text-transform:none;letter-spacing:0;color:var(--tx)}
+#srost h3,#rrost h3{font-size:18px}
+.tm{border:0;border-left:4px solid transparent;border-radius:6px}.tm.at{border-color:var(--acc);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.tm b{font:700 32px Inter,sans-serif}.tm span:first-child{font-weight:600}
+.adj button{border:1px solid var(--line);border-radius:6px;width:34px;height:34px;color:var(--mut)}
+.inn{font:600 13px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.cnt b{font:700 40px/1 Inter,sans-serif}.cnt small{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.oc button{border:1px solid var(--line);border-radius:6px;color:var(--mut)}
+.base{stroke-width:2}
+.tabs{gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}.tabs .b{border:0;border-right:1px solid var(--line);border-radius:0;box-shadow:none}.tabs .b:last-child{border-right:0}
+.bar i{background:var(--pri);border:0;height:10px;border-radius:3px}
+th{background:color-mix(in srgb,var(--ink) 6%,var(--panel));font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:700}
+.chip{border-radius:999px;background:color-mix(in srgb,var(--ink) 5%,var(--panel))}
+.zin{fill:color-mix(in srgb,var(--acc) 18%,var(--panel));stroke-width:1.5}
+#qp{border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+dialog{border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+#msg{color:var(--bad)}
+</style>
+<style id="cal">
+header{background:#003262;color:#fff;border-bottom:3px solid var(--acc);box-shadow:0 2px 6px rgba(0,20,50,.25)}
+header b{color:#fff}header b small{color:var(--acc);font-weight:600}
+header button{color:rgba(255,255,255,.82)}
+header button:hover{background:rgba(255,255,255,.12);color:#fff}
+header button.on{background:transparent;color:#fff;box-shadow:inset 0 -3px 0 var(--acc)}
+header #logo,header #lb{background:none;padding:0;border-radius:8px;height:46px;width:46px;object-fit:cover}
+.hero{background:#003262;border-radius:10px;padding:14px 18px;border-bottom:3px solid var(--acc)}
+.hero img{background:none;padding:0;height:84px;width:84px;border-radius:10px}
+.hero h1{color:#fff}.hero p{color:var(--acc);font-weight:500}
+.b.go{background:var(--acc);color:#003262;border-color:var(--acc);font-weight:700}
+.b.go:hover{background:var(--acc);filter:brightness(1.06)}
+.b.on{box-shadow:inset 0 -3px 0 var(--acc)}
+.tabs .b.on{box-shadow:inset 0 -3px 0 var(--acc)}
+.card h3,dialog h3{color:var(--ink)}
+.card h3::before{content:"";display:inline-block;width:4px;height:12px;background:var(--acc);border-radius:2px;margin-right:8px;vertical-align:-1px}
+#tb h3::before,#srost h3::before,#rrost h3::before{display:none}
+.tm b,.cnt b,.oc b{color:var(--ink)}
+.tm.at{background:color-mix(in srgb,var(--acc) 16%,transparent)}
+th{background:color-mix(in srgb,var(--pri) 10%,var(--panel));color:var(--ink)}
+.chip{background:color-mix(in srgb,var(--acc) 14%,var(--panel));border-color:color-mix(in srgb,var(--acc) 45%,var(--line))}
+.zin{fill:color-mix(in srgb,var(--acc) 24%,var(--panel))}
+#qp{border-top:3px solid var(--acc)}
+dialog{border-top:4px solid var(--acc)}
+</style>
+</head><body>
+<header><b><svg id="lb" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#FDB515" stroke="#fff" stroke-width="2"/><path d="M9 9C15 16 15 24 9 31M31 9C25 16 25 24 31 31" fill="none" stroke="#003262" stroke-width="2"/><text x="20" y="25" font-size="13" font-weight="700" text-anchor="middle" fill="#003262" font-family="Inter,sans-serif">CAL</text></svg><img id="logo" src="logo.jpg" alt="Cal Softball" hidden onload="this.hidden=false;document.getElementById('lb').hidden=true"><span>Cal Softball <small>Pitch Chart</small></span></b>
 <button data-a="undo" id="undo">Undo</button><button data-a="dlg">Roster</button>
 <button data-a="view" data-v="live" id="nl">Live</button><button data-a="view" data-v="book" id="nb">Scorebook</button><button data-a="view" data-v="setup" id="ns">Setup</button>
 <button data-a="new" id="newb">New game</button><span id="sbadge" style="font-size:12px"></span><button data-a="dd">Data</button><button data-a="theme">Theme</button></header>
 
-<main id="setup"><div class="card"><h3>Game info</h3>
+<main id="setup"><div class="hero"><img src="logo.jpg" alt="" onerror="this.remove()"><div><h1>Cal Softball</h1><p>Pitch charting &amp; in-game scorebook</p></div></div><div class="card"><h3>Game info</h3>
 <div class="grid g4">
 <label>Home team<input id="gh" data-k="g.home"></label><label>Away team<input data-k="g.away" id="ga"></label>
 <label>Date / time<input type="datetime-local" data-k="g.date" id="gd"></label><label>Venue<input data-k="g.venue" id="gv"></label>
@@ -185,7 +253,7 @@ $('#tb').innerHTML=`<h3>${E(w)} vs ${E(pt)}</h3><b>${lab}</b><br><small>Change a
 const keys=['away','home'].flatMap(t=>S.P[t].map((_,i)=>t+':'+i));if(!anK||!keys.includes(anK))anK=ft()+':'+S.cp[ft()];
 const l=S.pitches.filter(p=>p.pk==anK),s=stats(l),m=mix(l);
 $('#tb').innerHTML=`<select data-a="anp" id="ansel">${keys.map(k=>`<option value="${k}" ${k==anK?'selected':''}>${E(pk(k))}</option>`).join('')}</select>
-<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['First-pitch K %',s.fps],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Barlow Condensed',sans-serif">${b}</b></div>`).join('')}</div>
+<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['First-pitch K %',s.fps],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
 <b>Pitch usage</b>${m.length?m.map(([t,a])=>{const p=Math.round(a.length/l.length*100);return`<div class="bar"><span>${t}</span><i style="width:${p*1.6}px"></i><span>${p}% <small>${a.length} · ${avg(a)} mph</small></span></div>`}).join(''):'<p><small>No pitches charted for this pitcher.</small></p>'}
 <b>By count</b><table><tr><th>Count</th><th>#</th><th>Avg mph</th><th>Mix</th></tr>${CNTS.map(c=>[c,l.filter(p=>p.cnt==c)]).filter(x=>x[1].length).map(([c,a])=>`<tr><td>${c}</td><td>${a.length}</td><td>${avg(a)}</td><td>${mix(a).map(([t,z])=>t+' '+z.length).join(', ')}</td></tr>`).join('')}</table>
 <b>Locations</b> <small>(catcher's view · blue ball, red strike, green in play)</small>${zoneSvg(l)}`}
@@ -200,7 +268,7 @@ const chartBlock=vm=='bat'?'':bookP!='all'?cbl(PF,''):vm=='pit'?pks.map(k=>cbl(P
 const sp2=vm=='pit'?[['Balls in play against '+tn(vt)+' pitchers',p=>p.pk.startsWith(vt+':')]]:(vm=='bat'?[vt]:['away','home']).map(t=>[tn(t)+' spray chart',p=>p.t==t]);
 const vlabel=vm=='all'?'':`<h3 style="margin:2px 0">${E(tn(vt))} ${vm=='bat'?'batters':'pitchers'}</h3>`;
 $('#book').innerHTML=`<div class="noprint" style="margin-bottom:10px"><button class="b go" data-a="print">Print / Export PDF</button> <select id="bview" style="width:auto;min-width:200px">${[['all','Full sheet'],['bat-away',tn('away')+' batters'],['bat-home',tn('home')+' batters'],['pit-away',tn('away')+' pitchers'],['pit-home',tn('home')+' pitchers']].map(([v,l])=>`<option value="${v}" ${v==bookV?'selected':''}>${E(l)}</option>`).join('')}</select> <select id="bsel" style="width:auto;min-width:230px"><option value="all">All pitchers</option>${allK.map(k=>`<option value="${k}" ${k==bookP?'selected':''}>${E(pk(k))} (${baseP.filter(p=>p.pk==k).length})</option>`).join('')}</select> <small>Choose “Save as PDF” in the print dialog.</small></div>
-<div class="brand"><img src="logo.png" height="44" alt="" onerror="this.remove()">CAL SOFTBALL · PITCH CHART</div><h2>${E(tn('away'))} at ${E(tn('home'))}</h2>${vlabel}<p>${E((g.date||'').replace('T',' '))} · ${E(g.venue)} · Score ${S.score.away}–${S.score.home} · ${g.inn} innings</p>
+<div class="brand"><img src="logo.jpg" height="56" alt="" onerror="this.remove()">CAL SOFTBALL · PITCH CHART</div><h2>${E(tn('away'))} at ${E(tn('home'))}</h2>${vlabel}<p>${E((g.date||'').replace('T',' '))} · ${E(g.venue)} · Score ${S.score.away}–${S.score.home} · ${g.inn} innings</p>
 ${vm=='bat'?'<div hidden>':'<div>'}<h3>Pitcher summary${bookP=='all'?'':' — '+E(pk(bookP))}</h3><table><tr><th>Pitcher</th><th>Pitches</th><th>Strike %</th><th>FPS %</th><th>Avg mph</th><th>Usage</th></tr>${pks.map(k=>{const l=S.pitches.filter(p=>p.pk==k),s=stats(l);return`<tr><td>${E(pk(k))}</td><td>${s.n}</td><td>${s.sp}</td><td>${s.fps}</td><td>${s.v}</td><td>${mix(l).map(([t,a])=>t+' '+pc(a.length,l.length)).join(', ')}</td></tr>`}).join('')||'<tr><td colspan="6">No pitches charted yet.</td></tr>'}</table>
 </div>${chartBlock}<div class="two">${sp2.map(([nm,f])=>`<div><b>${E(nm)}</b>${fieldSvg(S.plays.filter(p=>f(p)&&(bookP=='all'||p.pk==bookP)))}</div>`).join('')}</div><small>Yellow hit · white out · red error · orange FC</small>
 <div class="brk"></div><h2 style="font-size:20px">At-bat pitch charts</h2>${legend([['#3B82F6','Ball / HBP'],['#DC2626','Strike / foul'],['#16A34A','In play']])}<small>Each box is one plate appearance. Dots show where each pitch crossed the zone, numbered in order.</small>${ab}<div class="brk"></div><h2 style="font-size:20px">Pitch-by-pitch log</h2>${halves||'<p>Chart some pitches to build the sheet.</p>'}`}
@@ -218,7 +286,7 @@ $('#rss').innerHTML=Object.entries(RS).map(([k,l])=>`<button class="b" data-a="r
 const setPath=(k,v)=>{const p=k.split('.');let o=S;p.slice(0,-1).forEach(x=>o=o[x]=o[x]||{});o[p[p.length-1]]=v};
 const ACT={
 undo(){if(H.length){S=JSON.parse(H.pop());done()}},
-view(v){view=v;done()},tab(v){tab=v;render()},theme(){const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()=='#06162B';r.dataset.theme=d?'light':'dark';ls.set('sbt',r.dataset.theme)},
+view(v){view=v;done()},tab(v){tab=v;render()},theme(){const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()=='#0B1424';r.dataset.theme=d?'light':'dark';ls.set('sbt',r.dataset.theme)},
 type(v){sel.type=v;sel.alt=false;if(!velRange().includes(+sel.velo))sel.velo='';render()},vel(v){sel.velo=sel.velo==v?'':+v;drawVel()},valt(){sel.alt=!sel.alt;sel.velo='';drawVel()},out(v){snap();v=+v;S.outs=S.outs==v+1?v:v+1;chk();done()},
 base(v){snap();S.bases[v]^=1;done()},sc(v){snap();const t=v.slice(0,-1);S.score[t]=Math.max(0,S.score[t]+(v.slice(-1)=='+'?1:-1));done()},
 add(v){const[a,t]=v.split('.');snap();S[a][t].push(a=='L'?{name:'',num:'',side:'R'}:{name:'',arm:'R'});$('#srost').innerHTML=rosters();$('#rrost').innerHTML=rosters();done()},
@@ -259,7 +327,7 @@ const csv=a=>a.map(r=>r.map(v=>{v=String(v??'');return/[",\n]/.test(v)?'"'+v.rep
 const fname=()=>(S.g.away+'-at-'+S.g.home+'-'+(S.g.date||'').slice(0,10)).replace(/[^\w-]+/g,'_');
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;document.body.appendChild(a);a.click();a.remove()}
 const cfg=()=>{try{return JSON.parse(ls.get('sbcfg')||'{}')}catch(e){return{}}};
-function badge(t,bad,hdr){$('#sbadge').textContent=hdr?'⚠ Sheet offline':'';$('#sbadge').style.color='#FF7070';$('#sst').textContent=t;$('#sst').style.color=bad?'var(--bad)':''}
+function badge(t,bad,hdr){$('#sbadge').textContent=hdr?'⚠ Sheet offline':'';$('#sbadge').style.color='var(--bad)';$('#sst').textContent=t;$('#sst').style.color=bad?'var(--bad)':''}
 let sT=0,pend2=false;
 async function sync(manual){const c=cfg();if(!c.url){if(manual)badge('Paste your Apps Script URL first.',1);return}
 badge('Sending…');
