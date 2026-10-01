@@ -32,6 +32,7 @@ main{padding:12px;max-width:1500px;margin:auto}
 .adj button{width:36px;height:36px;border-radius:8px;border:2px solid var(--line);background:var(--panel);font-weight:700}
 .inn{font:700 22px "Barlow Condensed",sans-serif;margin:8px 0}
 .cnt{display:flex;gap:16px;align-items:end}.cnt b{display:block;font:700 46px/1 "Barlow Condensed",sans-serif}
+.oc{display:flex;align-items:center;gap:6px}.oc button{width:38px;height:38px;border-radius:8px;border:2px solid var(--line);background:var(--panel);font-size:20px;font-weight:700;cursor:pointer}.oc b{min-width:26px;text-align:center}
 .dot{width:32px;height:32px;border-radius:50%;border:3px solid var(--ink);background:transparent;margin-right:6px}.dot.on{background:var(--bad);border-color:var(--bad)}
 .base{fill:var(--panel);stroke:var(--ink);stroke-width:3;cursor:pointer}.base.on{fill:var(--acc)}
 .grid{display:grid;gap:8px}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:1fr 1fr}
@@ -94,7 +95,7 @@ dialog{border:0;border-radius:14px;width:min(940px,96vw);max-height:92vh;padding
 <script>
 const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
-const T=['Rise','Drop','Curve','Screw','Changeup','Offspeed','Fastball'];
+const T=['Rise','Drop','Curve','Screw','Changeup','Offspeed','Fastball','Unknown'];
 const O={ball:'Ball',cs:'Called Strike',ss:'Swinging Strike',foul:'Foul',inplay:'In Play',hbp:'HBP',pitchout:'Pitchout',illegal:'Illegal Pitch'};
 const STR=['cs','ss','foul','inplay'],HT=['Ground Ball','Fly Ball','Line Drive','Pop-up','Bunt'];
 const RS={single:'Single',double:'Double',triple:'Triple',hr:'Home Run',fc:"Fielder's Choice",out:'Out',err:'Error'};
@@ -136,7 +137,7 @@ const PC=o=>o=='ball'||o=='pitchout'||o=='illegal'||o=='hbp'?'#3B82F6':o=='inpla
 const RY=[0,60,130,200,270],RH=[60,70,70,70,60];
 const zGrid=()=>Array.from({length:25},(_,k)=>{const c=k%5,r=k/5|0,i=r>0&&r<4&&c>0&&c<4;return`<rect x="${c*60}" y="${RY[r]}" width="60" height="${RH[r]}" class="${i?'zin':'zout'}"/>`}).join('')+'<rect x="60" y="60" width="180" height="210" fill="none" stroke="var(--ink)" stroke-width="4"/>';
 const zoneSvg=l=>`<svg class="fs" viewBox="0 0 300 330" style="max-width:280px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="7" fill="${PC(p.o)}" stroke="#fff" stroke-width="1.5"/>`).join('')}</svg>`;
-const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827'};
+const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827',Unknown:'#6B7280'};
 const zoneT=l=>`<svg class="fs" viewBox="0 0 300 330" style="max-width:300px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="9" fill="${TC[p.type]}" stroke="#fff" stroke-width="1.5"/><text x="${p.x}" y="${p.y+3}" font-size="8" font-weight="700" text-anchor="middle" fill="#fff">${p.type.slice(0,2)}</text>`).join('')}</svg>`;
 const sw=c=>`<i style="width:12px;height:12px;border-radius:50%;background:${c};display:inline-block;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact"></i>`;
 const legend=a=>`<div style="font-size:13px">${a.map(([c,t])=>`<span style="margin-right:10px;white-space:nowrap">${sw(c)}${t}</span>`).join('')}</div>`;
@@ -154,7 +155,7 @@ function mix(l){return T.map(t=>[t,l.filter(p=>p.type==t)]).filter(x=>x[1].lengt
 function renderSB(){const t=bt(),f=ft(),r=bp(t,S.bi[t]),pit=S.P[f][S.cp[f]];
 $('#sb').innerHTML=['away','home'].map(x=>`<div class="tm ${t==x?'at':''}"><span>${E(tn(x))}</span><b>${S.score[x]}</b><span class="adj"><button data-a="sc" data-v="${x}-">−</button><button data-a="sc" data-v="${x}+">+</button></span></div>`).join('')+
 `<div class="inn">${S.half=='top'?'▲ Top':'▼ Bottom'} ${S.inn} of ${S.g.inn}${S.inn>S.g.inn?' (extra innings)':''}</div>
-<div class="cnt"><div><small>Balls</small><b>${S.b}</b></div><div><small>Strikes</small><b>${S.s}</b></div><div><small>Outs</small><span>${[0,1,2].map(k=>`<button class="dot ${S.outs>k?'on':''}" data-a="out" data-v="${k}" aria-label="Out ${k+1}"></button>`).join('')}</span></div></div>
+<div class="cnt"><div><small>Balls</small><b>${S.b}</b></div><div><small>Strikes</small><b>${S.s}</b></div><div><small>Outs</small><span class="oc"><button data-a="oa" data-v="-1" aria-label="Remove an out">−</button><b>${S.outs}</b><button data-a="oa" data-v="1" aria-label="Add an out">+</button></span></div></div>
 <svg viewBox="0 0 140 125" style="width:100%;max-width:160px;display:block;margin:4px auto"><path d="M70 105 L110 65 L70 25 L30 65Z" fill="none" stroke="var(--line)" stroke-width="2"/>${[[110,65],[70,25],[30,65]].map(([x,y],i)=>`<rect class="base ${S.bases[i]?'on':''}" x="${x-14}" y="${y-14}" width="28" height="28" transform="rotate(45 ${x} ${y})" data-a="base" data-v="${i}"/>`).join('')}<polygon points="70,97 78,105 74,113 66,113 62,105" fill="#fff" stroke="var(--ink)" stroke-width="2"/></svg>
 <p><small>At bat (${E(tn(t))} #${S.bi[t]%S.L[t].length+1})</small><br><b style="font-size:20px">${E(who(t,S.bi[t]))}</b> ${r.num&&r.name?'#'+E(r.num):''} <small>bats ${r.side=='S'?'Slapper':r.side}</small></p>
 <label>Pitching for ${E(tn(f))} <small>(${pit?.arm=='L'?'lefty':'righty'})</small><select data-k="cp.${f}" data-n="1">${S.P[f].map((p,i)=>`<option value="${i}" ${i==S.cp[f]?'selected':''}>${E(p.name||'Pitcher '+(i+1))}</option>`).join('')}</select></label>
@@ -208,7 +209,7 @@ dd(v){const d=$('#dd');if(v=='x'){d.close();return}const c=cfg();$('#cu').value=
 xjson(){dl(fname()+'.json',JSON.stringify({v:1,S},null,1),'application/json')},
 xcsv(){dl(fname()+'-pitches.csv',csv([HDR,...pitchRows()]),'text/csv')},
 imp(){$('#imf').click()},sendnow(){sync(1)},
-quick(){sel.quick=!sel.quick;ls.set('sbq',sel.quick?'1':'');qlabel()},qx(){sel.x=sel.y=null;drawDot()},anp(){}
+quick(){sel.quick=!sel.quick;ls.set('sbq',sel.quick?'1':'');qlabel()},qx(){sel.x=sel.y=null;drawDot()},oa(v){snap();S.outs=Math.max(0,S.outs+(+v));chk();done()},anp(){}
 };
 document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(a&&ACT[a.dataset.a]&&a.tagName!='SELECT')ACT[a.dataset.a](a.dataset.v);const o=e.target.closest('[data-o]');if(o)pitch(o.dataset.o)});
 document.addEventListener('input',e=>{const t=e.target;if(t.id=='ansel'){anK=t.value;renderTab();return}if(t.id=='bsel'){bookP=t.value;renderBook();return}if(t.dataset.c){const x=cfg();x[t.dataset.c]=t.value.trim();ls.set('sbcfg',JSON.stringify(x));return}const k=t.dataset.k;if(!k)return;snapMaybe(k);setPath(k,t.dataset.n?+t.value:t.value);if(k.startsWith('cp.'))anK=null;save();if(view=='live')renderSB();if(view=='live'&&k.startsWith('cp.'))renderTab()});
