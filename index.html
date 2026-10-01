@@ -22,22 +22,23 @@ button,select,input{font:inherit;color:inherit}
 input,select{min-height:44px;border:2px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px;width:100%}
 main{padding:12px;max-width:1500px;margin:auto}
 .card{background:var(--panel);border:2px solid var(--line);border-top:5px solid var(--acc);border-radius:12px;padding:12px}
-#live{display:grid;gap:12px;grid-template-columns:minmax(260px,320px) minmax(320px,1fr) minmax(300px,400px);align-items:start}
-@media(max-width:1000px){#live{grid-template-columns:1fr 1fr}.c3{grid-column:1/-1}}
-@media(max-width:640px){#live{grid-template-columns:1fr}}
+#live{display:grid;gap:12px;grid-template-columns:minmax(220px,260px) minmax(500px,1.8fr) minmax(260px,330px);align-items:start}
+.pe{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,280px);gap:12px;align-items:start;margin-top:8px}.pe #zwrap{margin:0;max-width:280px}#pe #types .b,#pe #outs .b{min-height:46px}
+@media(max-width:1000px){#live{grid-template-columns:1fr 1fr}.c3{grid-column:1/-1}#live>section:nth-child(2){grid-column:1/-1;order:-1}}
+@media(max-width:640px){#live{grid-template-columns:1fr}.pe{grid-template-columns:1fr}.pe #zwrap{margin:8px auto}}
 .tm{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:2px solid transparent}
 .tm.at{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 18%,transparent)}
-.tm span:first-child{flex:1;font-weight:700}.tm b{font:700 40px "Barlow Condensed",sans-serif}
+.tm span:first-child{flex:1;font-weight:700}.tm b{font:700 34px "Barlow Condensed",sans-serif}
 .adj button{width:36px;height:36px;border-radius:8px;border:2px solid var(--line);background:var(--panel);font-weight:700}
 .inn{font:700 22px "Barlow Condensed",sans-serif;margin:8px 0}
-.cnt{display:flex;gap:16px;align-items:end}.cnt b{display:block;font:700 56px/1 "Barlow Condensed",sans-serif}
+.cnt{display:flex;gap:16px;align-items:end}.cnt b{display:block;font:700 46px/1 "Barlow Condensed",sans-serif}
 .dot{width:32px;height:32px;border-radius:50%;border:3px solid var(--ink);background:transparent;margin-right:6px}.dot.on{background:var(--bad);border-color:var(--bad)}
 .base{fill:var(--panel);stroke:var(--ink);stroke-width:3;cursor:pointer}.base.on{fill:var(--acc)}
 .grid{display:grid;gap:8px}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:1fr 1fr}
 @media(max-width:640px){.g4{grid-template-columns:repeat(2,1fr)}}
 #zwrap{position:relative;max-width:320px;margin:8px auto}#zone{width:100%;display:block;touch-action:manipulation;cursor:crosshair}#qp{position:absolute;z-index:3;width:210px;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:var(--panel);border:3px solid var(--ink);border-radius:12px;box-shadow:0 6px 20px #0006}#qp .b{min-height:48px;font-size:15px}
 .zin{fill:color-mix(in srgb,var(--acc) 30%,var(--panel));stroke:var(--ink);stroke-width:2}.zout{fill:var(--panel);stroke:var(--line);stroke-width:1}
-.vg{grid-template-columns:repeat(7,1fr)}.vg .b{min-height:48px;font-size:18px;padding:0}
+.vg{grid-template-columns:repeat(7,1fr)}.vg .b{min-height:44px;font-size:16px;padding:0}
 .tabs{display:flex;gap:6px;margin-bottom:8px}.tabs .b{flex:1;min-height:44px}
 .bar{display:flex;align-items:center;gap:8px;margin:4px 0}.bar i{display:block;height:14px;background:var(--acc);border:1px solid var(--ink);border-radius:4px}
 .bar span:first-child{width:78px}
@@ -71,12 +72,10 @@ dialog{border:0;border-radius:14px;width:min(940px,96vw);max-height:92vh;padding
 
 <main id="live" hidden>
 <section class="card" id="sb"></section>
-<section class="card"><div style="display:flex;align-items:center;gap:8px"><h3 style="flex:1">Pitch entry</h3><button class="b" data-a="quick" id="qb" style="min-height:44px;font-size:14px"></button></div><small>Quick mode keeps type and velocity selected. Tap the zone and the result buttons pop up right there.</small>
-<div class="grid g4" id="types"></div>
-<div style="margin:8px 0"><b>Velocity (mph)</b> <small>tap again to clear</small><div class="grid vg" id="vel" style="margin-top:6px"></div></div>
-<small>Tap the zone to plot location (optional), then tap the result.</small>
-<div id="zwrap"><svg id="zone" viewBox="0 0 300 360"></svg><div id="qp" hidden></div></div>
-<div class="grid g4" id="outs"></div></section>
+<section class="card" id="pe"><div style="display:flex;align-items:center;gap:8px"><h3 style="flex:1;margin:0">Pitch entry</h3><button class="b" data-a="quick" id="qb" style="min-height:40px;font-size:14px"></button></div>
+<div class="pe"><div><div class="grid g2" id="types"></div><div style="margin-top:8px"><b>Velocity (mph)</b> <small>tap again to clear</small><div class="grid vg" id="vel" style="margin-top:4px"></div></div></div>
+<div id="zwrap"><svg id="zone" viewBox="0 0 300 330"></svg><div id="qp" hidden></div></div></div>
+<div class="grid g4" id="outs" style="margin-top:8px"></div></section>
 <section class="card c3"><div class="tabs"><button class="b" data-a="tab" data-v="p">Pitcher</button><button class="b" data-a="tab" data-v="a">At-bat</button></div><div id="tb"></div></section>
 </main>
 
@@ -111,7 +110,7 @@ const snap=()=>{H.push(JSON.stringify(S));if(H.length>300)H.shift()};
 const bp=(t,i)=>S.L[t][i%S.L[t].length],who=(t,i)=>{const r=bp(t,i);return r.name||(r.num?'#'+r.num:'Batter '+(i%S.L[t].length+1))};
 const pn=k=>{const[t,i]=k.split(':'),p=S.P[t][i];return p?(p.name||'Pitcher '+(+i+1)):'?'};
 const pk=k=>{const[t,i]=k.split(':');return tn(t)+' – '+pn(k)};
-function zl(x,y){if(x==null)return'—';const c=Math.min(4,x/60|0),r=y<60?0:y>=300?4:1+Math.floor((y-60)/80);if(r>0&&r<4&&c>0&&c<4)return String((r-1)*3+c);return[r==0?'Hi':r==4?'Lo':'',c==0?'L':c==4?'R':''].filter(Boolean).join('-')}
+function zl(x,y){if(x==null)return'—';const c=Math.min(4,x/60|0),r=y<60?0:y>=270?4:1+Math.floor((y-60)/70);if(r>0&&r<4&&c>0&&c<4)return String((r-1)*3+c);return[r==0?'Hi':r==4?'Lo':'',c==0?'L':c==4?'R':''].filter(Boolean).join('-')}
 const run=()=>S.score[bt()]++;
 function adv(n,b){const nb=[0,0,0];for(let i=2;i>=0;i--)if(S.bases[i]){const t=i+n;t>=3?run():nb[t]=1}if(b){n>=4?run():nb[n-1]=1}S.bases=nb}
 function walk(){const b=S.bases;if(b[0]){if(b[1]){if(b[2])run();b[2]=1}b[1]=1}b[0]=1}
@@ -134,11 +133,11 @@ const DC=r=>({single:'#FACC15',double:'#FACC15',triple:'#FACC15',hr:'#FACC15',ou
 const RL={single:'1B',double:'2B',triple:'3B',hr:'HR',out:'O',err:'E',fc:'FC'};
 function fieldSvg(pl,cls){return`<svg class="fs" viewBox="0 0 400 400" ${cls||''}>${FIELD}${pl.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="10" fill="${DC(p.r)}" stroke="#000" stroke-width="1.5"/><text x="${p.x}" y="${p.y+4}" font-size="10" font-weight="700" text-anchor="middle" fill="#000">${RL[p.r]||''}</text>`).join('')}</svg>`}
 const PC=o=>o=='ball'||o=='pitchout'||o=='illegal'||o=='hbp'?'#3B82F6':o=='inplay'?'#16A34A':'#DC2626';
-const RY=[0,60,140,220,300],RH=[60,80,80,80,60];
-const zGrid=()=>Array.from({length:25},(_,k)=>{const c=k%5,r=k/5|0,i=r>0&&r<4&&c>0&&c<4;return`<rect x="${c*60}" y="${RY[r]}" width="60" height="${RH[r]}" class="${i?'zin':'zout'}"/>`}).join('')+'<rect x="60" y="60" width="180" height="240" fill="none" stroke="var(--ink)" stroke-width="4"/>';
-const zoneSvg=l=>`<svg class="fs" viewBox="0 0 300 360" style="max-width:280px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="7" fill="${PC(p.o)}" stroke="#fff" stroke-width="1.5"/>`).join('')}</svg>`;
+const RY=[0,60,130,200,270],RH=[60,70,70,70,60];
+const zGrid=()=>Array.from({length:25},(_,k)=>{const c=k%5,r=k/5|0,i=r>0&&r<4&&c>0&&c<4;return`<rect x="${c*60}" y="${RY[r]}" width="60" height="${RH[r]}" class="${i?'zin':'zout'}"/>`}).join('')+'<rect x="60" y="60" width="180" height="210" fill="none" stroke="var(--ink)" stroke-width="4"/>';
+const zoneSvg=l=>`<svg class="fs" viewBox="0 0 300 330" style="max-width:280px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="7" fill="${PC(p.o)}" stroke="#fff" stroke-width="1.5"/>`).join('')}</svg>`;
 const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827'};
-const zoneT=l=>`<svg class="fs" viewBox="0 0 300 360" style="max-width:300px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="9" fill="${TC[p.type]}" stroke="#fff" stroke-width="1.5"/><text x="${p.x}" y="${p.y+3}" font-size="8" font-weight="700" text-anchor="middle" fill="#fff">${p.type.slice(0,2)}</text>`).join('')}</svg>`;
+const zoneT=l=>`<svg class="fs" viewBox="0 0 300 330" style="max-width:300px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="9" fill="${TC[p.type]}" stroke="#fff" stroke-width="1.5"/><text x="${p.x}" y="${p.y+3}" font-size="8" font-weight="700" text-anchor="middle" fill="#fff">${p.type.slice(0,2)}</text>`).join('')}</svg>`;
 const sw=c=>`<i style="width:12px;height:12px;border-radius:50%;background:${c};display:inline-block;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact"></i>`;
 const legend=a=>`<div style="font-size:13px">${a.map(([c,t])=>`<span style="margin-right:10px;white-space:nowrap">${sw(c)}${t}</span>`).join('')}</div>`;
 function drawDot(){$('#zdot')&&$('#zdot').remove();if(sel.x==null)$('#qp').hidden=true;if(sel.x!=null)$('#zone').insertAdjacentHTML('beforeend',`<circle id="zdot" cx="${sel.x}" cy="${sel.y}" r="10" fill="var(--bad)" stroke="#fff" stroke-width="3"/>`)}
@@ -156,7 +155,7 @@ function renderSB(){const t=bt(),f=ft(),r=bp(t,S.bi[t]),pit=S.P[f][S.cp[f]];
 $('#sb').innerHTML=['away','home'].map(x=>`<div class="tm ${t==x?'at':''}"><span>${E(tn(x))}</span><b>${S.score[x]}</b><span class="adj"><button data-a="sc" data-v="${x}-">−</button><button data-a="sc" data-v="${x}+">+</button></span></div>`).join('')+
 `<div class="inn">${S.half=='top'?'▲ Top':'▼ Bottom'} ${S.inn} of ${S.g.inn}${S.inn>S.g.inn?' (extra innings)':''}</div>
 <div class="cnt"><div><small>Balls</small><b>${S.b}</b></div><div><small>Strikes</small><b>${S.s}</b></div><div><small>Outs</small><span>${[0,1,2].map(k=>`<button class="dot ${S.outs>k?'on':''}" data-a="out" data-v="${k}" aria-label="Out ${k+1}"></button>`).join('')}</span></div></div>
-<svg viewBox="0 0 140 125" style="width:100%;max-width:220px;display:block;margin:8px auto"><path d="M70 105 L110 65 L70 25 L30 65Z" fill="none" stroke="var(--line)" stroke-width="2"/>${[[110,65],[70,25],[30,65]].map(([x,y],i)=>`<rect class="base ${S.bases[i]?'on':''}" x="${x-14}" y="${y-14}" width="28" height="28" transform="rotate(45 ${x} ${y})" data-a="base" data-v="${i}"/>`).join('')}<polygon points="70,97 78,105 74,113 66,113 62,105" fill="#fff" stroke="var(--ink)" stroke-width="2"/></svg>
+<svg viewBox="0 0 140 125" style="width:100%;max-width:160px;display:block;margin:4px auto"><path d="M70 105 L110 65 L70 25 L30 65Z" fill="none" stroke="var(--line)" stroke-width="2"/>${[[110,65],[70,25],[30,65]].map(([x,y],i)=>`<rect class="base ${S.bases[i]?'on':''}" x="${x-14}" y="${y-14}" width="28" height="28" transform="rotate(45 ${x} ${y})" data-a="base" data-v="${i}"/>`).join('')}<polygon points="70,97 78,105 74,113 66,113 62,105" fill="#fff" stroke="var(--ink)" stroke-width="2"/></svg>
 <p><small>At bat (${E(tn(t))} #${S.bi[t]%S.L[t].length+1})</small><br><b style="font-size:20px">${E(who(t,S.bi[t]))}</b> ${r.num&&r.name?'#'+E(r.num):''} <small>bats ${r.side=='S'?'Slapper':r.side}</small></p>
 <label>Pitching for ${E(tn(f))} <small>(${pit?.arm=='L'?'lefty':'righty'})</small><select data-k="cp.${f}" data-n="1">${S.P[f].map((p,i)=>`<option value="${i}" ${i==S.cp[f]?'selected':''}>${E(p.name||'Pitcher '+(i+1))}</option>`).join('')}</select></label>
 <button class="b" data-a="dlg" style="width:100%;margin-top:8px;min-height:44px">Substitute batter / pitcher</button>`}
@@ -217,10 +216,10 @@ const snapMaybe=k=>{if(k.startsWith('cp.'))snap()};
 $('#spray').addEventListener('close',()=>{if(pend){pend=null;ACT.undo()}});
 $('#field').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();sp.x=Math.round((e.clientX-r.left)/r.width*400);sp.y=Math.round((e.clientY-r.top)/r.height*400);drawSp()});
 $('#zone').innerHTML=zGrid();
-$('#zone').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();sel.x=Math.round((e.clientX-r.left)/r.width*300);sel.y=Math.round((e.clientY-r.top)/r.height*360);drawDot();if(sel.quick)showQP(e.clientX-r.left,e.clientY-r.top,r)});
+$('#zone').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();sel.x=Math.round((e.clientX-r.left)/r.width*300);sel.y=Math.round((e.clientY-r.top)/r.height*330);drawDot();if(sel.quick)showQP(e.clientX-r.left,e.clientY-r.top,r)});
 function showQP(px,py,r){const q=$('#qp');q.innerHTML=Object.entries(O).map(([k,l])=>`<button class="b ${k=='inplay'?'go':''}" data-o="${k}">${l}</button>`).join('')+'<button class="b" data-a="qx" style="grid-column:1/-1;min-height:40px">Cancel location</button>';q.hidden=false;const w=q.offsetWidth,h=q.offsetHeight;q.style.left=Math.max(0,Math.min(r.width-w,px-w/2))+'px';let t=py+22;if(t+h>r.height)t=py-h-22;q.style.top=Math.max(0,t)+'px'}
 $('#types').innerHTML=T.map(t=>`<button class="b" data-a="type" data-v="${t}">${t}</button>`).join('');
-$('#outs').innerHTML=Object.entries(O).map(([k,l])=>`<button class="b ${k=='inplay'?'go':''}" data-o="${k}" style="${k=='inplay'?'grid-column:span 2':''}">${l}</button>`).join('');
+$('#outs').innerHTML=Object.entries(O).map(([k,l])=>`<button class="b ${k=='inplay'?'go':''}" data-o="${k}">${l}</button>`).join('');
 /* velocity buttons: 55-68 normally, 43-56 for Changeup/Offspeed */
 const velRange=()=>{const slow=sel.type=='Changeup'||sel.type=='Offspeed',lo=slow!=!!sel.alt?43:55;return Array.from({length:14},(_,i)=>lo+i)};
 function drawVel(){const r=velRange();$('#vel').innerHTML=r.map(v=>`<button class="b ${sel.velo==v?'on':''}" data-a="vel" data-v="${v}">${v}</button>`).join('')+`<button class="b" data-a="valt" style="grid-column:1/-1;min-height:44px;font-size:15px">${r[0]==43?'Show 55–68 mph':'Show 43–56 mph'}</button>`}
