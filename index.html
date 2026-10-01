@@ -35,7 +35,7 @@ main{padding:12px;max-width:1500px;margin:auto}
 .base{fill:var(--panel);stroke:var(--ink);stroke-width:3;cursor:pointer}.base.on{fill:var(--acc)}
 .grid{display:grid;gap:8px}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:1fr 1fr}
 @media(max-width:640px){.g4{grid-template-columns:repeat(2,1fr)}}
-#zone{width:100%;max-width:360px;display:block;margin:8px auto;touch-action:manipulation;cursor:crosshair}
+#zwrap{position:relative;max-width:320px;margin:8px auto}#zone{width:100%;display:block;touch-action:manipulation;cursor:crosshair}#qp{position:absolute;z-index:3;width:210px;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:var(--panel);border:3px solid var(--ink);border-radius:12px;box-shadow:0 6px 20px #0006}#qp .b{min-height:48px;font-size:15px}
 .zin{fill:color-mix(in srgb,var(--acc) 30%,var(--panel));stroke:var(--ink);stroke-width:2}.zout{fill:var(--panel);stroke:var(--line);stroke-width:1}
 .vg{grid-template-columns:repeat(7,1fr)}.vg .b{min-height:48px;font-size:18px;padding:0}
 .tabs{display:flex;gap:6px;margin-bottom:8px}.tabs .b{flex:1;min-height:44px}
@@ -71,11 +71,11 @@ dialog{border:0;border-radius:14px;width:min(940px,96vw);max-height:92vh;padding
 
 <main id="live" hidden>
 <section class="card" id="sb"></section>
-<section class="card"><h3>Pitch entry</h3>
+<section class="card"><div style="display:flex;align-items:center;gap:8px"><h3 style="flex:1">Pitch entry</h3><button class="b" data-a="quick" id="qb" style="min-height:44px;font-size:14px"></button></div><small>Quick mode keeps type and velocity selected. Tap the zone and the result buttons pop up right there.</small>
 <div class="grid g4" id="types"></div>
 <div style="margin:8px 0"><b>Velocity (mph)</b> <small>tap again to clear</small><div class="grid vg" id="vel" style="margin-top:6px"></div></div>
 <small>Tap the zone to plot location (optional), then tap the result.</small>
-<svg id="zone" viewBox="0 0 300 300"></svg>
+<div id="zwrap"><svg id="zone" viewBox="0 0 300 360"></svg><div id="qp" hidden></div></div>
 <div class="grid g4" id="outs"></div></section>
 <section class="card c3"><div class="tabs"><button class="b" data-a="tab" data-v="p">Pitcher</button><button class="b" data-a="tab" data-v="a">At-bat</button></div><div id="tb"></div></section>
 </main>
@@ -104,14 +104,14 @@ const rows=n=>Array.from({length:n},()=>({name:'',num:'',side:'R'}));
 const newId=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36);
 const blank=()=>({id:newId(),g:{home:'Home',away:'Away',date:new Date().toISOString().slice(0,16),venue:'',inn:7},L:{away:rows(9),home:rows(9)},P:{away:[{name:'',arm:'R'}],home:[{name:'',arm:'R'}]},cp:{away:0,home:0},bi:{away:0,home:0},inn:1,half:'top',outs:0,b:0,s:0,bases:[0,0,0],score:{away:0,home:0},pa:1,pitches:[],plays:[]});
 let S=blank(),H=[],sel={type:'Fastball',x:null,y:null},tab='p',view='setup',pend=null,sp={},anK=null,newT=0,bookP='all';
-try{const d=JSON.parse(ls.get('sbk')||'null');if(d){S=d.S;view=d.view}}catch(e){}S.id=S.id||newId();
+try{const d=JSON.parse(ls.get('sbk')||'null');if(d){S=d.S;view=d.view}}catch(e){}S.id=S.id||newId();sel.quick=!!ls.get('sbq');
 const save=()=>ls.set('sbk',JSON.stringify({S,view}));
 const bt=()=>S.half=='top'?'away':'home',ft=()=>S.half=='top'?'home':'away',tn=t=>S.g[t]||t;
 const snap=()=>{H.push(JSON.stringify(S));if(H.length>300)H.shift()};
 const bp=(t,i)=>S.L[t][i%S.L[t].length],who=(t,i)=>{const r=bp(t,i);return r.name||(r.num?'#'+r.num:'Batter '+(i%S.L[t].length+1))};
 const pn=k=>{const[t,i]=k.split(':'),p=S.P[t][i];return p?(p.name||'Pitcher '+(+i+1)):'?'};
 const pk=k=>{const[t,i]=k.split(':');return tn(t)+' – '+pn(k)};
-function zl(x,y){if(x==null)return'—';const c=Math.min(4,x/60|0),r=Math.min(4,y/60|0);if(r>0&&r<4&&c>0&&c<4)return String((r-1)*3+c);return[r==0?'Hi':r==4?'Lo':'',c==0?'L':c==4?'R':''].filter(Boolean).join('-')}
+function zl(x,y){if(x==null)return'—';const c=Math.min(4,x/60|0),r=y<60?0:y>=300?4:1+Math.floor((y-60)/80);if(r>0&&r<4&&c>0&&c<4)return String((r-1)*3+c);return[r==0?'Hi':r==4?'Lo':'',c==0?'L':c==4?'R':''].filter(Boolean).join('-')}
 const run=()=>S.score[bt()]++;
 function adv(n,b){const nb=[0,0,0];for(let i=2;i>=0;i--)if(S.bases[i]){const t=i+n;t>=3?run():nb[t]=1}if(b){n>=4?run():nb[n-1]=1}S.bases=nb}
 function walk(){const b=S.bases;if(b[0]){if(b[1]){if(b[2])run();b[2]=1}b[1]=1}b[0]=1}
@@ -119,7 +119,7 @@ function chk(){if(S.outs>=3){S.outs=0;S.bases=[0,0,0];S.b=S.s=0;flip=1;if(S.half
 let flip=0;const done=()=>{save();render();auto()};
 function endPA(res,fn,ex){fn&&fn();const t=bt(),f=ft();S.plays.push({pa:S.pa,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],res,...ex});S.pa++;S.b=S.s=0;S.bi[t]++;chk();done()}
 function pitch(o){snap();const t=bt(),f=ft(),p={pa:S.pa,n:S.pitches.filter(q=>q.pa==S.pa).length+1,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],type:sel.type,velo:sel.velo||'',x:sel.x,y:sel.y,o,cnt:S.b+'-'+S.s};
-S.pitches.push(p);sel.x=sel.y=null;sel.velo='';drawVel();drawDot();
+S.pitches.push(p);sel.x=sel.y=null;if(!sel.quick)sel.velo='';drawVel();drawDot();
 if(o=='ball'||o=='pitchout'){if(++S.b>=4)return endPA('BB',walk)}
 else if(o=='illegal'){if(++S.b>=4)return endPA('BB',walk);adv(1,0)}
 else if(o=='cs'||o=='ss'){if(++S.s>=3)return endPA('K',()=>S.outs++)}
@@ -134,13 +134,14 @@ const DC=r=>({single:'#FACC15',double:'#FACC15',triple:'#FACC15',hr:'#FACC15',ou
 const RL={single:'1B',double:'2B',triple:'3B',hr:'HR',out:'O',err:'E',fc:'FC'};
 function fieldSvg(pl,cls){return`<svg class="fs" viewBox="0 0 400 400" ${cls||''}>${FIELD}${pl.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="10" fill="${DC(p.r)}" stroke="#000" stroke-width="1.5"/><text x="${p.x}" y="${p.y+4}" font-size="10" font-weight="700" text-anchor="middle" fill="#000">${RL[p.r]||''}</text>`).join('')}</svg>`}
 const PC=o=>o=='ball'||o=='pitchout'||o=='illegal'||o=='hbp'?'#3B82F6':o=='inplay'?'#16A34A':'#DC2626';
-const zGrid=()=>Array.from({length:25},(_,k)=>{const c=k%5,r=k/5|0,i=r>0&&r<4&&c>0&&c<4;return`<rect x="${c*60}" y="${r*60}" width="60" height="60" class="${i?'zin':'zout'}"/>`}).join('');
-const zoneSvg=l=>`<svg class="fs" viewBox="0 0 300 300" style="max-width:300px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="7" fill="${PC(p.o)}" stroke="#fff" stroke-width="1.5"/>`).join('')}</svg>`;
+const RY=[0,60,140,220,300],RH=[60,80,80,80,60];
+const zGrid=()=>Array.from({length:25},(_,k)=>{const c=k%5,r=k/5|0,i=r>0&&r<4&&c>0&&c<4;return`<rect x="${c*60}" y="${RY[r]}" width="60" height="${RH[r]}" class="${i?'zin':'zout'}"/>`}).join('')+'<rect x="60" y="60" width="180" height="240" fill="none" stroke="var(--ink)" stroke-width="4"/>';
+const zoneSvg=l=>`<svg class="fs" viewBox="0 0 300 360" style="max-width:280px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="7" fill="${PC(p.o)}" stroke="#fff" stroke-width="1.5"/>`).join('')}</svg>`;
 const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827'};
-const zoneT=l=>`<svg class="fs" viewBox="0 0 300 300" style="max-width:320px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="9" fill="${TC[p.type]}" stroke="#fff" stroke-width="1.5"/><text x="${p.x}" y="${p.y+3}" font-size="8" font-weight="700" text-anchor="middle" fill="#fff">${p.type.slice(0,2)}</text>`).join('')}</svg>`;
+const zoneT=l=>`<svg class="fs" viewBox="0 0 300 360" style="max-width:300px">${zGrid()}${l.filter(p=>p.x!=null).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="9" fill="${TC[p.type]}" stroke="#fff" stroke-width="1.5"/><text x="${p.x}" y="${p.y+3}" font-size="8" font-weight="700" text-anchor="middle" fill="#fff">${p.type.slice(0,2)}</text>`).join('')}</svg>`;
 const sw=c=>`<i style="width:12px;height:12px;border-radius:50%;background:${c};display:inline-block;margin-right:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact"></i>`;
 const legend=a=>`<div style="font-size:13px">${a.map(([c,t])=>`<span style="margin-right:10px;white-space:nowrap">${sw(c)}${t}</span>`).join('')}</div>`;
-function drawDot(){$('#zdot')&&$('#zdot').remove();if(sel.x!=null)$('#zone').insertAdjacentHTML('beforeend',`<circle id="zdot" cx="${sel.x}" cy="${sel.y}" r="10" fill="var(--bad)" stroke="#fff" stroke-width="3"/>`)}
+function drawDot(){$('#zdot')&&$('#zdot').remove();if(sel.x==null)$('#qp').hidden=true;if(sel.x!=null)$('#zone').insertAdjacentHTML('beforeend',`<circle id="zdot" cx="${sel.x}" cy="${sel.y}" r="10" fill="var(--bad)" stroke="#fff" stroke-width="3"/>`)}
 /* roster editor */
 const opt=(a,v)=>a.map(([x,l])=>`<option value="${x}" ${x==v?'selected':''}>${l}</option>`).join('');
 const rost=t=>`<div><h3>${E(tn(t))}</h3><b>Lineup</b><small> (name, jersey #, bats)</small>`+S.L[t].map((r,i)=>`<div class="row"><b>${i+1}</b><input data-k="L.${t}.${i}.name" placeholder="Player" value="${E(r.name)}"><input data-k="L.${t}.${i}.num" placeholder="#" inputmode="numeric" value="${E(r.num)}"><select data-k="L.${t}.${i}.side">${opt([['R','R'],['L','L'],['S','Slapper']],r.side)}</select></div>`).join('')+`<button class="b" data-a="add" data-v="L.${t}" style="width:100%;min-height:44px">+ Add batter</button><p><b>Pitchers</b><small> (first is the starter)</small></p>`+S.P[t].map((r,i)=>`<div class="row p"><input data-k="P.${t}.${i}.name" placeholder="Pitcher ${i+1}" value="${E(r.name)}"><select data-k="P.${t}.${i}.arm">${opt([['R','Right'],['L','Left']],r.arm)}</select></div>`).join('')+`<button class="b" data-a="add" data-v="P.${t}" style="width:100%;min-height:44px">+ Add pitcher</button></div>`;
@@ -183,7 +184,7 @@ ${chartBlock}<div class="two">${['away','home'].map(t=>`<div><b>${E(tn(t))} spra
 function render(){$('#setup').hidden=view!='setup';$('#live').hidden=view!='live';$('#book').hidden=view!='book';
 [['nl','live'],['nb','book'],['ns','setup']].forEach(([i,v])=>$('#'+i).classList.toggle('on',view==v));$('#undo').hidden=view!='live';
 if(view=='setup'){['gh:home','ga:away'].forEach(x=>{const[i,k]=x.split(':');if(document.activeElement.id!=i)$('#'+i).value=S.g[k]});$('#gd').value=S.g.date;$('#gv').value=S.g.venue;$('#gi').value=S.g.inn;if(!$('#srost').contains(document.activeElement))$('#srost').innerHTML=rosters()}
-if(view=='live'){renderSB();renderTab();drawVel();document.querySelectorAll('#types .b').forEach(b=>b.classList.toggle('on',b.dataset.v==sel.type))}
+if(view=='live'){renderSB();renderTab();drawVel();qlabel();document.querySelectorAll('#types .b').forEach(b=>b.classList.toggle('on',b.dataset.v==sel.type))}
 if(view=='book')renderBook()}
 /* spray dialog */
 function openSpray(){sp={x:null,y:null,ht:null};$('#msg').textContent='';drawSp();$('#spray').showModal()}
@@ -208,7 +209,7 @@ dd(v){const d=$('#dd');if(v=='x'){d.close();return}const c=cfg();$('#cu').value=
 xjson(){dl(fname()+'.json',JSON.stringify({v:1,S},null,1),'application/json')},
 xcsv(){dl(fname()+'-pitches.csv',csv([HDR,...pitchRows()]),'text/csv')},
 imp(){$('#imf').click()},sendnow(){sync(1)},
-anp(){}
+quick(){sel.quick=!sel.quick;ls.set('sbq',sel.quick?'1':'');qlabel()},qx(){sel.x=sel.y=null;drawDot()},anp(){}
 };
 document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(a&&ACT[a.dataset.a]&&a.tagName!='SELECT')ACT[a.dataset.a](a.dataset.v);const o=e.target.closest('[data-o]');if(o)pitch(o.dataset.o)});
 document.addEventListener('input',e=>{const t=e.target;if(t.id=='ansel'){anK=t.value;renderTab();return}if(t.id=='bsel'){bookP=t.value;renderBook();return}if(t.dataset.c){const x=cfg();x[t.dataset.c]=t.value.trim();ls.set('sbcfg',JSON.stringify(x));return}const k=t.dataset.k;if(!k)return;snapMaybe(k);setPath(k,t.dataset.n?+t.value:t.value);if(k.startsWith('cp.'))anK=null;save();if(view=='live')renderSB();if(view=='live'&&k.startsWith('cp.'))renderTab()});
@@ -216,12 +217,14 @@ const snapMaybe=k=>{if(k.startsWith('cp.'))snap()};
 $('#spray').addEventListener('close',()=>{if(pend){pend=null;ACT.undo()}});
 $('#field').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();sp.x=Math.round((e.clientX-r.left)/r.width*400);sp.y=Math.round((e.clientY-r.top)/r.height*400);drawSp()});
 $('#zone').innerHTML=zGrid();
-$('#zone').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();sel.x=Math.round((e.clientX-r.left)/r.width*300);sel.y=Math.round((e.clientY-r.top)/r.height*300);drawDot()});
+$('#zone').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();sel.x=Math.round((e.clientX-r.left)/r.width*300);sel.y=Math.round((e.clientY-r.top)/r.height*360);drawDot();if(sel.quick)showQP(e.clientX-r.left,e.clientY-r.top,r)});
+function showQP(px,py,r){const q=$('#qp');q.innerHTML=Object.entries(O).map(([k,l])=>`<button class="b ${k=='inplay'?'go':''}" data-o="${k}">${l}</button>`).join('')+'<button class="b" data-a="qx" style="grid-column:1/-1;min-height:40px">Cancel location</button>';q.hidden=false;const w=q.offsetWidth,h=q.offsetHeight;q.style.left=Math.max(0,Math.min(r.width-w,px-w/2))+'px';let t=py+22;if(t+h>r.height)t=py-h-22;q.style.top=Math.max(0,t)+'px'}
 $('#types').innerHTML=T.map(t=>`<button class="b" data-a="type" data-v="${t}">${t}</button>`).join('');
 $('#outs').innerHTML=Object.entries(O).map(([k,l])=>`<button class="b ${k=='inplay'?'go':''}" data-o="${k}" style="${k=='inplay'?'grid-column:span 2':''}">${l}</button>`).join('');
 /* velocity buttons: 55-68 normally, 43-56 for Changeup/Offspeed */
 const velRange=()=>{const slow=sel.type=='Changeup'||sel.type=='Offspeed',lo=slow!=!!sel.alt?43:55;return Array.from({length:14},(_,i)=>lo+i)};
 function drawVel(){const r=velRange();$('#vel').innerHTML=r.map(v=>`<button class="b ${sel.velo==v?'on':''}" data-a="vel" data-v="${v}">${v}</button>`).join('')+`<button class="b" data-a="valt" style="grid-column:1/-1;min-height:44px;font-size:15px">${r[0]==43?'Show 55–68 mph':'Show 43–56 mph'}</button>`}
+const qlabel=()=>{const b=$('#qb');b.textContent='Quick mode: '+(sel.quick?'ON':'off');b.classList.toggle('on',!!sel.quick)};
 /* data export + Google Sheets sync */
 const HDR=['GameID','Date','Venue','Home','Away','Inning','Half','PA','Pitch#','Batting Team','Batter','Batter #','Bats','Pitcher Team','Pitcher','Throws','Pitch Type','Velo','Zone X','Zone Y','Zone','Count','Pitch Result','PA Result','Hit Type','Spray X','Spray Y'];
 const GH=['GameID','Date','Venue','Home','Away','Home Score','Away Score','Innings','Pitches','Updated'];
@@ -231,12 +234,12 @@ const csv=a=>a.map(r=>r.map(v=>{v=String(v??'');return/[",\n]/.test(v)?'"'+v.rep
 const fname=()=>(S.g.away+'-at-'+S.g.home+'-'+(S.g.date||'').slice(0,10)).replace(/[^\w-]+/g,'_');
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;document.body.appendChild(a);a.click();a.remove()}
 const cfg=()=>{try{return JSON.parse(ls.get('sbcfg')||'{}')}catch(e){return{}}};
-function badge(t,bad){$('#sbadge').textContent=t;$('#sbadge').style.color=bad?'#FF7070':'';$('#sst').textContent=t;$('#sst').style.color=bad?'var(--bad)':''}
+function badge(t,bad,hdr){$('#sbadge').textContent=hdr?'⚠ Sheet offline':'';$('#sbadge').style.color='#FF7070';$('#sst').textContent=t;$('#sst').style.color=bad?'var(--bad)':''}
 let sT=0,pend2=false;
 async function sync(manual){const c=cfg();if(!c.url){if(manual)badge('Paste your Apps Script URL first.',1);return}
 badge('Sending…');
 try{await fetch(c.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:c.token||'',gameId:S.id,header:HDR,rows:pitchRows(),gh:GH,game:[S.id,(S.g.date||'').replace('T',' '),S.g.venue,S.g.home,S.g.away,S.score.home,S.score.away,S.g.inn,S.pitches.length,new Date().toLocaleString()]})});pend2=false;badge('Sent '+new Date().toLocaleTimeString()+' (check your Sheet)')}
-catch(e){pend2=true;badge('Sheet offline – will retry',1)}}
+catch(e){pend2=true;badge('Sheet offline – will retry',1,1)}}
 function auto(){const c=cfg(),m=c.mode||'pitch';if(!c.url)return;if(m=='pitch'||(m=='half'&&flip)){flip=0;clearTimeout(sT);sT=setTimeout(()=>sync(),1500)}}
 addEventListener('online',()=>pend2&&sync());
 $('#imf').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),n=d.S||d;if(!n.g||!n.L||!n.P||!n.pitches||!n.plays)throw 0;S=n;S.id=S.id||newId();H=[];anK=null;view='live';done();badge('Imported '+f.name)}catch(x){badge('That file is not a valid game export.',1)}};r.readAsText(f);e.target.value=''});
