@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cal Softball Pitch Chart</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" href="logo.jpg"><link rel="apple-touch-icon" href="logo.jpg">
+<link rel="apple-touch-icon" href="logo.jpg">
 <style>
 :root{--bg:#EEF2F7;--panel:#fff;--ink:#003262;--mut:#42597A;--line:#B7C3D3;--acc:#FDB515;--accInk:#003262;--bad:#C42B2B;--grass:#3E9B55;--dirt:#C99A6B;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06162B;--panel:#0C2445;--ink:#F1F5FA;--mut:#A9BBD3;--line:#24406B;--bad:#FF7070}}
@@ -256,7 +256,7 @@ $('#tb').innerHTML=`<h3>${E(w)} vs ${E(pt)}</h3><b>${lab}</b><br><small>Change a
 const keys=['away','home'].flatMap(t=>S.P[t].map((_,i)=>t+':'+i));if(!anK||!keys.includes(anK))anK=ft()+':'+S.cp[ft()];
 const l=S.pitches.filter(p=>p.pk==anK),s=stats(l),m=mix(l);
 $('#tb').innerHTML=`<select data-a="anp" id="ansel">${keys.map(k=>`<option value="${k}" ${k==anK?'selected':''}>${E(pk(k))}</option>`).join('')}</select>
-<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['First-pitch K %',s.fps],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
+<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['FPS %',s.fps],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
 <b>Pitch usage</b>${m.length?m.map(([t,a])=>{const p=Math.round(a.length/l.length*100);return`<div class="bar"><span>${t}</span><i style="width:${p*1.6}px"></i><span>${p}% <small>${a.length} · ${avg(a)} mph</small></span></div>`}).join(''):'<p><small>No pitches charted for this pitcher.</small></p>'}
 <b>By count</b><table><tr><th>Count</th><th>#</th><th>Avg mph</th><th>Mix</th></tr>${CNTS.map(c=>[c,l.filter(p=>p.cnt==c)]).filter(x=>x[1].length).map(([c,a])=>`<tr><td>${c}</td><td>${a.length}</td><td>${avg(a)}</td><td>${mix(a).map(([t,z])=>t+' '+z.length).join(', ')}</td></tr>`).join('')}</table>
 <b>Locations</b> <small>(catcher's view · blue ball, red strike, green in play)</small>${zoneSvg(l)}`}
