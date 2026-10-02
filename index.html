@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cal Softball Pitch Chart</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="apple-touch-icon" href="logo.jpg">
+<link rel="icon" href="logo.jpg"><link rel="apple-touch-icon" href="logo.jpg">
 <style>
 :root{--bg:#EEF2F7;--panel:#fff;--ink:#003262;--mut:#42597A;--line:#B7C3D3;--acc:#FDB515;--accInk:#003262;--bad:#C42B2B;--grass:#3E9B55;--dirt:#C99A6B;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06162B;--panel:#0C2445;--ink:#F1F5FA;--mut:#A9BBD3;--line:#24406B;--bad:#FF7070}}
@@ -108,7 +108,7 @@ header b{color:#fff}header b small{color:var(--acc);font-weight:600}
 header button{color:rgba(255,255,255,.82)}
 header button:hover{background:rgba(255,255,255,.12);color:#fff}
 header button.on{background:transparent;color:#fff;box-shadow:inset 0 -3px 0 var(--acc)}
-header #logo,header #lb{background:none;padding:0;border-radius:8px;height:46px;width:46px;object-fit:cover}
+header #logo{background:none;padding:0;border-radius:8px;height:52px;width:52px;object-fit:cover;display:block}
 .hero{background:#003262;border-radius:10px;padding:14px 18px;border-bottom:3px solid var(--acc)}
 .hero img{background:none;padding:0;height:84px;width:84px;border-radius:10px}
 .hero h1{color:#fff}.hero p{color:var(--acc);font-weight:500}
@@ -128,7 +128,8 @@ th{background:color-mix(in srgb,var(--pri) 10%,var(--panel));color:var(--ink)}
 dialog{border-top:4px solid var(--acc)}
 </style>
 </head><body>
-<header><b><svg id="lb" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="M9 9C15 16 15 24 9 31M31 9C25 16 25 24 31 31" fill="none" stroke="#003262" stroke-width="2"/></svg><img id="logo" src="logo.jpg" alt="Cal Softball" hidden onload="this.hidden=false;document.getElementById('lb').hidden=true"><span>Cal Softball <small>Pitch Chart</small></span></b><button data-a="undo" id="undo">Undo</button><button data-a="dlg">Roster</button>
+<header><b><img id="logo" src="logo.jpg" alt="Cal Softball"></b>
+<button data-a="undo" id="undo">Undo</button><button data-a="dlg">Roster</button>
 <button data-a="view" data-v="live" id="nl">Live</button><button data-a="view" data-v="book" id="nb">Scorebook</button><button data-a="view" data-v="setup" id="ns">Setup</button>
 <button data-a="new" id="newb">New game</button><span id="sbadge" style="font-size:12px"></span><button data-a="dd">Data</button><button data-a="theme">Theme</button></header>
 
@@ -188,7 +189,7 @@ function adv(n,b){const nb=[0,0,0];for(let i=2;i>=0;i--)if(S.bases[i]){const t=i
 function walk(){const b=S.bases;if(b[0]){if(b[1]){if(b[2])run();b[2]=1}b[1]=1}b[0]=1}
 function chk(){if(S.outs>=3){S.outs=0;S.bases=[0,0,0];S.b=S.s=0;flip=1;if(S.half=='top')S.half='bottom';else{S.half='top';S.inn++}}}
 let flip=0;const done=()=>{save();render();auto()};
-function endPA(res,fn,ex){fn&&fn();const t=bt(),f=ft();S.plays.push({pa:S.pa,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],res,...ex});S.pa++;S.b=S.s=0;S.bi[t]++;chk();done()}
+function endPA(res,fn,ex){const o0=S.outs;fn&&fn();const t=bt(),f=ft();S.plays.push({pa:S.pa,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],res,oa:S.outs-o0,...ex});S.pa++;S.b=S.s=0;S.bi[t]++;chk();done()}
 function pitch(o){snap();const t=bt(),f=ft(),p={pa:S.pa,n:S.pitches.filter(q=>q.pa==S.pa).length+1,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],type:sel.type,velo:sel.velo||'',x:sel.x,y:sel.y,o,cnt:S.b+'-'+S.s};
 S.pitches.push(p);sel.x=sel.y=null;if(!sel.quick)sel.velo='';drawVel();drawDot();
 if(o=='ball'||o=='pitchout'){if(++S.b>=4)return endPA('BB',walk)}
@@ -233,10 +234,15 @@ const er=p=>`<div class="er"><b>${p.n}</b><select data-pe="type" data-pa="${p.pa
 const lastOf=p=>{const q=S.pitches.filter(x=>x.pa==p.pa);return q[q.length-1]===p};
 function baa(L){let ab=0,h=0,tb=0;L.forEach(p=>{if(!lastOf(p))return;const pl=S.plays.find(x=>x.pa==p.pa);if(!pl)return;const b={single:1,double:2,triple:3,hr:4}[pl.r];if(b){ab++;h++;tb+=b}else if(pl.res=='K'||['out','fc','err'].includes(pl.r))ab++});const f=v=>v.toFixed(3).replace(/^0/,'');return[ab?f(h/ab):'—',ab?f(tb/ab):'—',ab]}
 const ptr=(lab,a,n)=>{const[ba,sl,ab]=baa(a),v=a.map(p=>+p.velo).filter(Boolean);return`<tr><td>${lab}</td><td>${a.length}</td><td>${pc(a.length,n)}</td><td>${avg(a)}</td><td>${v.length?Math.max(...v):'—'}</td><td>${pc(a.filter(p=>STR.includes(p.o)).length,a.length)}</td><td>${ab}</td><td>${ba}</td><td>${sl}</td></tr>`};
+const outRec=pl=>pl.oa!=null?pl.oa>0:(pl.res=='K'||pl.r=='out');
+function f3p(pa){const all=S.pitches.filter(p=>p.pa==pa),ps=all.slice(0,3);if(!ps.length)return null;let b=0,s=0;
+for(const p of ps){const o=p.o;if(o=='ball'||o=='pitchout'||o=='illegal')b++;else if(o=='cs'||o=='ss')s++;else if(o=='foul'&&s<2)s++;if(s>=2&&b<2)return true}
+const pl=S.plays.find(x=>x.pa==pa);if(pl&&all.length<=3&&outRec(pl))return true;if(ps.length>=3||pl)return false;return null}
+const f3t=pa=>{const r=f3p(pa);return r===true?'Win':r===false?'Loss':'—'};
 /* stats */
 const avg=a=>{const x=a.map(p=>+p.velo).filter(Boolean);return x.length?(x.reduce((a,b)=>a+b)/x.length).toFixed(1):'—'};
 const pc=(a,b)=>b?Math.round(a/b*100)+'%':'—';
-function stats(l){const f=l.filter(p=>p.n==1),s=p=>STR.includes(p.o);return{n:l.length,sp:pc(l.filter(s).length,l.length),fps:pc(f.filter(s).length,f.length),v:avg(l)}}
+function stats(l){const f=l.filter(p=>p.n==1),s=p=>STR.includes(p.o);const fr=[...new Set(f.map(p=>p.pa))].map(f3p).filter(x=>x!==null),fw=fr.filter(Boolean).length;return{n:l.length,sp:pc(l.filter(s).length,l.length),fps:pc(f.filter(s).length,f.length),v:avg(l),f3:pc(fw,fr.length),f3n:fw+'/'+fr.length}}
 function mix(l){return T.map(t=>[t,l.filter(p=>p.type==t)]).filter(x=>x[1].length)}
 /* render */
 function renderSB(){const t=bt(),f=ft(),r=bp(t,S.bi[t]),pit=S.P[f][S.cp[f]];
@@ -255,7 +261,7 @@ $('#tb').innerHTML=`<h3>${E(w)} vs ${E(pt)}</h3><b>${lab}</b><br><small>Change a
 const keys=['away','home'].flatMap(t=>S.P[t].map((_,i)=>t+':'+i));if(!anK||!keys.includes(anK))anK=ft()+':'+S.cp[ft()];
 const l=S.pitches.filter(p=>p.pk==anK),s=stats(l),m=mix(l);
 $('#tb').innerHTML=`<select data-a="anp" id="ansel">${keys.map(k=>`<option value="${k}" ${k==anK?'selected':''}>${E(pk(k))}</option>`).join('')}</select>
-<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['FPS %',s.fps],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
+<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['First-pitch strike %',s.fps],['F3P win %',s.f3+' <small>'+s.f3n+'</small>'],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
 <b>Pitch usage</b>${m.length?m.map(([t,a])=>{const p=Math.round(a.length/l.length*100);return`<div class="bar"><span>${t}</span><i style="width:${p*1.6}px"></i><span>${p}% <small>${a.length} · ${avg(a)} mph</small></span></div>`}).join(''):'<p><small>No pitches charted for this pitcher.</small></p>'}
 <b>By count</b><table><tr><th>Count</th><th>#</th><th>Avg mph</th><th>Mix</th></tr>${CNTS.map(c=>[c,l.filter(p=>p.cnt==c)]).filter(x=>x[1].length).map(([c,a])=>`<tr><td>${c}</td><td>${a.length}</td><td>${avg(a)}</td><td>${mix(a).map(([t,z])=>t+' '+z.length).join(', ')}</td></tr>`).join('')}</table>
 <b>Locations</b> <small>(catcher's view · blue ball, red strike, green in play)</small>${zoneSvg(l)}`}
@@ -263,7 +269,7 @@ function renderBook(){const g=S.g,keys=[],[vm,vt]=bookV=='all'?['all','']:bookV.
 const halves=keys.map(k=>{const[inn,h]=k.split('-'),ps=PF.filter(p=>p.inn==inn&&p.half==h),pas=[...new Set(ps.map(p=>p.pa))],t=h=='top'?'away':'home';
 return`<h3>${h=='top'?'Top':'Bottom'} ${inn} — ${E(tn(t))} batting</h3><table><tr><th>Batter</th><th>Pitcher</th><th>#</th><th>Type</th><th>mph</th><th>Zone</th><th>Cnt</th><th>Result</th><th>PA result</th></tr>${pas.map(pa=>{const a=ps.filter(p=>p.pa==pa),pl=S.plays.find(x=>x.pa==pa);return a.map((p,i)=>`<tr>${i?'':`<td rowspan="${a.length}"><b>${E(who(p.t,p.bi))}</b></td><td rowspan="${a.length}">${E(pn(p.pk))}</td>`}<td>${p.n}</td><td>${p.type}</td><td>${p.velo||''}</td><td>${zl(p.x,p.y)}</td><td>${p.cnt}</td><td>${O[p.o]}</td>${i?'':`<td rowspan="${a.length}"><b>${pl?(RS[pl.r]||pl.res)+(pl.ht?' ('+pl.ht+')':''):'—'}</b></td>`}</tr>`).join('')}).join('')}</table>`}).join('');
 const ab=keys.map(k=>{const[inn,h]=k.split('-'),ps=PF.filter(p=>p.inn==inn&&p.half==h),pas=[...new Set(ps.map(p=>p.pa))],t=h=='top'?'away':'home';
-return`<h3>${h=='top'?'Top':'Bottom'} ${inn} — ${E(tn(t))} batting</h3><div class="abgrid">${pas.map(pa=>{const a=ps.filter(p=>p.pa==pa),pl=S.plays.find(x=>x.pa==pa),f=a[0],r=bp(f.t,f.bi);return`<div class="ab"><b>${E(who(f.t,f.bi))}</b>${r.num&&r.name?' #'+E(r.num):''}<br><small>bats ${r.side=='S'?'Slapper':r.side} · vs ${E(pn(f.pk))}</small>${abSvg(a)}<div class="seq">${a.map(p=>`${p.n}. ${TA[p.type]||p.type}${p.velo?' '+p.velo:''} – ${RA[p.o]}${p.x==null?' (no loc)':''}`).join('<br>')}</div><b>${pl?(RS[pl.r]||pl.res)+(pl.ht?' ('+pl.ht+')':''):'In progress'}</b></div>`}).join('')}</div>`}).join('');
+return`<h3>${h=='top'?'Top':'Bottom'} ${inn} — ${E(tn(t))} batting</h3><div class="abgrid">${pas.map(pa=>{const a=ps.filter(p=>p.pa==pa),pl=S.plays.find(x=>x.pa==pa),f=a[0],r=bp(f.t,f.bi);return`<div class="ab"><b>${E(who(f.t,f.bi))}</b>${r.num&&r.name?' #'+E(r.num):''}<br><small>bats ${r.side=='S'?'Slapper':r.side} · vs ${E(pn(f.pk))}</small>${abSvg(a)}<div class="seq">${a.map(p=>`${p.n}. ${TA[p.type]||p.type}${p.velo?' '+p.velo:''} – ${RA[p.o]}${p.x==null?' (no loc)':''}`).join('<br>')}</div><b>${pl?(RS[pl.r]||pl.res)+(pl.ht?' ('+pl.ht+')':''):'In progress'}</b><br><small>F3P: ${f3t(pa)}</small></div>`}).join('')}</div>`}).join('');
 const pks=allK.filter(k=>bookP=='all'||k==bookP);
 const cbl=(L,nm)=>`<div style="break-inside:avoid">${nm?`<h3>${E(nm)}</h3>`:''}<div class="two"><div><b>Pitch location by type</b>${zoneT(L)}${legend(mix(L).map(([t])=>[TC[t],t]))}</div><div><b>Pitch location by result</b>${zoneSvg(L)}${legend([['#3B82F6','Ball / HBP'],['#DC2626','Strike / foul'],['#16A34A','In play']])}</div></div><small>Catcher's view. Only pitches with a plotted location appear.</small><table><tr><th>Pitch</th><th>#</th><th>Usage</th><th>Avg mph</th><th>Max mph</th><th>Strike %</th><th>AB</th><th>BA against</th><th>SLG against</th></tr>${mix(L).map(([t,a])=>ptr(sw(TC[t])+t,a,L.length)).join('')}${ptr('<b>All pitches</b>',L,L.length)}</table><small>BA and SLG against credit the pitch that ended each plate appearance. AB excludes walks and hit-by-pitch. Errors count as at-bats without a hit.</small></div>`;
 const chartBlock=vm=='bat'?'':bookP!='all'?cbl(PF,''):vm=='pit'?pks.map(k=>cbl(PF.filter(p=>p.pk==k),pk(k))).join(''):'';
@@ -271,7 +277,7 @@ const sp2=vm=='pit'?[['Balls in play against '+tn(vt)+' pitchers',p=>p.pk.starts
 const vlabel=vm=='all'?'':`<h3 style="margin:2px 0">${E(tn(vt))} ${vm=='bat'?'batters':'pitchers'}</h3>`;
 $('#book').innerHTML=`<div class="noprint" style="margin-bottom:10px"><button class="b go" data-a="print">Print / Export PDF</button> <select id="bview" style="width:auto;min-width:200px">${[['all','Full sheet'],['bat-away',tn('away')+' batters'],['bat-home',tn('home')+' batters'],['pit-away',tn('away')+' pitchers'],['pit-home',tn('home')+' pitchers']].map(([v,l])=>`<option value="${v}" ${v==bookV?'selected':''}>${E(l)}</option>`).join('')}</select> <select id="bsel" style="width:auto;min-width:230px"><option value="all">All pitchers</option>${allK.map(k=>`<option value="${k}" ${k==bookP?'selected':''}>${E(pk(k))} (${baseP.filter(p=>p.pk==k).length})</option>`).join('')}</select> <small>Choose “Save as PDF” in the print dialog.</small></div>
 <div class="brand"><img src="logo.jpg" height="56" alt="" onerror="this.remove()">CAL SOFTBALL · PITCH CHART</div><h2>${E(tn('away'))} at ${E(tn('home'))}</h2>${vlabel}<p>${E((g.date||'').replace('T',' '))} · ${E(g.venue)} · Score ${S.score.away}–${S.score.home} · ${g.inn} innings</p>
-${vm=='bat'?'<div hidden>':'<div>'}<h3>Pitcher summary${bookP=='all'?'':' — '+E(pk(bookP))}</h3><table><tr><th>Pitcher</th><th>Pitches</th><th>Strike %</th><th>FPS %</th><th>Avg mph</th><th>Usage</th></tr>${pks.map(k=>{const l=S.pitches.filter(p=>p.pk==k),s=stats(l);return`<tr><td>${E(pk(k))}</td><td>${s.n}</td><td>${s.sp}</td><td>${s.fps}</td><td>${s.v}</td><td>${mix(l).map(([t,a])=>t+' '+pc(a.length,l.length)).join(', ')}</td></tr>`}).join('')||'<tr><td colspan="6">No pitches charted yet.</td></tr>'}</table>
+${vm=='bat'?'<div hidden>':'<div>'}<h3>Pitcher summary${bookP=='all'?'':' — '+E(pk(bookP))}</h3><table><tr><th>Pitcher</th><th>Pitches</th><th>Strike %</th><th>FPS %</th><th>F3P win</th><th>Avg mph</th><th>Usage</th></tr>${pks.map(k=>{const l=S.pitches.filter(p=>p.pk==k),s=stats(l);return`<tr><td>${E(pk(k))}</td><td>${s.n}</td><td>${s.sp}</td><td>${s.fps}</td><td>${s.f3} <small>(${s.f3n})</small></td><td>${s.v}</td><td>${mix(l).map(([t,a])=>t+' '+pc(a.length,l.length)).join(', ')}</td></tr>`}).join('')||'<tr><td colspan="7">No pitches charted yet.</td></tr>'}</table><small>F3P win = the pitcher records an out, or gets the count to 0-2 or 1-2, within a batter's first 3 pitches.</small>
 </div>${chartBlock}<div class="two">${sp2.map(([nm,f])=>`<div><b>${E(nm)}</b>${fieldSvg(S.plays.filter(p=>f(p)&&(bookP=='all'||p.pk==bookP)))}</div>`).join('')}</div><small>Yellow hit · white out · red error · orange FC</small>
 <div class="brk"></div><h2 style="font-size:20px">At-bat pitch charts</h2>${legend([['#3B82F6','Ball / HBP'],['#DC2626','Strike / foul'],['#16A34A','In play']])}<small>Each box is one plate appearance. Dots show where each pitch crossed the zone, numbered in order.</small>${ab}<div class="brk"></div><h2 style="font-size:20px">Pitch-by-pitch log</h2>${halves||'<p>Chart some pitches to build the sheet.</p>'}`}
 function render(){$('#setup').hidden=view!='setup';$('#live').hidden=view!='live';$('#book').hidden=view!='book';
