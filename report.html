@@ -14,8 +14,10 @@ button{cursor:pointer;font-weight:600}button.go{background:var(--acc);color:#003
 main{max-width:1250px;margin:auto;padding:14px}
 .card{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px}label{font-size:12px;font-weight:600;color:var(--mut);display:flex;flex-direction:column;gap:3px}
-#games{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:4px;max-height:220px;overflow:auto;margin:8px 0}
+summary{cursor:pointer;font-weight:600;color:var(--ink);margin-bottom:8px}
+#games{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:4px;max-height:280px;overflow:auto;margin:8px 0;border:1px solid var(--ln);border-radius:8px;padding:8px}
 #games label{flex-direction:row;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--tx)}#games input{min-height:0;width:18px;height:18px}
+#st{font-weight:600}#st.bad{color:var(--bad)}
 #out{background:#fff;border:1px solid var(--ln);border-radius:10px;padding:18px}
 .brand{display:flex;align-items:center;gap:12px;border-bottom:4px solid var(--acc);padding-bottom:8px;margin-bottom:10px}.brand img{height:56px;border-radius:8px}.brand h1{margin:0;font-size:22px;color:var(--ink)}.brand p{margin:0;color:var(--mut)}
 h3{margin:16px 0 6px;color:var(--ink);font-size:15px}
@@ -28,10 +30,13 @@ small,.mut{color:var(--mut)}.wrap{overflow-x:auto}
 <header><img src="logo.jpg" alt="Cal Softball"><b>Pitching Report</b><button class="noprint go" id="pr">Print / PDF</button><button class="noprint" id="cv">Download CSV</button></header>
 <main>
 <div class="card noprint">
-<div class="row" id="conn" hidden><label>Apps Script URL<input id="u" size="48" placeholder="https://script.google.com/macros/s/.../exec"></label><label>Token (if set)<input id="t"></label></div>
-<div class="row"><button class="go" id="ld">Load / refresh data</button><span class="mut" id="st">Not loaded yet.</span></div>
-<div class="row"><label>Team<select id="tm"></select></label><label>Batter side<select id="fh"><option value="all">All batters</option><option value="R">RHH</option><option value="L">LHH</option></select></label></div>
-<div><b>Outings</b> <button id="a1">All</button> <button id="a3">Last 3</button> <button id="a0">None</button></div><div id="games"></div>
+<details id="conn"><summary>Data source</summary>
+<div class="row"><label>Apps Script URL (ends in /exec)<input id="u" size="52" placeholder="https://script.google.com/macros/s/.../exec"></label><label>Token (only if you set one)<input id="t"></label><button class="go" id="ld" style="align-self:flex-end">Load from Sheet</button></div>
+<div class="row"><label>Or upload the Pitches tab exported as CSV (Sheet: File, Download, CSV)<input type="file" id="fl" accept=".csv,text/csv"></label></div>
+</details>
+<div class="row"><span id="st" class="mut">Not loaded yet.</span></div>
+<div class="row"><label>Team<select id="tm"></select></label><label>Pitcher<select id="pf"></select></label><label>Batter side<select id="fh"><option value="all">All batters</option><option value="R">RHH</option><option value="L">LHH</option></select></label></div>
+<div><b>Outings</b> <small>(one row per pitcher per game; tick the ones to include)</small><br><button id="a1">All</button> <button id="a3">Last 3 games</button> <button id="a0">None</button></div><div id="games"></div>
 </div>
 <div id="out"><p class="mut">Load your data, then pick the outings to include.</p></div>
 </main>
@@ -43,42 +48,60 @@ if(q.get('s'))cfg.url=q.get('s');if(q.get('t'))cfg.token=q.get('t');
 const TY=['Rise','Drop','Curve','Screw','Changeup','Offspeed','Fastball','Unknown'];
 const SW=['Swinging Strike','Foul','In Play'],ST=['Called Strike','Swinging Strike','Foul','In Play'];
 const cal=t=>/\b(cal|california|berkeley)\b/i.test(t||'');
-let games=[],R=[],sel=new Set();
+let R=[],sel=new Set();
+const fmtDate=v=>{v=String(v||'');const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(v);if(m)return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');if(/^\d{4}-\d\d-\d\dT.*Z$/.test(v)){const d=new Date(v);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}return v.slice(0,10)};
 const pc=(a,b)=>b?Math.round(a/b*100)+'%':'—',r3=v=>v.toFixed(3).replace(/^0/,''),d3=(a,b)=>b?r3(a/b):'—';
 const nums=a=>a.filter(Boolean);const av=a=>{const v=nums(a);return v.length?(v.reduce((x,y)=>x+y)/v.length).toFixed(1):'—'},mx=a=>{const v=nums(a);return v.length?Math.max(...v):'—'};
-const norm=(h,rows)=>rows.map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i]);const n=k=>o[k]===''||o[k]==null?null:+o[k];return{game:String(o.GameID),n:+o['Pitch#'],pit:o.Pitcher,pt:o['Pitcher Team'],side:o.Bats=='Slapper'||o.Bats=='S'?'L':o.Bats,type:o['Pitch Type'],v:n('Velo'),res:o['Pitch Result'],par:o['PA Result']||'',f3:o.F3P||''}});
+const norm=(h,rows)=>rows.map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i]);const n=k=>o[k]===''||o[k]==null?null:+o[k];return{game:String(o.GameID),date:fmtDate(o.Date),home:o.Home,away:o.Away,n:+o['Pitch#'],pit:o.Pitcher,pt:o['Pitcher Team'],side:o.Bats=='Slapper'||o.Bats=='S'?'L':o.Bats,type:o['Pitch Type'],v:n('Velo'),res:o['Pitch Result'],par:o['PA Result']||'',f3:o.F3P||''}}).filter(p=>p.game&&p.game!='undefined'&&p.pit);
+function parseCSV(t){const rows=[];let r=[],c='',i=0,qt=false;t=t.replace(/^﻿/,'');for(;i<t.length;i++){const ch=t[i];if(qt){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else qt=false}else c+=ch}else if(ch=='"')qt=true;else if(ch==','){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);c='';rows.push(r);r=[]}else c+=ch}if(c!==''||r.length){r.push(c);rows.push(r)}return rows.filter(x=>x.some(y=>y!==''))}
 function agg(L){const sw=L.filter(p=>SW.includes(p.res)).length,wh=L.filter(p=>p.res=='Swinging Strike').length,f=L.filter(p=>p.n==1),fr=L.filter(p=>p.f3),pa=L.filter(p=>p.par),c=k=>pa.filter(p=>p.par==k).length;
 const h1=c('Single'),h2=c('Double'),h3=c('Triple'),hr=c('Home Run'),bb=c('BB'),hb=c('HBP'),k=c('K'),PA=pa.length,AB=PA-bb-hb,H=h1+h2+h3+hr,TB=h1+2*h2+3*h3+4*hr,g=new Set(L.map(p=>p.game)).size;
 return{n:L.length,g,ppg:g?Math.round(L.length/g):'—',sp:pc(L.filter(p=>ST.includes(p.res)).length,L.length),fps:pc(f.filter(p=>ST.includes(p.res)).length,f.length),f3:pc(fr.filter(p=>p.f3=='Win').length,fr.length),sw:pc(sw,L.length),wh:pc(wh,sw),ss:pc(wh,L.length),av:av(L.map(p=>p.v)),mx:mx(L.map(p=>p.v)),PA,AB,H,h1,h2,h3,hr,bb,hb,k,ba:d3(H,AB),slg:d3(TB,AB),obp:d3(H+bb+hb,PA),kp:pc(k,PA),bp:pc(bb,PA)}}
 const tr=(cls,a)=>`<tr class="${cls}">${a.map(x=>`<td>${x}</td>`).join('')}</tr>`;
 const tbl=(h,body)=>`<div class="wrap"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${body}</table></div>`;
-function build(){const team=$('#tm').value,fh=$('#fh').value,gs=games.filter(g=>sel.has(String(g.GameID)));
-if(!R.length||!team)return;if(!gs.length){$('#out').innerHTML='<p class="mut">Select at least one outing.</p>';return}
-const L=R.filter(p=>sel.has(p.game)&&p.pt==team&&(fh=='all'||p.side==fh));if(!L.length){$('#out').innerHTML='<p class="mut">No pitches for that team in the selected outings.</p>';return}
+const key=p=>p.game+'|'+p.pit;
+function outings(team){const m=new Map();R.filter(p=>p.pt==team).forEach(p=>{const k=key(p);if(!m.has(k))m.set(k,{k,game:p.game,pit:p.pit,date:p.date,opp:p.pt==p.home?p.away:p.home,n:0});m.get(k).n++});return[...m.values()].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:a.pit<b.pit?-1:1)}
+const status=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
+function build(){const team=$('#tm').value,fh=$('#fh').value;if(!R.length||!team)return;
+const os=outings(team).filter(o=>sel.has(o.k));if(!os.length){$('#out').innerHTML='<p class="mut">Select at least one outing.</p>';return}
+const L=R.filter(p=>p.pt==team&&sel.has(key(p))&&(fh=='all'||p.side==fh));if(!L.length){$('#out').innerHTML='<p class="mut">No pitches match those filters.</p>';return}
 const pits=[...new Set(L.map(p=>p.pit))].sort((a,b)=>L.filter(p=>p.pit==b).length-L.filter(p=>p.pit==a).length),T=agg(L),f3on=cal(team)&&L.some(p=>p.f3);
-const dates=gs.map(g=>String(g.Date).slice(0,10)).sort();
-let h=`<div class="brand"><img src="logo.jpg" alt="" onerror="this.remove()"><div><h1>${E(team)} Pitching Report</h1><p>${gs.length} outing${gs.length>1?'s':''}: ${E(dates[0])}${dates.length>1?' to '+E(dates[dates.length-1]):''}${fh!='all'?' · vs '+fh+'HH only':''}</p></div></div>`;
+const dates=os.map(o=>o.date).sort(),ng=new Set(os.map(o=>o.game)).size;
+let h=`<div class="brand"><img src="logo.jpg" alt="" onerror="this.remove()"><div><h1>${E(team)} Pitching Report</h1><p>${os.length} outing${os.length>1?'s':''} across ${ng} game${ng>1?'s':''}: ${E(dates[0])}${dates[0]!=dates[dates.length-1]?' to '+E(dates[dates.length-1]):''}${fh!='all'?' · vs '+fh+'HH only':''}</p></div></div>`;
 h+='<h3>Pitching summary</h3>'+tbl(['Pitcher','G','Pitches','P/G','Strike %','First-pitch strike %',...(f3on?['F3P win %']:[]),'Swing %','Whiff %','SwStr %','Avg mph','Max mph'],pits.map(p=>{const a=agg(L.filter(x=>x.pit==p));return tr('',[E(p),a.g,a.n,a.ppg,a.sp,a.fps,...(f3on?[a.f3]:[]),a.sw,a.wh,a.ss,a.av,a.mx])}).join('')+tr('t',['Total',T.g,T.n,T.ppg,T.sp,T.fps,...(f3on?[T.f3]:[]),T.sw,T.wh,T.ss,T.av,T.mx]));
 const hw=a=>[a.PA,a.AB,a.H,a.h1,a.h2,a.h3,a.hr,a.bb,a.hb,a.k,a.ba,a.obp,a.slg,a.kp,a.bp];
 h+='<h3>Hits &amp; walks allowed</h3>'+tbl(['Pitcher','BF','AB','H','1B','2B','3B','HR','BB','HBP','K','BA against','OBP against','SLG against','K %','BB %'],pits.map(p=>tr('',[E(p),...hw(agg(L.filter(x=>x.pit==p)))])).join('')+tr('t',['Total',...hw(T)]));
 h+='<h3>Hits &amp; walks by pitch type</h3><small>Results are credited to the pitch type that ended the plate appearance.</small>'+tbl(['Pitch','#','Usage','Avg mph','Max mph','Strike %','Swing %','Whiff %','BF','H','2B/3B/HR','BB','K','BA against','SLG against'],TY.map(t=>[t,L.filter(p=>p.type==t)]).filter(x=>x[1].length).map(([t,l])=>{const a=agg(l);return tr('',[t,a.n,pc(a.n,L.length),a.av,a.mx,a.sp,a.sw,a.wh,a.PA,a.H,a.h2+'/'+a.h3+'/'+a.hr,a.bb,a.k,a.ba,a.slg])}).join(''));
-pits.forEach(p=>{const PL=L.filter(x=>x.pit==p);h+=`<h3>${E(p)}: pitch types</h3>`+tbl(['Pitch','#','Usage','Avg mph','Max mph','Strike %','Swing %','Whiff %','SwStr %','BF','H','BB','K','BA against','SLG against'],TY.map(t=>[t,PL.filter(x=>x.type==t)]).filter(x=>x[1].length).map(([t,l])=>{const a=agg(l);return tr('',[t,a.n,pc(a.n,PL.length),a.av,a.mx,a.sp,a.sw,a.wh,a.ss,a.PA,a.H,a.bb,a.k,a.ba,a.slg])}).join(''))});
-const og=[];gs.slice().sort((a,b)=>String(a.Date)<String(b.Date)?-1:1).forEach(g=>pits.forEach(p=>{const l=L.filter(x=>x.game==String(g.GameID)&&x.pit==p);if(l.length){const a=agg(l);og.push(tr('',[String(g.Date).slice(0,10),E(g.Home==team?g.Away:g.Home),E(p),a.n,a.sp,a.PA,a.H,a.bb,a.k,a.ba]))}}));
+if(pits.length>1)pits.forEach(p=>{const PL=L.filter(x=>x.pit==p);h+=`<h3>${E(p)}: pitch types</h3>`+tbl(['Pitch','#','Usage','Avg mph','Max mph','Strike %','Swing %','Whiff %','SwStr %','BF','H','BB','K','BA against','SLG against'],TY.map(t=>[t,PL.filter(x=>x.type==t)]).filter(x=>x[1].length).map(([t,l])=>{const a=agg(l);return tr('',[t,a.n,pc(a.n,PL.length),a.av,a.mx,a.sp,a.sw,a.wh,a.ss,a.PA,a.H,a.bb,a.k,a.ba,a.slg])}).join(''))});
+const og=os.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.pit<b.pit?-1:1).map(o=>{const a=agg(L.filter(x=>key(x)==o.k));return tr('',[E(o.date),E(o.opp),E(o.pit),a.n,a.sp,a.PA,a.H,a.bb,a.k,a.ba])});
 h+='<h3>By outing</h3>'+tbl(['Date','Opponent','Pitcher','Pitches','Strike %','BF','H','BB','K','BA against'],og.join(''));
 h+=`<p><small>Strike % counts called strikes, swinging strikes, fouls and balls in play. Swing % = swings ÷ pitches; Whiff % = swinging strikes ÷ swings; SwStr % = swinging strikes ÷ pitches. AB excludes walks and hit-by-pitch. Generated ${new Date().toLocaleDateString()}.</small></p>`;
 $('#out').innerHTML=h}
-function lists(){const teams=[...new Set(R.map(p=>p.pt))].sort((a,b)=>cal(b)-cal(a));const cur=$('#tm').value;$('#tm').innerHTML=teams.map(t=>`<option ${t==cur?'selected':''}>${E(t)}</option>`).join('');
-const gl=games.slice().sort((a,b)=>String(b.Date)<String(a.Date)?-1:1);$('#games').innerHTML=gl.map(g=>`<label><input type="checkbox" data-g="${E(g.GameID)}" ${sel.has(String(g.GameID))?'checked':''}>${E(String(g.Date).slice(0,10))} · ${E(g.Away)} at ${E(g.Home)} (${E(g['Away Score'])}-${E(g['Home Score'])})</label>`).join('')}
-async function load(){if(!cfg.url){$('#st').textContent='Enter your Apps Script URL first.';return}
-cfg.url=cfg.url.trim();let old={};try{old=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}ls.set('sbcfg',JSON.stringify({...old,url:cfg.url,token:cfg.token||''}));
-$('#st').textContent='Loading…';try{const d=await fetch(cfg.url+(cfg.url.includes('?')?'&':'?')+'action=all'+(cfg.token?'&token='+encodeURIComponent(cfg.token):'')).then(r=>r.json());if(d.error)throw 0;
-games=d.games||[];R=norm(d.header,d.rows);if(!sel.size)games.forEach(g=>sel.add(String(g.GameID)));lists();build();$('#st').textContent=`Loaded ${games.length} games, ${R.length} pitches · ${new Date().toLocaleTimeString()}`}catch(e){$('#st').textContent='Could not load. Check the URL, token, and that the script is deployed for Anyone.'}}
-$('#ld').onclick=()=>{if(!$('#conn').hidden){cfg.url=$('#u').value;cfg.token=$('#t').value.trim()}load()};
-$('#tm').onchange=$('#fh').onchange=build;
-$('#games').onchange=e=>{const g=e.target.dataset.g;e.target.checked?sel.add(g):sel.delete(g);build()};
-const pick=a=>{sel=new Set(a.map(g=>String(g.GameID)));lists();build()};
-$('#a1').onclick=()=>pick(games);$('#a0').onclick=()=>pick([]);$('#a3').onclick=()=>pick(games.slice().sort((a,b)=>String(b.Date)<String(a.Date)?-1:1).slice(0,3));
+function listOutings(){const team=$('#tm').value,os=outings(team);$('#games').innerHTML=os.map(o=>`<label><input type="checkbox" data-k="${E(o.k)}" ${sel.has(o.k)?'checked':''}>${E(o.date)} · vs ${E(o.opp)} · <b>${E(o.pit)}</b> (${o.n})</label>`).join('')||'<span class="mut">No outings for this team.</span>'}
+function setTeam(){const team=$('#tm').value,os=outings(team);const ps=[...new Set(os.map(o=>o.pit))];$('#pf').innerHTML='<option value="">All pitchers</option>'+ps.map(p=>`<option>${E(p)}</option>`).join('');sel=new Set(os.map(o=>o.k));listOutings();build()}
+function afterLoad(src){const teams=[...new Set(R.map(p=>p.pt))].sort((a,b)=>cal(b)-cal(a));if(!teams.length){status('Connected, but there are no pitches yet. Chart a game and tap "Send game to Sheet now" in the charting app.',1);return}
+$('#tm').innerHTML=teams.map(t=>`<option>${E(t)}</option>`).join('');setTeam();status(`Loaded ${new Set(R.map(p=>p.game)).size} games, ${R.length} pitches (${src}) · ${new Date().toLocaleTimeString()}`)}
+async function load(){let url=($('#u').value||cfg.url||'').trim(),tok=($('#t').value||cfg.token||'').trim();
+if(!url){$('#conn').open=true;status('Paste your Apps Script URL first.',1);return}
+if(!/\/exec(\?|$)/.test(url)){$('#conn').open=true;status('That URL should end in /exec (copy it from Deploy > Manage deployments > Web app URL).',1);return}
+cfg={url,token:tok};let old={};try{old=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}ls.set('sbcfg',JSON.stringify({...old,url,token:tok}));
+status('Loading…');let txt;
+try{const r=await fetch(url+(url.includes('?')?'&':'?')+'action=all'+(tok?'&token='+encodeURIComponent(tok):''));txt=await r.text();if(!r.ok)throw new Error('HTTP '+r.status)}
+catch(e){$('#conn').open=true;status('Could not reach the script ('+(e.message||'network error')+'). Check the URL and that the deployment access is "Anyone". You can also upload a CSV below.',1);return}
+let d;try{d=JSON.parse(txt)}catch(e){$('#conn').open=true;status(/<html|<!DOCTYPE/i.test(txt)?'Google returned a page instead of data. Set "Who has access" to Anyone and redeploy.':'The script answered, but it is the old version without the report feature. Paste the new google-sheets-script.gs into Apps Script, then Deploy > Manage deployments > pencil > Version: New version > Deploy. Or skip that for now and upload the Pitches tab as a CSV below.',1);return}
+if(d.error){$('#conn').open=true;status(d.error=='bad token'?'Token does not match the one in the script.':'Script error: '+d.error,1);return}
+if(!d.header||!d.header.length){status('Connected, but the Pitches tab is empty. Tap "Send game to Sheet now" in the charting app.',1);return}
+R=norm(d.header,d.rows||[]);afterLoad('Sheet')}
+$('#ld').onclick=load;
+$('#fl').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const a=parseCSV(String(rd.result));if(a.length<2||!a[0].includes('GameID'))throw 0;R=norm(a[0],a.slice(1));afterLoad('CSV file')}catch(x){status('That file does not look like the Pitches tab. It needs the header row starting with GameID.',1)}};rd.readAsText(f)};
+$('#tm').onchange=setTeam;$('#fh').onchange=build;
+$('#pf').onchange=()=>{const p=$('#pf').value,os=outings($('#tm').value).filter(o=>!p||o.pit==p);sel=new Set(os.map(o=>o.k));listOutings();build()};
+$('#games').onchange=e=>{const k=e.target.dataset.k;e.target.checked?sel.add(k):sel.delete(k);build()};
+const pick=f=>{sel=new Set(outings($('#tm').value).filter(f).map(o=>o.k));listOutings();build()};
+$('#a1').onclick=()=>{$('#pf').value='';pick(()=>true)};$('#a0').onclick=()=>pick(()=>false);
+$('#a3').onclick=()=>{const g=[...new Set(outings($('#tm').value).map(o=>o.game))].slice(0,3);pick(o=>g.includes(o.game))};
 $('#pr').onclick=()=>window.print();
 $('#cv').onclick=()=>{const t=[...document.querySelectorAll('#out h1,#out h3,#out table')].map(el=>el.tagName=='TABLE'?[...el.rows].map(r=>[...r.cells].map(c=>'"'+c.textContent.replace(/"/g,'""')+'"').join(',')).join('\n'):'\n'+el.textContent).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='pitching-report.csv';document.body.appendChild(a);a.click();a.remove()};
-if(!cfg.url){$('#conn').hidden=false}else{$('#u').value=cfg.url;$('#t').value=cfg.token||'';load()}
+$('#u').value=cfg.url||'';$('#t').value=cfg.token||'';
+if(cfg.url)load();else{$('#conn').open=true}
 </script></body></html>
