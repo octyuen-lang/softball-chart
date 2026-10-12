@@ -46,6 +46,7 @@ main{padding:12px;max-width:1500px;margin:auto}
 .bar span:first-child{width:78px}
 table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid var(--line);padding:3px 6px;text-align:left}th{background:color-mix(in srgb,var(--line) 40%,transparent)}
 .er{display:grid;grid-template-columns:22px 1fr 84px;gap:6px;align-items:center;margin:6px 0}.er select{min-height:42px}.er small{grid-column:2/-1;margin-top:-2px}
+.rb{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}#rn{width:min(460px,96vw)}
 .chip{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:2px 6px;margin:2px;font-size:13px}
 .row{display:grid;grid-template-columns:24px 1fr 64px 92px;gap:6px;margin-bottom:6px;align-items:center}.row.p{grid-template-columns:1fr 92px}
 .split{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:760px){.split{grid-template-columns:1fr}}
@@ -161,6 +162,7 @@ dialog{border-top:4px solid var(--acc)}
 <label>Auto-send<select id="cm" data-c="mode"><option value="pitch">After every pitch</option><option value="half">After every half-inning</option><option value="manual">Manual only</option></select></label>
 <p><button class="b go" data-a="sendnow" style="width:100%">Send game to Sheet now</button></p><p id="sst"></p></dialog>
 <dialog id="rd"><div style="display:flex"><h3 style="flex:1">Roster &amp; substitutions</h3><button class="b" data-a="dlg" data-v="x">Done</button></div><div class="split" id="rrost"></div></dialog>
+<dialog id="rn"><h3 id="rnt">Run scored</h3><div id="rnb"></div><div class="grid g2" style="margin-top:10px"><button class="b" data-a="rnundo">Undo that play</button><button class="b go" data-a="rnsave">Save</button></div></dialog>
 <dialog id="spray"><h3>Ball in play</h3><div class="sprow"><svg id="field" viewBox="0 0 400 400"></svg>
 <div><b>1. Tap where it landed</b><br><b>2. Hit type</b><div class="grid g2" id="hts" style="margin:6px 0 10px"></div><b>3. Result</b><div class="grid g2" id="rss" style="margin:6px 0"></div><div id="msg"></div><button class="b" data-a="cancelsp" style="width:100%">Cancel (undo this pitch)</button></div></div></dialog>
 
@@ -175,7 +177,7 @@ const CNTS=['0-0','0-1','0-2','1-0','1-1','1-2','2-0','2-1','2-2','3-0','3-1','3
 const CAL=['Ainsley Berlingeri', 'Alanna Clincy', 'Alyssa Herrera', 'Anaya Togia', 'Carly Raven', 'Charlotte White', 'Emalee Cargill', 'Emma Jackson', 'Emoni Lam Sam', 'Gator Robinson', 'Jayda Koontz', 'Kayla Lee', 'Kayli Counts', 'Kiki Mashhoud', 'Maalia Cherry', 'Maddie Rey', 'Malea Ricks', 'Megan Gregory', 'Mila Reddy', 'Mya McGowan', 'Olivia Pichardo', 'Rachel Del Busto', 'Sophia Everett', 'Xiomei Geluz'];
 const rows=n=>Array.from({length:n},()=>({name:'',num:'',side:'R'}));
 const newId=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36);
-const blank=()=>({id:newId(),g:{home:'Home',away:'Away',date:new Date().toISOString().slice(0,16),venue:'',inn:7},L:{away:rows(9),home:rows(9)},P:{away:[{name:'',arm:'R'}],home:[{name:'',arm:'R'}]},cp:{away:0,home:0},bi:{away:0,home:0},inn:1,half:'top',outs:0,b:0,s:0,bases:[0,0,0],score:{away:0,home:0},pa:1,pitches:[],plays:[]});
+const blank=()=>({id:newId(),g:{home:'Home',away:'Away',date:new Date().toISOString().slice(0,16),venue:'',inn:7},L:{away:rows(9),home:rows(9)},P:{away:[{name:'',arm:'R'}],home:[{name:'',arm:'R'}]},cp:{away:0,home:0},bi:{away:0,home:0},inn:1,half:'top',outs:0,b:0,s:0,bases:[0,0,0],score:{away:0,home:0},pa:1,pitches:[],plays:[],runs:[]});
 let S=blank(),H=[],sel={type:'Fastball',x:null,y:null},tab='p',view='setup',pend=null,sp={},anK=null,newT=0,bookP='all',bookV='all';
 try{const d=JSON.parse(ls.get('sbk')||'null');if(d){S=d.S;view=d.view}}catch(e){}S.id=S.id||newId();sel.quick=!!ls.get('sbq');
 const save=()=>ls.set('sbk',JSON.stringify({S,view}));
@@ -185,12 +187,16 @@ const bp=(t,i)=>S.L[t][i%S.L[t].length],who=(t,i)=>{const r=bp(t,i);return r.nam
 const pn=k=>{const[t,i]=k.split(':'),p=S.P[t][i];return p?(p.name||'Pitcher '+(+i+1)):'?'};
 const pk=k=>{const[t,i]=k.split(':');return tn(t)+' – '+pn(k)};
 function zl(x,y){if(x==null)return'—';const c=Math.min(4,x/60|0),r=y<60?0:y>=270?4:1+Math.floor((y-60)/70);if(r>0&&r<4&&c>0&&c<4)return String((r-1)*3+c);return[r==0?'Hi':r==4?'Lo':'',c==0?'L':c==4?'R':''].filter(Boolean).join('-')}
-const run=()=>S.score[bt()]++;
+let ctxPlay=null;
+const GOODRBI=['single','double','triple','hr','BB','HBP'];
+function addRun(t,man){const f=t=='away'?'home':'away';S.runs=S.runs||[];S.score[t]++;let bn='';if(man){const lp=[...S.pitches].reverse().find(p=>p.t==t);bn=lp?bname(lp):''}else bn=who(t,S.bi[t]);
+S.runs.push({t,inn:S.inn,half:S.half,pa:S.pa,at:S.pitches.length-1,bn,play:man?'manual':ctxPlay,pk:f+':'+S.cp[f],e:null,rbi:''})}
+const run=()=>addRun(bt(),0);
 function adv(n,b){const nb=[0,0,0];for(let i=2;i>=0;i--)if(S.bases[i]){const t=i+n;t>=3?run():nb[t]=1}if(b){n>=4?run():nb[n-1]=1}S.bases=nb}
 function walk(){const b=S.bases;if(b[0]){if(b[1]){if(b[2])run();b[2]=1}b[1]=1}b[0]=1}
 function chk(){if(S.outs>=3){S.outs=0;S.bases=[0,0,0];S.b=S.s=0;flip=1;if(S.half=='top')S.half='bottom';else{S.half='top';S.inn++}}}
-let flip=0;const done=()=>{save();render();auto()};
-function endPA(res,fn,ex){const o0=S.outs;fn&&fn();const t=bt(),f=ft();S.plays.push({pa:S.pa,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],res,oa:S.outs-o0,...ex});S.pa++;S.b=S.s=0;S.bi[t]++;chk();done()}
+let flip=0;const done=()=>{save();render();auto();askRuns()};
+function endPA(res,fn,ex){const o0=S.outs;ctxPlay=ex&&ex.r?ex.r:res;fn&&fn();ctxPlay=null;const t=bt(),f=ft();S.plays.push({pa:S.pa,inn:S.inn,half:S.half,t,bi:S.bi[t],pk:f+':'+S.cp[f],res,oa:S.outs-o0,...ex});S.pa++;S.b=S.s=0;S.bi[t]++;chk();done()}
 function pitch(o){snap();const t=bt(),f=ft(),p={pa:S.pa,n:S.pitches.filter(q=>q.pa==S.pa).length+1,inn:S.inn,half:S.half,t,bi:S.bi[t],...bsn(t,S.bi[t]),pk:f+':'+S.cp[f],type:sel.type,velo:sel.velo||'',x:sel.x,y:sel.y,o,cnt:S.b+'-'+S.s};
 S.pitches.push(p);sel.x=sel.y=null;if(!sel.quick)sel.velo='';drawVel();drawDot();
 if(o=='ball'||o=='pitchout'){if(++S.b>=4)return endPA('BB',walk)}
@@ -245,7 +251,17 @@ const pl=S.plays.find(x=>x.pa==pa);if(pl&&all.length<=3&&outRec(pl))return true;
 const f3t=pa=>{const r=f3p(pa);return r===true?'Win':r===false?'Loss':'—'};
 function bsn(t,i){const r=bp(t,i);return{bn:who(t,i),bnm:r.name,bnum:r.num,bs:r.side}}
 const bname=p=>p.bn!=null?p.bn:who(p.t,p.bi),bsnap=p=>p.bn!=null?{name:p.bnm,num:p.bnum,side:p.bs}:bp(p.t,p.bi);
-function fillBn(){['away','home'].forEach(t=>S.L[t].forEach(r=>{if(r.side=='S')r.side='L'}));S.pitches.forEach(p=>{if(p.bs=='S')p.bs='L'});S.pitches.forEach(p=>{if(p.bn==null)Object.assign(p,bsn(p.t,p.bi))})}
+function fillBn(){S.runs=S.runs||[];['away','home'].forEach(t=>S.L[t].forEach(r=>{if(r.side=='S')r.side='L'}));S.pitches.forEach(p=>{if(p.bs=='S')p.bs='L'});S.pitches.forEach(p=>{if(p.bn==null)Object.assign(p,bsn(p.t,p.bi))})}
+const PD={single:'Single',double:'Double',triple:'Triple',hr:'Home run',BB:'Walk',HBP:'Hit by pitch',err:'Error',fc:"Fielder's choice",out:'Out',K:'Strikeout',manual:'Run added by hand',null:'Illegal pitch'};
+function renderRn(){const un=(S.runs||[]).filter(r=>r.e==null);$('#rnt').textContent=un.length>1?un.length+' runs scored':'Run scored';
+$('#rnb').innerHTML=un.map(r=>{const i=S.runs.indexOf(r),f=r.t=='away'?'home':'away',names=[...new Set(S.L[r.t].map((_,k)=>who(r.t,k)))].filter(n=>n!=r.bn);
+return`<div class="rb"><b>${E(tn(r.t))}</b> <small>${r.half=='top'?'Top':'Bottom'} ${r.inn} · ${PD[r.play]||''}${r.bn&&r.play!='manual'?' by '+E(r.bn):''}</small>
+<div class="grid g2" style="margin:6px 0"><button class="b ${r.tE=='E'?'on':''}" data-a="rue" data-v="${i}:E">Earned</button><button class="b ${r.tE=='U'?'on':''}" data-a="rue" data-v="${i}:U">Unearned</button></div>
+<label>Charged to<select data-rs="${i}" data-f="pk">${S.P[f].map((p,k)=>`<option value="${f}:${k}" ${r.pk==f+':'+k?'selected':''}>${E(p.name||'Pitcher '+(k+1))}</option>`).join('')}</select></label>
+<label style="margin-top:6px">RBI<select data-rs="${i}" data-f="rbi"><option value="">No RBI</option>${r.bn?`<option value="${E(r.bn)}" ${r.tR==r.bn?'selected':''}>${E(r.bn)} (${r.play=='manual'?'last batter':'batter'})</option>`:''}${names.map(n=>`<option value="${E(n)}" ${r.tR==n?'selected':''}>${E(n)}</option>`).join('')}</select></label></div>`}).join('')}
+function askRuns(){const d=$('#rn');if(d.open)return;const un=(S.runs||[]).filter(r=>r.e==null);if(!un.length)return;
+un.forEach(r=>{if(r.tE==null)r.tE='E';if(r.tR==null)r.tR=GOODRBI.includes(r.play)?r.bn:''});renderRn();d.showModal()}
+const runsFor=k=>{const a=(S.runs||[]).filter(r=>r.e!=null&&r.pk==k);return a.length+' / '+a.filter(r=>r.e=='E').length};
 /* stats */
 const avg=a=>{const x=a.map(p=>+p.velo).filter(Boolean);return x.length?(x.reduce((a,b)=>a+b)/x.length).toFixed(1):'—'};
 const pc=(a,b)=>b?Math.round(a/b*100)+'%':'—';
@@ -268,7 +284,7 @@ $('#tb').innerHTML=`<h3>${E(w)} vs ${E(pt)}</h3><b>${lab}</b><br><small>Change a
 const keys=['away','home'].flatMap(t=>S.P[t].map((_,i)=>t+':'+i));if(!anK||!keys.includes(anK))anK=ft()+':'+S.cp[ft()];
 const l=S.pitches.filter(p=>p.pk==anK),s=stats(l),m=mix(l);
 $('#tb').innerHTML=`<select data-a="anp" id="ansel">${keys.map(k=>`<option value="${k}" ${k==anK?'selected':''}>${E(pk(k))}</option>`).join('')}</select>
-<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['First-pitch strike %',s.fps],...(f3on(anK.split(':')[0])?[['F3P win %',s.f3+' <small>'+s.f3n+'</small>']]:[]),['Whiff %',s.wh],['Avg mph',s.v]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
+<div class="grid g4" style="margin:8px 0">${[['Pitches',s.n],['Strike %',s.sp],['First-pitch strike %',s.fps],...(f3on(anK.split(':')[0])?[['F3P win %',s.f3+' <small>'+s.f3n+'</small>']]:[]),['Whiff %',s.wh],['Avg mph',s.v],['Runs / ER',runsFor(anK)]].map(([a,b])=>`<div><small>${a}</small><br><b style="font:700 30px 'Inter',sans-serif">${b}</b></div>`).join('')}</div>
 <b>Pitch usage</b>${m.length?m.map(([t,a])=>{const p=Math.round(a.length/l.length*100);return`<div class="bar"><span>${t}</span><i style="width:${p*1.6}px"></i><span>${p}% <small>${a.length} · ${avg(a)} mph</small></span></div>`}).join(''):'<p><small>No pitches charted for this pitcher.</small></p>'}
 <b>By count</b><table><tr><th>Count</th><th>#</th><th>Avg mph</th><th>Mix</th></tr>${CNTS.map(c=>[c,l.filter(p=>p.cnt==c)]).filter(x=>x[1].length).map(([c,a])=>`<tr><td>${c}</td><td>${a.length}</td><td>${avg(a)}</td><td>${mix(a).map(([t,z])=>t+' '+z.length).join(', ')}</td></tr>`).join('')}</table>
 <b>Locations</b> <span class="pv">PITCHER VIEW</span><br><small>blue ball · red strike · green in play</small>${zoneSvg(l,1)}`}
@@ -276,9 +292,12 @@ function renderBook(){const g=S.g,keys=[],[vm,vt]=bookV=='all'?['all','']:bookV.
 const halves=keys.map(k=>{const[inn,h]=k.split('-'),ps=PF.filter(p=>p.inn==inn&&p.half==h),pas=[...new Set(ps.map(p=>p.pa))],t=h=='top'?'away':'home';
 return`<h3>${h=='top'?'Top':'Bottom'} ${inn} — ${E(tn(t))} batting</h3><table><tr><th>Batter</th><th>Pitcher</th><th>#</th><th>Type</th><th>mph</th><th>Zone</th><th>Cnt</th><th>Result</th><th>PA result</th></tr>${pas.map(pa=>{const a=ps.filter(p=>p.pa==pa),pl=S.plays.find(x=>x.pa==pa);return a.map((p,i)=>`<tr>${i?'':`<td rowspan="${a.length}"><b>${E(bname(p))}</b></td><td rowspan="${a.length}">${E(pn(p.pk))}</td>`}<td>${p.n}</td><td>${p.type}</td><td>${p.velo||''}</td><td>${zl(p.x,p.y)}</td><td>${p.cnt}</td><td>${O[p.o]}</td>${i?'':`<td rowspan="${a.length}"><b>${pl?(RS[pl.r]||pl.res)+(pl.ht?' ('+pl.ht+')':''):'—'}</b></td>`}</tr>`).join('')}).join('')}</table>`}).join('');
 const pv=vm=='pit'||bookP!='all';
+const rbiN=(pa,n)=>{const c=(S.runs||[]).filter(r=>r.e!=null&&r.pa==pa&&r.rbi==n).length;return c?' · '+c+' RBI':''};
 const ab=keys.map(k=>{const[inn,h]=k.split('-'),ps=PF.filter(p=>p.inn==inn&&p.half==h),pas=[...new Set(ps.map(p=>p.pa))],t=h=='top'?'away':'home';
-return`<h3>${h=='top'?'Top':'Bottom'} ${inn} — ${E(tn(t))} batting</h3><div class="abgrid">${pas.map(pa=>{const a=ps.filter(p=>p.pa==pa),pl=S.plays.find(x=>x.pa==pa),f=a[0],r=bsnap(f);return`<div class="ab"><b>${E(bname(f))}</b>${r.num&&r.name?' #'+E(r.num):''}<br><small>bats ${r.side} · vs ${E(pn(f.pk))}</small>${abSvg(a,pv)}<div class="seq">${a.map(p=>`${p.n}. ${TA[p.type]||p.type}${p.velo?' '+p.velo:''} – ${RA[p.o]}${p.x==null?' (no loc)':''}`).join('<br>')}</div><b>${pl?(RS[pl.r]||pl.res)+(pl.ht?' ('+pl.ht+')':''):'In progress'}</b>${f3on(f.pk.split(':')[0])?`<br><small>F3P: ${f3t(pa)}</small>`:''}</div>`}).join('')}</div>`}).join('');
+return`<h3>${h=='top'?'Top':'Bottom'} ${inn} — ${E(tn(t))} batting</h3><div class="abgrid">${pas.map(pa=>{const a=ps.filter(p=>p.pa==pa),pl=S.plays.find(x=>x.pa==pa),f=a[0],r=bsnap(f);return`<div class="ab"><b>${E(bname(f))}</b>${r.num&&r.name?' #'+E(r.num):''}<br><small>bats ${r.side} · vs ${E(pn(f.pk))}</small>${abSvg(a,pv)}<div class="seq">${a.map(p=>`${p.n}. ${TA[p.type]||p.type}${p.velo?' '+p.velo:''} – ${RA[p.o]}${p.x==null?' (no loc)':''}`).join('<br>')}</div><b>${pl?(RS[pl.r]||pl.res)+(pl.ht?' ('+pl.ht+')':''):'In progress'}${rbiN(pa,bname(f))}</b>${f3on(f.pk.split(':')[0])?`<br><small>F3P: ${f3t(pa)}</small>`:''}</div>`}).join('')}</div>`}).join('');
 const pks=allK.filter(k=>bookP=='all'||k==bookP),showF3=pks.some(k=>f3on(k.split(':')[0]));
+const RN=(S.runs||[]).filter(r=>r.e!=null&&(vm=='all'||(vm=='bat'?r.t==vt:r.pk.startsWith(vt+':')))&&(bookP=='all'||r.pk==bookP));
+const runTbl=RN.length?`<h2 style="font-size:20px">Runs</h2><table><tr><th>Inning</th><th>Scored for</th><th>Charged to</th><th>Earned</th><th>RBI</th></tr>${RN.map(r=>`<tr><td>${r.half=='top'?'Top':'Bottom'} ${r.inn}</td><td>${E(tn(r.t))}</td><td>${E(pk(r.pk))}</td><td>${r.e=='E'?'Earned':'Unearned'}</td><td>${r.rbi?E(r.rbi):'—'}</td></tr>`).join('')}</table>`:'';
 const hsplit=(L,lab)=>`<div><b>${lab}</b> <small>(${L.length} pitches)</small> <span class="pv">PITCHER VIEW</span>${L.length?zoneT(L,1)+legend(mix(L).map(([t])=>[TC[t],t]))+ptbl(L,0):'<p><small>No pitches.</small></p>'}</div>`;
 const cbl=(L,nm)=>`<div style="break-inside:avoid">${nm?`<h3>${E(nm)}</h3>`:''}<div class="two"><div><b>Pitch location by type</b> <span class="pv">PITCHER VIEW</span>${zoneT(L,1)}${legend(mix(L).map(([t])=>[TC[t],t]))}</div><div><b>Pitch location by result</b> <span class="pv">PITCHER VIEW</span>${zoneSvg(L,1)}${legend([['#3B82F6','Ball / HBP'],['#DC2626','Strike / foul'],['#16A34A','In play']])}</div></div><small>Pitcher view: the zone as seen from the mound (the catcher's view, mirrored left to right). Only pitches with a plotted location appear.</small>${ptbl(L,1)}<small>Whiff % = swinging strikes ÷ swings. SwStr % = swinging strikes ÷ all pitches. BA and SLG against credit the pitch that ended each plate appearance; AB excludes walks and hit-by-pitch; errors count as at-bats without a hit.</small><h3 style="margin-top:12px">Splits by batter side</h3><div class="two">${hsplit(L.filter(p=>hand(p)=='R'),'vs RHH')}${hsplit(L.filter(p=>hand(p)=='L'),'vs LHH')}</div></div>`;
 const chartBlock=vm=='bat'?'':bookP!='all'?cbl(PF,''):vm=='pit'?pks.map(k=>cbl(PF.filter(p=>p.pk==k),pk(k))).join(''):'';
@@ -286,9 +305,9 @@ const sp2=vm=='pit'?[['Balls in play against '+tn(vt)+' pitchers',p=>p.pk.starts
 const vlabel=vm=='all'?'':`<h3 style="margin:2px 0">${E(tn(vt))} ${vm=='bat'?'batters':'pitchers'}</h3>`;
 $('#book').innerHTML=`<div class="noprint" style="margin-bottom:10px"><button class="b go" data-a="print">Print / Export PDF</button> <select id="bview" style="width:auto;min-width:200px">${[['all','Full sheet'],['bat-away',tn('away')+' batters'],['bat-home',tn('home')+' batters'],['pit-away',tn('away')+' pitchers'],['pit-home',tn('home')+' pitchers']].map(([v,l])=>`<option value="${v}" ${v==bookV?'selected':''}>${E(l)}</option>`).join('')}</select> <select id="bsel" style="width:auto;min-width:230px"><option value="all">All pitchers</option>${allK.map(k=>`<option value="${k}" ${k==bookP?'selected':''}>${E(pk(k))} (${baseP.filter(p=>p.pk==k).length})</option>`).join('')}</select> <small>Choose “Save as PDF” in the print dialog.</small></div>
 <div class="brand"><img src="logo.jpg" height="56" alt="" onerror="this.remove()">CAL SOFTBALL · PITCH CHART</div><h2>${E(tn('away'))} at ${E(tn('home'))}</h2>${vlabel}<p>${E((g.date||'').replace('T',' '))} · ${E(g.venue)} · Score ${S.score.away}–${S.score.home} · ${g.inn} innings</p>
-${vm=='bat'?'<div hidden>':'<div>'}<h3>Pitcher summary${bookP=='all'?'':' — '+E(pk(bookP))}</h3><table><tr><th>Pitcher</th><th>Pitches</th><th>Strike %</th><th>FPS %</th>${showF3?'<th>F3P win</th>':''}<th>Avg mph</th><th>Whiff %</th><th>Usage</th></tr>${pks.map(k=>{const l=S.pitches.filter(p=>p.pk==k),s=stats(l);return`<tr><td>${E(pk(k))}</td><td>${s.n}</td><td>${s.sp}</td><td>${s.fps}</td>${showF3?(f3on(k.split(':')[0])?`<td>${s.f3} <small>(${s.f3n})</small></td>`:'<td>—</td>'):''}<td>${s.v}</td><td>${s.wh}</td><td>${mix(l).map(([t,a])=>t+' '+pc(a.length,l.length)).join(', ')}</td></tr>`}).join('')||'<tr><td colspan="7">No pitches charted yet.</td></tr>'}</table>${showF3?"<small>F3P win = the pitcher records an out, or gets the count to 0-2 or 1-2, within a batter's first 3 pitches.</small>":''}
+${vm=='bat'?'<div hidden>':'<div>'}<h3>Pitcher summary${bookP=='all'?'':' — '+E(pk(bookP))}</h3><table><tr><th>Pitcher</th><th>Pitches</th><th>R</th><th>ER</th><th>Strike %</th><th>FPS %</th>${showF3?'<th>F3P win</th>':''}<th>Avg mph</th><th>Whiff %</th><th>Usage</th></tr>${pks.map(k=>{const l=S.pitches.filter(p=>p.pk==k),s=stats(l);return`<tr><td>${E(pk(k))}</td><td>${s.n}</td><td>${runsFor(k).split(' / ')[0]}</td><td>${runsFor(k).split(' / ')[1]}</td><td>${s.sp}</td><td>${s.fps}</td>${showF3?(f3on(k.split(':')[0])?`<td>${s.f3} <small>(${s.f3n})</small></td>`:'<td>—</td>'):''}<td>${s.v}</td><td>${s.wh}</td><td>${mix(l).map(([t,a])=>t+' '+pc(a.length,l.length)).join(', ')}</td></tr>`}).join('')||'<tr><td colspan="9">No pitches charted yet.</td></tr>'}</table>${showF3?"<small>F3P win = the pitcher records an out, or gets the count to 0-2 or 1-2, within a batter's first 3 pitches.</small>":''}
 </div>${chartBlock}<div class="two">${sp2.map(([nm,f])=>`<div><b>${E(nm)}</b>${fieldSvg(S.plays.filter(p=>f(p)&&(bookP=='all'||p.pk==bookP)))}</div>`).join('')}</div><small>Yellow hit · white out · red error · orange FC</small>
-<div class="brk"></div><h2 style="font-size:20px">At-bat pitch charts${pv?' <span class="pv">PITCHER VIEW</span>':''}</h2>${legend([['#3B82F6','Ball / HBP'],['#DC2626','Strike / foul'],['#16A34A','In play']])}<small>Each box is one plate appearance. Dots show where each pitch crossed the zone, numbered in order (${pv?'pitcher view':"catcher's view"}).</small>${ab}<div class="brk"></div><h2 style="font-size:20px">Pitch-by-pitch log</h2>${pv?"<small>Zone codes (1-9, L/R) follow the catcher's view.</small>":''}${halves||'<p>Chart some pitches to build the sheet.</p>'}`}
+<div class="brk"></div><h2 style="font-size:20px">At-bat pitch charts${pv?' <span class="pv">PITCHER VIEW</span>':''}</h2>${legend([['#3B82F6','Ball / HBP'],['#DC2626','Strike / foul'],['#16A34A','In play']])}<small>Each box is one plate appearance. Dots show where each pitch crossed the zone, numbered in order (${pv?'pitcher view':"catcher's view"}).</small>${ab}${runTbl}<div class="brk"></div><h2 style="font-size:20px">Pitch-by-pitch log</h2>${pv?"<small>Zone codes (1-9, L/R) follow the catcher's view.</small>":''}${halves||'<p>Chart some pitches to build the sheet.</p>'}`}
 function render(){$('#setup').hidden=view!='setup';$('#live').hidden=view!='live';$('#book').hidden=view!='book';
 [['nl','live'],['nb','book'],['ns','setup']].forEach(([i,v])=>$('#'+i).classList.toggle('on',view==v));$('#undo').hidden=view!='live';
 if(view=='setup'){['gh:home','ga:away'].forEach(x=>{const[i,k]=x.split(':');if(document.activeElement.id!=i)$('#'+i).value=S.g[k]});$('#gd').value=S.g.date;$('#gv').value=S.g.venue;$('#gi').value=S.g.inn;if(!$('#srost').contains(document.activeElement))$('#srost').innerHTML=rosters()}
@@ -305,7 +324,10 @@ const ACT={
 undo(){if(H.length){S=JSON.parse(H.pop());done()}},
 view(v){view=v;done()},tab(v){tab=v;render()},theme(){const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()=='#0B1424';r.dataset.theme=d?'light':'dark';ls.set('sbt',r.dataset.theme)},
 type(v){sel.type=v;sel.alt=false;if(!velRange().includes(+sel.velo))sel.velo='';render()},vel(v){sel.velo=sel.velo==v?'':+v;drawVel()},valt(){sel.alt=!sel.alt;sel.velo='';drawVel()},out(v){snap();v=+v;S.outs=S.outs==v+1?v:v+1;chk();done()},
-base(v){snap();S.bases[v]^=1;done()},sc(v){snap();const t=v.slice(0,-1);S.score[t]=Math.max(0,S.score[t]+(v.slice(-1)=='+'?1:-1));done()},
+base(v){snap();S.bases[v]^=1;done()},sc(v){snap();const t=v.slice(0,-1);S.runs=S.runs||[];if(v.slice(-1)=='+')addRun(t,1);else{S.score[t]=Math.max(0,S.score[t]-1);const i=S.runs.map(r=>r.t).lastIndexOf(t);if(i>=0)S.runs.splice(i,1)}done()},
+rue(v){const[i,x]=v.split(':');S.runs[+i].tE=x;renderRn()},
+rnsave(){(S.runs||[]).forEach(r=>{if(r.e==null){r.e=r.tE||'E';r.rbi=r.tR||'';delete r.tE;delete r.tR}});$('#rn').close();done()},
+rnundo(){$('#rn').close();ACT.undo()},
 add(v){const[a,t]=v.split('.');snap();S[a][t].push(a=='L'?{name:'',num:'',side:'R'}:{name:'',arm:'R'});$('#srost').innerHTML=rosters();$('#rrost').innerHTML=rosters();done()},
 dlg(v){const d=$('#rd');if(v=='x'){d.close();return}$('#rrost').innerHTML=rosters();d.showModal()},
 start(){view='live';H=[];done()},print(){window.print()},
@@ -320,7 +342,7 @@ imp(){$('#imf').click()},sendnow(){sync(1)},
 quick(){sel.quick=!sel.quick;ls.set('sbq',sel.quick?'1':'');qlabel()},qx(){sel.x=sel.y=null;drawDot()},oa(v){snap();S.outs=Math.max(0,S.outs+(+v));chk();done()},anp(){}
 };
 document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(a&&ACT[a.dataset.a]&&a.tagName!='SELECT')ACT[a.dataset.a](a.dataset.v);const o=e.target.closest('[data-o]');if(o)pitch(o.dataset.o)});
-document.addEventListener('input',e=>{const t=e.target;if(t.id=='ansel'){anK=t.value;renderTab();return}if(t.id=='bsel'){bookP=t.value;renderBook();return}if(t.id=='bview'){bookV=t.value;bookP='all';renderBook();return}if(t.dataset.pe){editPitch(+t.dataset.pa,+t.dataset.pn,t.dataset.pe,t.dataset.pe=='velo'?(t.value===''?'':+t.value):t.value);return}
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.rs){const r=S.runs[+t.dataset.rs];if(t.dataset.f=='pk')r.pk=t.value;else r.tR=t.value;save();return}if(t.id=='ansel'){anK=t.value;renderTab();return}if(t.id=='bsel'){bookP=t.value;renderBook();return}if(t.id=='bview'){bookV=t.value;bookP='all';renderBook();return}if(t.dataset.pe){editPitch(+t.dataset.pa,+t.dataset.pn,t.dataset.pe,t.dataset.pe=='velo'?(t.value===''?'':+t.value):t.value);return}
 if(t.id=='rl'){ls.set('sbroster',JSON.stringify(t.value.split('\n').map(x=>x.trim()).filter(Boolean)));return}
 if(t.dataset.c){const x=cfg();x[t.dataset.c]=t.value.trim();ls.set('sbcfg',JSON.stringify(x));return}const k=t.dataset.k;if(!k)return;snapMaybe(k);if(view=='live'&&/^L\./.test(k))fillBn();let val=t.type=='checkbox'?t.checked:t.dataset.n?+t.value:t.value;if(val=='__o')val=(prompt('Player name')||'').trim();setPath(k,val);rosterAuto(k,val,!!t.dataset.nm);if(k.startsWith('cp.'))anK=null;save();if(view=='live')renderSB();if(view=='live'&&k.startsWith('cp.'))renderTab();if(t.dataset.nm||t.type=='checkbox'||(view=='setup'&&/^g\.(home|away)$/.test(k)))refRost()});
 const snapMaybe=k=>{if(k.startsWith('cp.'))snap()};
@@ -336,10 +358,10 @@ const velRange=()=>{const slow=sel.type=='Changeup'||sel.type=='Offspeed',lo=slo
 function drawVel(){const r=velRange();$('#vel').innerHTML=r.map(v=>`<button class="b ${sel.velo==v?'on':''}" data-a="vel" data-v="${v}">${v}</button>`).join('')+`<button class="b" data-a="valt" style="grid-column:1/-1;min-height:44px;font-size:15px">${r[0]==43?'Show 55–68 mph':'Show 43–56 mph'}</button>`}
 const qlabel=()=>{const b=$('#qb');b.textContent='Quick mode: '+(sel.quick?'ON':'off');b.classList.toggle('on',!!sel.quick)};
 /* data export + Google Sheets sync */
-const HDR=['GameID','Date','Venue','Home','Away','Inning','Half','PA','Pitch#','Batting Team','Batter','Batter #','Bats','Pitcher Team','Pitcher','Throws','Pitch Type','Velo','Zone X','Zone Y','Zone','Count','Pitch Result','PA Result','Hit Type','Spray X','Spray Y','Outs On Play','F3P'];
+const HDR=['GameID','Date','Venue','Home','Away','Inning','Half','PA','Pitch#','Batting Team','Batter','Batter #','Bats','Pitcher Team','Pitcher','Throws','Pitch Type','Velo','Zone X','Zone Y','Zone','Count','Pitch Result','PA Result','Hit Type','Spray X','Spray Y','Outs On Play','F3P','Runs','Run Detail'];
 const GH=['GameID','Date','Venue','Home','Away','Home Score','Away Score','Innings','Pitches','Updated','Inning','Half','Outs'];
-const pitchRows=()=>S.pitches.map(p=>{const r=bsnap(p),[pt,pi]=p.pk.split(':'),P=S.P[pt][pi]||{},pl=S.plays.find(x=>x.pa==p.pa),last=!!pl&&S.pitches.filter(q=>q.pa==p.pa).pop()===p;
-return[S.id,(S.g.date||'').replace('T',' '),S.g.venue,S.g.home,S.g.away,p.inn,p.half=='top'?'Top':'Bottom',p.pa,p.n,tn(p.t),bname(p),r.num,r.side,tn(pt),pn(p.pk),P.arm||'',p.type,p.velo===''?'':+p.velo,p.x??'',p.y??'',zl(p.x,p.y).replace('—',''),p.cnt,O[p.o],last?(RS[pl.r]||pl.res):'',last?(pl.ht||''):'',last&&pl.x!=null?pl.x:'',last&&pl.y!=null?pl.y:'',last&&pl.oa!=null?pl.oa:'',p.n==1&&f3on(pt)&&f3p(p.pa)!==null?f3t(p.pa):'']});
+const pitchRows=()=>S.pitches.map((p,px)=>{const rr=(S.runs||[]).filter(q=>q.e!=null&&Math.max(q.at,0)==px);const r=bsnap(p),[pt,pi]=p.pk.split(':'),P=S.P[pt][pi]||{},pl=S.plays.find(x=>x.pa==p.pa),last=!!pl&&S.pitches.filter(q=>q.pa==p.pa).pop()===p;
+return[S.id,(S.g.date||'').replace('T',' '),S.g.venue,S.g.home,S.g.away,p.inn,p.half=='top'?'Top':'Bottom',p.pa,p.n,tn(p.t),bname(p),r.num,r.side,tn(pt),pn(p.pk),P.arm||'',p.type,p.velo===''?'':+p.velo,p.x??'',p.y??'',zl(p.x,p.y).replace('—',''),p.cnt,O[p.o],last?(RS[pl.r]||pl.res):'',last?(pl.ht||''):'',last&&pl.x!=null?pl.x:'',last&&pl.y!=null?pl.y:'',last&&pl.oa!=null?pl.oa:'',p.n==1&&f3on(pt)&&f3p(p.pa)!==null?f3t(p.pa):'',rr.length||'',rr.map(q=>q.e+'|'+pn(q.pk)+'|'+(q.rbi||'-')).join(';')]});
 const csv=a=>a.map(r=>r.map(v=>{v=String(v??'');return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n');
 const fname=()=>(S.g.away+'-at-'+S.g.home+'-'+(S.g.date||'').slice(0,10)).replace(/[^\w-]+/g,'_');
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;document.body.appendChild(a);a.click();a.remove()}
@@ -354,5 +376,6 @@ function auto(){const c=cfg(),m=c.mode||'pitch';if(!c.url)return;if(m=='pitch'||
 addEventListener('online',()=>pend2&&sync());
 $('#imf').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),n=d.S||d;if(!n.g||!n.L||!n.P||!n.pitches||!n.plays)throw 0;S=n;S.id=S.id||newId();fillBn();H=[];anK=null;view='live';done();badge('Imported '+f.name)}catch(x){badge('That file is not a valid game export.',1)}};r.readAsText(f);e.target.value=''});
 {const t=ls.get('sbt');if(t)document.documentElement.dataset.theme=t}
-fillBn();render();
+fillBn();render();askRuns();
+$('#rn').addEventListener('cancel',e=>e.preventDefault());
 </script></body></html>
