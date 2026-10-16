@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cal Softball Stats</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.jpg">
+<style>
+:root{--bg:#F3F5F8;--p:#fff;--ink:#003262;--tx:#1B2533;--mut:#5B6778;--ln:#DDE2E9;--acc:#FDB515;--bad:#C42B2B;--grass:#4F9A60;--dirt:#C9A27A}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 16px;background:#003262;color:#fff;border-bottom:3px solid var(--acc)}
+header img{height:46px;width:46px;border-radius:8px}header b{font-size:18px;flex:1}header a{color:#fff;font-weight:600;text-decoration:none;padding:8px 10px;border-radius:6px}header a:hover{background:rgba(255,255,255,.14)}header button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);font-weight:600;padding:8px 12px;border-radius:6px;cursor:pointer}header button:hover{background:rgba(255,255,255,.14)}
+button,select,input{font:inherit;color:inherit;min-height:40px;border:1px solid var(--ln);border-radius:8px;background:var(--p);padding:0 12px}
+button{cursor:pointer;font-weight:600}button.go{background:var(--acc);color:#003262;border-color:var(--acc)}button.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--acc)}
+main{max-width:1400px;margin:auto;padding:14px}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink)}.card h3:before{content:"";display:inline-block;width:4px;height:12px;background:var(--acc);border-radius:2px;margin-right:8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:6px}label{font-size:12px;font-weight:600;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:8px 0 0 8px;margin:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{min-height:44px;padding:0 22px;font-size:15px}
+.chips button{min-height:32px;font-size:12.5px;padding:0 10px;margin:2px}.chips button.off{opacity:.4}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{border:1px solid var(--ln);padding:5px 7px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none}th.s:after{content:" ▼";font-size:9px}th.s.asc:after{content:" ▲"}
+tbody tr[data-a]{cursor:pointer}tbody tr[data-a]:hover td{background:#FFF9E6}tr.sel td{background:#FFF1BF!important}tr.t td{font-weight:700;background:#FFF6DC;border-top:2px solid #003262}
+.wrap{overflow-x:auto}.mut,small{color:var(--mut)}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}.kp div{border:1px solid var(--ln);border-radius:8px;padding:8px 10px}.kp b{display:block;font-size:22px;color:var(--ink);line-height:1.15}.kp small{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+svg{display:block;width:100%;max-width:360px;margin:auto}.zin{fill:rgba(253,181,21,.18);stroke:var(--ink);stroke-width:1.5}.zout{fill:#fff;stroke:var(--ln)}
+.pv{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;background:#FDB515;color:#003262;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+#st{font-weight:600}#st.bad{color:var(--bad)}.bad{color:var(--bad)}
+#gl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;max-height:240px;overflow:auto;margin-top:8px;border:1px solid var(--ln);border-radius:8px;padding:8px}#gl label{flex-direction:row;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--tx)}#gl input{min-height:0;width:18px;height:18px}
+summary{cursor:pointer;font-weight:600;color:var(--ink)}
+[hidden]{display:none!important}
+</style></head><body>
+<header><img src="logo.jpg" alt="Cal Softball"><b>Team Stats</b><a href="index.html">Chart a game</a><a href="report.html">Pitching report</a><a href="batters.html">Batting report</a><button id="rf">Refresh</button></header>
+<main>
+<div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the passcode that was set as <b>TEAM_PASSCODE</b> in Vercel.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
+<div id="app" hidden>
+<div class="card"><div class="row">
+<div><small>Show</small><div class="seg" id="typseg"><button data-a="typ" data-v="game">Games</button><button data-a="typ" data-v="scrimmage">Scrimmages</button><button data-a="typ" data-v="all">All</button></div></div>
+<label>From<input type="date" id="df"></label><label>To<input type="date" id="dt"></label><label>Team<select id="tm"></select></label><span id="st" class="mut"></span></div>
+<details><summary id="gsum">Choose games</summary><div style="margin-top:8px"><button data-a="gall">All</button> <button data-a="gnone">None</button> <button data-a="glast">Last 5</button></div><div id="gl"></div></details></div>
+<div class="tabs"><button data-a="tab" data-v="p">Pitchers</button><button data-a="tab" data-v="b">Batters</button><button data-a="tab" data-v="d">Data</button></div>
+<div id="view"></div>
+</div></main>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let cfg={};try{cfg=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}
+let PASS=cfg.dbpass||'';
+const cal=t=>/\b(cal|california|berkeley)\b/i.test(t||'');
+const TY=['Rise','Drop','Curve','Screw','Changeup','Offspeed','Fastball','Unknown'];
+const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827',Unknown:'#6B7280'};
+const SWG=['Swinging Strike','Foul','In Play'],STRK=['Called Strike','Swinging Strike','Foul','In Play'];
+const HB={Single:1,Double:2,Triple:3,'Home Run':4};
+const CNTS=['0-0','0-1','0-2','1-0','1-1','1-2','2-0','2-1','2-2','3-0','3-1','3-2'];
+const CNT={first:c=>c=='0-0',ahead:c=>['0-1','0-2','1-2'].includes(c),behind:c=>['1-0','2-0','3-0','2-1','3-1'].includes(c),even:c=>['1-1','2-2','3-2'].includes(c),two:c=>/-2$/.test(c)};
+let GAMES=[],RAW=[],ROWS=[],up={};
+const st={tab:'p',typ:'game',from:'',to:'',team:'*cal*',selG:new Set(),f:{side:'all',arm:'all',types:new Set(),cnt:'all'},cols:{p:new Set(['Volume','Results','Command','Swing/miss','Velocity']),b:new Set(['Volume','Counting','Rates','Approach'])},sort:{p:['n',0],b:['PA',0]},player:null,zmode:'type',zoff:new Set()};
+const fmtDate=v=>{v=String(v||'');const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(v);if(m)return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');if(/^\d{4}-\d\d-\d\dT.*Z$/.test(v)){const d=new Date(v);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}return v.slice(0,10)};
+/* ---------- server ---------- */
+async function api(q,opt={}){let r;try{r=await fetch('/api/games'+(q||''),{...opt,headers:{'Content-Type':'application/json','x-passcode':PASS}})}catch(e){throw new Error('Could not reach the server. Open this page from your Vercel site.')}
+const t=await r.text();let j=null;try{j=JSON.parse(t)}catch(e){}
+if(!j)throw Object.assign(new Error(r.status==404?'The database is not set up on this site yet: the /api/games function was not found. Upload the api folder and redeploy.':'Unexpected response from the server (HTTP '+r.status+').'),{status:r.status});
+if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
+function norm(g){const h=g.header,m=g.meta,ix={};h.forEach((k,i)=>ix[k]=i);const v=(r,k)=>ix[k]==null?'':r[ix[k]],n=(r,k)=>{const x=v(r,k);return x===''||x==null?null:+x};
+return g.rows.map(r=>({game:m.id,date:fmtDate(m.date||v(r,'Date')),gt:m.type||'game',pa:+v(r,'PA'),n:+v(r,'Pitch#'),bat:v(r,'Batter'),bt:v(r,'Batting Team'),side:/^(S|Slapper)$/.test(v(r,'Bats'))?'L':v(r,'Bats'),pit:v(r,'Pitcher'),pt:v(r,'Pitcher Team'),arm:v(r,'Throws'),ty:v(r,'Pitch Type'),v:n(r,'Velo'),x:n(r,'Zone X'),y:n(r,'Zone Y'),cnt:String(v(r,'Count')),res:v(r,'Pitch Result'),par:v(r,'PA Result')||'',sx:n(r,'Spray X'),sy:n(r,'Spray Y'),f3:v(r,'F3P')||'',rd:String(v(r,'Run Detail')||'').split(';').filter(Boolean).map(s=>{const a=s.split('|');return{e:a[0],pn:a[1]||'',rbi:a[2]&&a[2]!='-'?a[2]:''}})})).filter(p=>p.pit&&p.bat)}
+const setSt=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
+async function loadAll(){setSt('Loading…');const l=await api('');GAMES=l.games||[];RAW=[];ROWS=[];
+for(let off=0;off<GAMES.length;off+=20){const j=await api('?all=1&offset='+off+'&limit=20');(j.games||[]).forEach(g=>{RAW.push(g);ROWS.push(...norm(g))})}
+const teams=teamList();if(!teams.some(cal)&&st.team=='*cal*')st.team=teams[0]||'*cal*';
+fillTeams();refreshGames();setSt(GAMES.length+' games, '+ROWS.length+' pitches loaded')}
+/* ---------- filters ---------- */
+const teamList=()=>[...new Set(ROWS.flatMap(p=>[p.pt,p.bt]))].filter(Boolean).sort((a,b)=>cal(b)-cal(a)||a.localeCompare(b));
+const teamMatch=t=>st.team=='*cal*'?cal(t):st.team=='*opp*'?!cal(t):t==st.team;
+function fillTeams(){const t=teamList();$('#tm').innerHTML=(t.some(cal)?'<option value="*cal*">All Cal teams</option>':'')+(t.some(x=>!cal(x))?'<option value="*opp*">All opponents</option>':'')+t.map(x=>`<option value="${E(x)}">${E(x)}</option>`).join('');$('#tm').value=st.team}
+const avail=()=>GAMES.filter(g=>(st.typ=='all'||(g.type||'game')==st.typ)&&(!st.from||fmtDate(g.date)>=st.from)&&(!st.to||fmtDate(g.date)<=st.to)&&(teamMatch(g.home)||teamMatch(g.away)));
+function refreshGames(){st.selG=new Set(avail().map(g=>g.id));st.player=null;updFbar();renderView()}
+function updFbar(){document.querySelectorAll('#typseg button').forEach(b=>b.classList.toggle('on',b.dataset.v==st.typ));document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v==st.tab));
+const a=avail();$('#gsum').textContent=`Games included: ${a.filter(g=>st.selG.has(g.id)).length} of ${a.length}`;
+$('#gl').innerHTML=a.map(g=>`<label><input type="checkbox" data-g="${E(g.id)}" ${st.selG.has(g.id)?'checked':''}>${E(fmtDate(g.date))} · ${E(g.away)} at ${E(g.home)}${g.type=='scrimmage'?' <span class="pv">SCRIM</span>':''}</label>`).join('')||'<span class="mut">No games match these filters.</span>'}
+const filtered=()=>st.f.side!='all'||st.f.arm!='all'||st.f.types.size>0||st.f.cnt!='all';
+const pf=p=>(st.f.side=='all'||p.side==st.f.side)&&(st.f.arm=='all'||p.arm==st.f.arm)&&(!st.f.types.size||st.f.types.has(p.ty))&&(st.f.cnt=='all'||CNT[st.f.cnt](p.cnt));
+const scope=kind=>ROWS.filter(p=>st.selG.has(p.game)&&teamMatch(kind=='p'?p.pt:p.bt)&&pf(p));
+/* ---------- stats ---------- */
+const ratio=(a,b)=>b?a/b:null,sum=a=>a.reduce((x,y)=>x+y,0);
+function core(L){const pa=L.filter(p=>p.par),c=k=>pa.filter(p=>p.par==k).length,h1=c('Single'),h2=c('Double'),h3=c('Triple'),hr=c('Home Run'),bb=c('BB'),hb=c('HBP'),k=c('K'),PA=pa.length,AB=PA-bb-hb,H=h1+h2+h3+hr,TB=h1+2*h2+3*h3+4*hr,o=ratio(H+bb+hb,PA),s=ratio(TB,AB);
+return{PA,AB,H,h1,h2,h3,hr,TB,bb,hb,k,ba:ratio(H,AB),obp:o,slg:s,ops:o!=null&&s!=null?o+s:null,kp:ratio(k,PA),bp:ratio(bb,PA)}}
+function agg(L){const c=core(L),sw=L.filter(p=>SWG.includes(p.res)).length,wh=L.filter(p=>p.res=='Swinging Strike').length,f=L.filter(p=>p.n==1),fr=L.filter(p=>p.f3),g=new Set(L.map(p=>p.game)).size,v=L.map(p=>p.v).filter(Boolean);
+return{...c,n:L.length,g,ppg:g?L.length/g:null,sp:ratio(L.filter(p=>STRK.includes(p.res)).length,L.length),fps:ratio(f.filter(p=>STRK.includes(p.res)).length,f.length),f3:ratio(fr.filter(p=>p.f3=='Win').length,fr.length),swp:ratio(sw,L.length),whp:ratio(wh,sw),ssp:ratio(wh,L.length),av:v.length?sum(v)/v.length:null,mx:v.length?Math.max(...v):null,ppa:ratio(L.length,c.PA)}}
+const fi=v=>v==null?'—':v,f1=v=>v==null?'—':v.toFixed(1),f0=v=>v==null?'—':Math.round(v),fp=v=>v==null?'—':Math.round(v*100)+'%',f3=v=>v==null?'—':v.toFixed(3).replace(/^0(?=\.)/,'');
+const PCOLS=[['g','G','Volume',fi],['n','Pitches','Volume',fi],['ppg','P/G','Volume',f0],['PA','BF','Volume',fi],['R','R','Results',fi],['ER','ER','Results',fi],['H','H','Results',fi],['bb','BB','Results',fi],['k','K','Results',fi],['ba','BAA','Results',f3],['obp','OBP','Results',f3],['slg','SLG','Results',f3],['kp','K %','Results',fp],['bp','BB %','Results',fp],['sp','Strike %','Command',fp],['fps','FPS %','Command',fp],['f3','F3P %','Command',fp],['swp','Swing %','Swing/miss',fp],['whp','Whiff %','Swing/miss',fp],['ssp','SwStr %','Swing/miss',fp],['av','Avg mph','Velocity',f1],['mx','Max mph','Velocity',fi]];
+const BCOLS=[['g','G','Volume',fi],['PA','PA','Volume',fi],['AB','AB','Volume',fi],['H','H','Counting',fi],['h1','1B','Counting',fi],['h2','2B','Counting',fi],['h3','3B','Counting',fi],['hr','HR','Counting',fi],['TB','TB','Counting',fi],['RBI','RBI','Counting',fi],['bb','BB','Counting',fi],['hb','HBP','Counting',fi],['k','K','Counting',fi],['ba','BA','Rates',f3],['obp','OBP','Rates',f3],['slg','SLG','Rates',f3],['ops','OPS','Rates',f3],['kp','K %','Rates',fp],['bp','BB %','Rates',fp],['n','Pitches','Approach',fi],['ppa','P/PA','Approach',f1],['swp','Swing %','Approach',fp],['whp','Whiff %','Approach',fp]];
+function chargeMaps(){const ch={},rb={},cg={},rg={};ROWS.forEach(p=>{if(!st.selG.has(p.game)||!p.rd.length)return;p.rd.forEach(r=>{if(teamMatch(p.pt)){const c=ch[r.pn]=ch[r.pn]||{R:0,ER:0};c.R++;if(r.e=='E')c.ER++;const g=cg[p.game+'|'+r.pn]=cg[p.game+'|'+r.pn]||{R:0,ER:0};g.R++;if(r.e=='E')g.ER++}if(teamMatch(p.bt)&&r.rbi){rb[r.rbi]=(rb[r.rbi]||0)+1;rg[p.game+'|'+r.rbi]=(rg[p.game+'|'+r.rbi]||0)+1}})});return{ch,rb,cg,rg}}
+function withRuns(a,kind,nm,M){if(filtered()){a.R=a.ER=a.RBI=null;return a}if(kind=='p'){const c=M.ch[nm]||{R:0,ER:0};a.R=c.R;a.ER=c.ER}else a.RBI=M.rb[nm]||0;return a}
+function sortRows(arr,kind){const[k,asc]=st.sort[kind];return arr.sort((x,y)=>{const a=k=='name'?x.name:x.a[k],b=k=='name'?y.name:y.a[k];if(a==null&&b==null)return 0;if(a==null)return 1;if(b==null)return -1;const c=a<b?-1:a>b?1:0;return(asc?c:-c)||(y.a.n-x.a.n)})}
+let lastTable=[];
+function renderTable(){const kind=st.tab,cols=(kind=='p'?PCOLS:BCOLS).filter(c=>st.cols[kind].has(c[2])),R=scope(kind),key=p=>kind=='p'?p.pit:p.bat,q=($('#q')?$('#q').value:'').toLowerCase().trim(),M=chargeMaps();
+if(!R.length){$('#tbl').innerHTML='<p class="mut" style="padding:10px">No data for these filters. Pick games above, or load past games on the Data tab.</p>';lastTable=[];return}
+const names=[...new Set(R.map(key))];let rows=names.map(nm=>({name:nm,a:withRuns(agg(R.filter(p=>key(p)==nm)),kind,nm,M)}));rows=sortRows(rows,kind).filter(r=>!q||r.name.toLowerCase().includes(q));
+const T=agg(R);if(!filtered()){if(kind=='p'){T.R=sum(Object.values(M.ch).map(x=>x.R));T.ER=sum(Object.values(M.ch).map(x=>x.ER))}else T.RBI=sum(Object.values(M.rb))}else T.R=T.ER=T.RBI=null;
+const th=(k,l)=>`<th data-a="sort" data-v="${k}" class="${st.sort[kind][0]==k?'s'+(st.sort[kind][1]?' asc':''):''}">${l}</th>`;
+$('#tbl').innerHTML=`<table><thead><tr>${th('name',kind=='p'?'Pitcher':'Batter')}${cols.map(c=>th(c[0],c[1])).join('')}</tr></thead><tbody>${rows.map(r=>`<tr data-a="player" data-v="${E(r.name)}" class="${st.player==r.name?'sel':''}"><td>${E(r.name)}</td>${cols.map(c=>`<td>${c[3](r.a[c[0]])}</td>`).join('')}</tr>`).join('')}<tr class="t"><td>Team total</td>${cols.map(c=>`<td>${c[3](T[c[0]])}</td>`).join('')}</tr></tbody></table>`;
+lastTable=[[kind=='p'?'Pitcher':'Batter',...cols.map(c=>c[1])],...rows.map(r=>[r.name,...cols.map(c=>c[3](r.a[c[0]]))]),['Team total',...cols.map(c=>c[3](T[c[0]]))]];
+$('#tnote').textContent=filtered()?'Pitch filters are on: runs, ER and RBI are hidden, and results (hits, walks, strikeouts) are credited to the pitch that ended each plate appearance.':'Click a player to open their detail. Click a column heading to sort. Runs, ER and RBI come from the run prompts in the charting app.'}
+/* ---------- charts ---------- */
+const RY=[0,60,130,200,270],RH=[60,70,70,70,60],zrow=y=>y<60?0:y>=270?4:1+Math.floor((y-60)/70);
+const zg=()=>Array.from({length:25},(_,k)=>{const c=k%5,r=k/5|0,i=r>0&&r<4&&c>0&&c<4;return`<rect x="${c*60}" y="${RY[r]}" width="60" height="${RH[r]}" class="${i?'zin':'zout'}"/>`}).join('')+'<rect x="60" y="60" width="180" height="210" fill="none" stroke="#003262" stroke-width="3"/>';
+const RC=r=>['Ball','Pitchout','Illegal Pitch','HBP'].includes(r)?'#3B82F6':r=='In Play'?'#16A34A':'#DC2626';
+function zone(L,inv){const mode=st.zmode,pts=L.filter(p=>p.x!=null&&p.y!=null&&!st.zoff.has(p.ty)),X=p=>inv?300-p.x:p.x;
+if(mode=='grid'){const cells={};pts.forEach(p=>{const r=zrow(p.y);let c=Math.min(4,Math.floor(p.x/60));if(inv)c=4-c;const k=r+'-'+c,o=cells[k]=cells[k]||{n:0,sw:0,wh:0};o.n++;if(SWG.includes(p.res))o.sw++;if(p.res=='Swinging Strike')o.wh++});const mx=Math.max(1,...Object.values(cells).map(c=>c.n));
+return`<svg viewBox="0 0 300 330">${zg()}${Object.entries(cells).map(([k,o])=>{const[r,c]=k.split('-').map(Number);return`<rect x="${c*60}" y="${RY[r]}" width="60" height="${RH[r]}" fill="#FDB515" fill-opacity="${(.15+.75*o.n/mx).toFixed(2)}"/><text x="${c*60+30}" y="${RY[r]+RH[r]/2}" font-size="17" font-weight="700" text-anchor="middle" fill="#003262">${o.n}</text><text x="${c*60+30}" y="${RY[r]+RH[r]/2+15}" font-size="11" text-anchor="middle" fill="#003262">${o.sw?Math.round(o.wh/o.sw*100)+'% whiff':''}</text>`}).join('')}</svg><small>Number = pitches in that cell. % = swinging strikes ÷ swings.</small>`}
+return`<svg viewBox="0 0 300 330">${zg()}${pts.map(p=>`<circle cx="${X(p)}" cy="${p.y}" r="8" fill="${mode=='type'?(TC[p.ty]||'#6B7280'):RC(p.res)}" fill-opacity=".85" stroke="#fff" stroke-width="1.5"/>`).join('')}</svg><small>${pts.length} pitches with a plotted location. ${mode=='res'?'Blue ball · red strike · green in play.':''}</small>`}
+const FIELD='<path d="M200 370 L23 193 A250 250 0 0 1 377 193 Z" fill="#4F9A60"/><polygon points="200,370 250,320 200,270 150,320" fill="#C9A27A" stroke="#fff" stroke-width="2"/><path d="M200 370 L23 193 M200 370 L377 193" stroke="#fff" stroke-width="3"/><circle cx="200" cy="320" r="7" fill="#fff"/>';
+const spray=L=>{const b=L.filter(p=>p.par&&p.sx!=null);return`<svg viewBox="0 0 400 400" style="max-width:380px">${FIELD}${b.map(p=>`<circle cx="${p.sx}" cy="${p.sy}" r="9" fill="${HB[p.par]?'#FACC15':p.par=='Error'?'#EF4444':'#E5E7EB'}" stroke="#000" stroke-width="1.5"/>`).join('')}</svg><small>Yellow hit · white out · red error · ${b.length} balls in play</small>`};
+/* ---------- detail ---------- */
+const tbl=(h,body)=>`<div class="wrap"><table><tr>${h.map(x=>`<th style="cursor:default">${x}</th>`).join('')}</tr>${body}</table></div>`;
+const tr=a=>`<tr>${a.map(x=>`<td>${x}</td>`).join('')}</tr>`;
+const mixOf=L=>TY.map(t=>[t,L.filter(p=>p.ty==t)]).filter(x=>x[1].length);
+function detail(){const kind=st.tab,nm=st.player;if(!nm||kind=='d'){$('#detail').innerHTML='';return}
+const key=p=>kind=='p'?p.pit:p.bat,L=scope(kind).filter(p=>key(p)==nm);if(!L.length){$('#detail').innerHTML='';return}
+const M=chargeMaps(),a=withRuns(agg(L),kind,nm,M),pit=kind=='p',teamN=L[0][pit?'pt':'bt'],hand=pit?(L[0].arm?L[0].arm+'HP':''):(L[0].side?'bats '+L[0].side:'');
+const kpis=pit?[['Pitches',a.n],['Strike %',fp(a.sp)],['First-pitch strike',fp(a.fps)],['F3P win',fp(a.f3)],['Whiff %',fp(a.whp)],['Avg / max mph',f1(a.av)+' / '+fi(a.mx)],['BAA',f3(a.ba)],['R / ER',fi(a.R)+' / '+fi(a.ER)]]:[['PA',a.PA],['BA',f3(a.ba)],['OBP',f3(a.obp)],['SLG',f3(a.slg)],['OPS',f3(a.ops)],['K % / BB %',fp(a.kp)+' / '+fp(a.bp)],['RBI',fi(a.RBI)],['Swing / whiff',fp(a.swp)+' / '+fp(a.whp)]];
+const pt=mixOf(L).map(([t,l])=>{const x=agg(l);return pit?tr([`<span class="sw" style="background:${TC[t]||'#6B7280'}"></span>${t}`,x.n,fp(x.n/L.length),f1(x.av),fi(x.mx),fp(x.sp),fp(x.swp),fp(x.whp),fp(x.ssp),x.PA,x.H,x.bb,x.k,f3(x.ba),f3(x.slg)]):tr([`<span class="sw" style="background:${TC[t]||'#6B7280'}"></span>${t}`,x.n,fp(x.n/L.length),fp(x.swp),fp(x.whp),x.PA,x.H,x.k,f3(x.ba),f3(x.slg)])}).join('');
+const hs=pit?[['All batters',()=>true],['vs RHH',p=>p.side=='R'],['vs LHH',p=>p.side=='L']]:[['All pitchers',()=>true],['vs RHP',p=>p.arm=='R'],['vs LHP',p=>p.arm=='L']];
+const sp=hs.map(([l,f])=>{const x=agg(L.filter(f));return x.n?tr([l,x.n,fp(x.sp),fp(x.whp),x.PA,x.H,x.bb,x.k,f3(x.ba),f3(x.obp),f3(x.slg)]):tr([l,'—','—','—','—','—','—','—','—','—','—'])}).join('');
+const cn=CNTS.map(c=>[c,L.filter(p=>p.cnt==c)]).filter(x=>x[1].length).map(([c,l])=>{const x=agg(l);return pit?tr([`<b>${c}</b>`,l.length,mixOf(l).sort((p,q)=>q[1].length-p[1].length).slice(0,3).map(([t,z])=>t.slice(0,2).toUpperCase()+' '+fp(z.length/l.length)).join(' · '),fp(x.sp),fp(x.whp)]):tr([`<b>${c}</b>`,l.length,fp(x.swp),fp(x.whp)])}).join('');
+const games=[...new Set(L.map(p=>p.game))].map(id=>({id,date:L.find(p=>p.game==id).date,L:L.filter(p=>p.game==id)})).sort((x,y)=>x.date<y.date?1:-1);
+const gl=games.map(g=>{const x=agg(g.L),opp=g.L[0][pit?'bt':'pt'];if(pit){const c=M.cg[g.id+'|'+nm];return tr([g.date,E(opp),x.n,fp(x.sp),fp(x.whp),x.PA,x.H,x.bb,x.k,f3(x.ba),filtered()?'—':(c?c.R:0),filtered()?'—':(c?c.ER:0)])}return tr([g.date,E(opp),x.PA,x.AB,x.H,x.h2,x.h3,x.hr,x.bb,x.k,filtered()?'—':(M.rg[g.id+'|'+nm]||0),f3(x.ba)])}).join('');
+const types=mixOf(L);
+$('#detail').innerHTML=`<div class="card"><h3>${E(nm)} <small>· ${E(teamN)}${hand?' · '+E(hand):''} · ${games.length} game${games.length>1?'s':''}</small></h3><div class="kp">${kpis.map(([l,v])=>`<div><small>${l}</small><b>${v}</b></div>`).join('')}</div>
+<div class="cols"><div><h3>${pit?'Pitch types':'Pitch types seen'}</h3>${tbl(pit?['Pitch','#','Use','Avg','Max','Strike','Swing','Whiff','SwStr','BF','H','BB','K','BAA','SLG']:['Pitch','#','Use','Swing','Whiff','PA','H','K','BA','SLG'],pt)}<small>Hits, walks and strikeouts are credited to the pitch that ended the plate appearance.</small></div>
+<div><h3>Splits</h3>${tbl(['','Pitches','Strike','Whiff','PA','H','BB','K',pit?'BAA':'BA','OBP','SLG'],sp)}<h3 style="margin-top:14px">By count</h3>${tbl(pit?['Count','#','Pitch mix','Strike','Whiff']:['Count','#','Swing','Whiff'],cn)}</div></div></div>
+<div class="cols"><div class="card"><h3>${pit?'Pitch locations':'Pitches seen'} <span class="pv">${pit?'PITCHER VIEW':"CATCHER'S VIEW"}</span></h3><div class="row"><div class="seg">${[['type','Pitch type'],['res','Result'],['grid','Zone grid']].map(([v,l])=>`<button data-a="zm" data-v="${v}" class="${st.zmode==v?'on':''}">${l}</button>`).join('')}</div></div><div class="chips">${types.map(([t])=>`<button data-a="zt" data-v="${t}" class="${st.zoff.has(t)?'off':''}"><span class="sw" style="background:${TC[t]||'#6B7280'}"></span>${t}</button>`).join('')}</div>${zone(L,pit)}</div>
+<div class="card"><h3>${pit?'Balls in play against':'Spray chart'}</h3>${spray(L)}</div></div>
+<div class="card"><h3>Game log</h3>${tbl(pit?['Date','Opponent','Pitches','Strike','Whiff','BF','H','BB','K','BAA','R','ER']:['Date','Opponent','PA','AB','H','2B','3B','HR','BB','K','RBI','BA'],gl)}</div>`}
+/* ---------- views ---------- */
+function ctl(){const kind=st.tab;$('#pfc').innerHTML=(kind=='p'?`<label>vs batters<select data-f="side"><option value="all">All</option><option value="R" ${st.f.side=='R'?'selected':''}>Right-handed</option><option value="L" ${st.f.side=='L'?'selected':''}>Left-handed</option></select></label>`:`<label>vs pitchers<select data-f="arm"><option value="all">All</option><option value="R" ${st.f.arm=='R'?'selected':''}>Right-handed</option><option value="L" ${st.f.arm=='L'?'selected':''}>Left-handed</option></select></label>`)
++`<label>Count<select data-f="cnt">${[['all','Any count'],['first','First pitch'],['ahead','Pitcher ahead'],['behind','Pitcher behind'],['even','Even count'],['two','Two strikes']].map(([v,l])=>`<option value="${v}" ${st.f.cnt==v?'selected':''}>${l}</option>`).join('')}</select></label><div class="chips"><small>Pitch type</small><br>${TY.map(t=>`<button data-a="ft" data-v="${t}" class="${st.f.types.has(t)?'on':''}"><span class="sw" style="background:${TC[t]}"></span>${t}</button>`).join('')}</div>`;
+const groups=[...new Set((kind=='p'?PCOLS:BCOLS).map(c=>c[2]))];$('#colc').innerHTML='<small>Columns</small> '+groups.map(g=>`<button data-a="col" data-v="${g}" class="${st.cols[kind].has(g)?'on':''}">${g}</button>`).join('')}
+function renderView(){const v=$('#view');updTabs();
+if(st.tab=='d'){renderData();return}
+if(!$('#pfc')){v.innerHTML=`<div class="card"><div class="row"><label>Search<input id="q" placeholder="Player name"></label><div id="pfc" class="row"></div></div><div class="chips" id="colc"></div></div><div class="card"><div class="wrap" id="tbl"></div><p class="mut" id="tnote"></p><button data-a="tcsv">Download table as CSV</button></div><div id="detail"></div>`}
+ctl();renderTable();detail()}
+const updTabs=()=>document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v==st.tab));
+/* ---------- data tab ---------- */
+function parseCSV(t){const rows=[];let r=[],c='',i=0,qt=false;t=t.replace(/^﻿/,'');for(;i<t.length;i++){const ch=t[i];if(qt){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else qt=false}else c+=ch}else if(ch=='"')qt=true;else if(ch==','){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);c='';rows.push(r);r=[]}else c+=ch}if(c!==''||r.length){r.push(c);rows.push(r)}return rows.filter(x=>x.some(y=>y!==''))}
+function buildUpload(){const P=up.pitches;up.list=[];up.msg='';if(!P)return;const h=P[0],gi=h.indexOf('GameID');if(gi<0||!h.includes('Pitcher')||!h.includes('Batter')){up.msg='That file is not the Pitches tab. Its first row must include GameID, Pitcher and Batter.';return}
+const by=new Map();P.slice(1).forEach(r=>{const id=String(r[gi]||'').trim().replace(/[^A-Za-z0-9_-]/g,'_');if(!id)return;if(!by.has(id))by.set(id,[]);by.get(id).push(r)});
+const gm={};if(up.games){const gh=up.games[0];up.games.slice(1).forEach(r=>{const o={};gh.forEach((k,i)=>o[k]=r[i]);gm[String(o.GameID||'').trim().replace(/[^A-Za-z0-9_-]/g,'_')]=o})}
+const type=($('#utype')||{}).value||'game';up.list=[...by.entries()].map(([id,rows])=>{const col=k=>{const i=h.indexOf(k);return i<0?'':rows[0][i]},g=gm[id]||{};return{id,header:h,rows,meta:{id,date:fmtDate(col('Date')||g.Date),home:col('Home')||g.Home||'',away:col('Away')||g.Away||'',venue:col('Venue')||g.Venue||'',homeScore:g['Home Score']??'',awayScore:g['Away Score']??'',innings:g.Innings||'',type}}})}
+function renderData(){const sc=GAMES.filter(g=>g.type=='scrimmage').length;
+$('#view').innerHTML=`<div class="card"><h3>Load past data</h3><p>In your Google Sheet, open the <b>Pitches</b> tab and choose <b>File, Download, Comma Separated Values (.csv)</b>. Do the same for the <b>Games</b> tab if you want final scores. Games already in the database are replaced, so uploading the same file twice is safe.</p>
+<div class="row"><label>Pitches tab (.csv)<input type="file" id="fp" accept=".csv,text/csv"></label><label>Games tab (.csv, optional)<input type="file" id="fg" accept=".csv,text/csv"></label><label>These are<select id="utype"><option value="game">Games</option><option value="scrimmage">Scrimmages</option></select></label></div>
+<p id="upm" class="mut">Choose the Pitches file to begin.</p><button class="go" data-a="upload" id="upb" disabled>Upload to database</button></div>
+<div class="card"><h3>Games in the database (${GAMES.length}${sc?', '+sc+' scrimmages':''})</h3><div class="wrap"><table><tr><th style="cursor:default">Date</th><th style="cursor:default">Matchup</th><th style="cursor:default">Score</th><th style="cursor:default">Pitches</th><th style="cursor:default">Type</th><th style="cursor:default"></th></tr>${GAMES.map(g=>`<tr><td>${E(fmtDate(g.date))}</td><td>${E(g.away)} at ${E(g.home)}</td><td>${g.awayScore!==''&&g.awayScore!=null?E(g.awayScore)+'–'+E(g.homeScore):'—'}</td><td>${g.pitches}</td><td><select data-gt="${E(g.id)}"><option value="game" ${g.type!='scrimmage'?'selected':''}>Game</option><option value="scrimmage" ${g.type=='scrimmage'?'selected':''}>Scrimmage</option></select></td><td><button data-a="gdel" data-v="${E(g.id)}">Delete</button></td></tr>`).join('')||'<tr><td colspan="6">No games yet.</td></tr>'}</table></div>
+<p><button data-a="dlall">Download everything as CSV (backup)</button></p></div>`}
+const dl=(name,text)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();a.remove()};
+const csvOut=a=>a.map(r=>r.map(c=>'"'+String(c??'').replace(/"/g,'""')+'"').join(',')).join('\n');
+async function doUpload(){const b=$('#upb');b.disabled=true;let ok=0;try{for(const g of up.list){$('#upm').textContent=`Uploading ${ok+1} of ${up.list.length}…`;await api('',{method:'POST',body:JSON.stringify({game:g.meta,header:g.header,rows:g.rows})});ok++}
+up={};await loadAll();st.tab='d';renderView();$('#upm').textContent=`Uploaded ${ok} game${ok==1?'':'s'}. They now appear in your stats.`}catch(e){$('#upm').textContent=`Stopped after ${ok} game${ok==1?'':'s'}: ${e.message}`;$('#upm').className='bad';b.disabled=false}}
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,v=b.dataset.v;
+if(a=='typ'){st.typ=v;refreshGames()}
+else if(a=='tab'){st.tab=v;st.player=null;if(v!='d'&&!$('#pfc'))renderView();else renderView()}
+else if(a=='sort'){const s=st.sort[st.tab];if(s[0]==v)s[1]=s[1]?0:1;else st.sort[st.tab]=[v,v=='name'?1:0];renderTable()}
+else if(a=='player'){st.player=st.player==v?null:v;renderTable();detail();if(st.player)$('#detail').scrollIntoView({behavior:'smooth',block:'start'})}
+else if(a=='col'){const s=st.cols[st.tab];s.has(v)?s.delete(v):s.add(v);ctl();renderTable()}
+else if(a=='ft'){st.f.types.has(v)?st.f.types.delete(v):st.f.types.add(v);ctl();renderTable();detail()}
+else if(a=='zm'){st.zmode=v;detail()}else if(a=='zt'){st.zoff.has(v)?st.zoff.delete(v):st.zoff.add(v);detail()}
+else if(a=='gall'){st.selG=new Set(avail().map(g=>g.id));updFbar();renderView()}
+else if(a=='gnone'){st.selG=new Set();updFbar();renderView()}
+else if(a=='glast'){st.selG=new Set(avail().slice(0,5).map(g=>g.id));updFbar();renderView()}
+else if(a=='tcsv')dl('team-stats.csv',csvOut(lastTable));
+else if(a=='upload')doUpload();
+else if(a=='dlall'){const hdr=[...new Set(RAW.flatMap(g=>g.header))],out=[[...hdr,'Game Type']];RAW.forEach(g=>{const ix={};g.header.forEach((k,i)=>ix[k]=i);g.rows.forEach(r=>out.push([...hdr.map(k=>ix[k]==null?'':r[ix[k]]),g.meta.type||'game']))});dl('all-pitches.csv',csvOut(out))}
+else if(a=='gdel'){const g=GAMES.find(x=>x.id==v);if(!confirm('Delete '+g.away+' at '+g.home+' ('+fmtDate(g.date)+') and all of its pitches? This cannot be undone.'))return;try{await api('?id='+encodeURIComponent(v),{method:'DELETE'});await loadAll();renderView()}catch(x){setSt(x.message,1)}}});
+document.addEventListener('change',async e=>{const t=e.target;
+if(t.id=='df'){st.from=t.value;refreshGames()}else if(t.id=='dt'){st.to=t.value;refreshGames()}
+else if(t.id=='tm'){st.team=t.value;refreshGames()}
+else if(t.dataset.g){t.checked?st.selG.add(t.dataset.g):st.selG.delete(t.dataset.g);st.player=null;updFbar();renderView()}
+else if(t.dataset.f){st.f[t.dataset.f]=t.value;renderTable();detail()}
+else if(t.dataset.gt){try{await api('',{method:'PATCH',body:JSON.stringify({id:t.dataset.gt,type:t.value})});const g=GAMES.find(x=>x.id==t.dataset.gt);g.type=t.value;RAW.forEach(r=>{if(r.meta.id==g.id)r.meta.type=t.value});ROWS.forEach(p=>{if(p.game==g.id)p.gt=t.value});setSt('Saved')}catch(x){setSt(x.message,1)}}
+else if(t.id=='utype'){buildUpload();upUI()}
+else if(t.id=='fp'||t.id=='fg'){const f=t.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{up[t.id=='fp'?'pitches':'games']=parseCSV(String(rd.result));buildUpload();upUI()};rd.readAsText(f)}});
+document.addEventListener('input',e=>{if(e.target.id=='q'){renderTable()}});
+function upUI(){const m=$('#upm'),b=$('#upb');if(!m)return;m.className='mut';if(up.msg){m.textContent=up.msg;m.className='bad';b.disabled=true;return}if(!up.list||!up.list.length){m.textContent='Choose the Pitches file to begin.';b.disabled=true;return}
+const ex=up.list.filter(g=>GAMES.some(x=>x.id==g.id)).length,pc=sum(up.list.map(g=>g.rows.length));m.textContent=`Found ${up.list.length} game${up.list.length>1?'s':''} (${pc} pitches), dated ${up.list.map(g=>g.meta.date).sort()[0]} to ${up.list.map(g=>g.meta.date).sort().pop()}.${ex?' '+ex+' already in the database and will be replaced.':''}`;b.disabled=false}
+$('#rf').onclick=async()=>{try{await loadAll();renderView()}catch(e){setSt(e.message,1)}};
+async function connect(){try{await loadAll();$('#gate').hidden=true;$('#app').hidden=false;renderView()}catch(e){$('#app').hidden=true;$('#gate').hidden=false;$('#gmsg').textContent=e.status==401?(PASS?'That passcode is not right.':''):e.message}}
+$('#pwb').onclick=()=>{PASS=$('#pw').value.trim();let o={};try{o=JSON.parse(ls.get('sbcfg')||'{}')}catch(x){}o.dbpass=PASS;ls.set('sbcfg',JSON.stringify(o));connect()};
+$('#pw').addEventListener('keydown',e=>{if(e.key=='Enter')$('#pwb').click()});
+$('#app').hidden=true;if(PASS)connect();else{$('#gate').hidden=false}
+</script></body></html>

@@ -58,7 +58,7 @@ const obp=PA?(H+bb+hb)/PA:null,slg=AB?TB/AB:null;
 return{g:new Set(L.map(p=>p.game)).size,pa:PA,ab:AB,h:H,h1,h2,h3,hr,tb:TB,bb,hb,k,ba:AB?H/AB:null,obp,slg,ops:obp!=null&&slg!=null?obp+slg:null,kp:PA?k/PA:null,bp:PA?bb/PA:null,pit:L.length,ppa:PA?L.length/PA:null,swp:L.length?sw/L.length:null,whp:sw?wh/sw:null}}
 const f3=v=>v==null?'—':r3(v),fp=v=>v==null?'—':Math.round(v*100)+'%';
 const COLS=[['g','G',v=>v],['pa','PA',v=>v],['ab','AB',v=>v],['h','H',v=>v],['h1','1B',v=>v],['h2','2B',v=>v],['h3','3B',v=>v],['hr','HR',v=>v],['tb','TB',v=>v],['bb','BB',v=>v],['hb','HBP',v=>v],['k','K',v=>v],['ba','BA',f3],['obp','OBP',f3],['slg','SLG',f3],['ops','OPS',v=>v==null?'—':v.toFixed(3).replace(/^0/,'')],['kp','K %',fp],['bp','BB %',fp],['pit','Pitches',v=>v],['ppa','P/PA',v=>v==null?'—':v.toFixed(1)],['swp','Swing %',fp],['whp','Whiff %',fp]];
-const status=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
+const setSt=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
 const games=team=>{const m=new Map();R.filter(p=>p.bt==team).forEach(p=>{if(!m.has(p.game))m.set(p.game,{game:p.game,date:p.date,opp:p.bt==p.home?p.away:p.home,n:0});m.get(p.game).n++});return[...m.values()].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0)};
 function build(){const team=$('#tm').value,fa=$('#fa').value,fh=$('#fh').value;if(!R.length||!team)return;
 const gs=games(team).filter(g=>sel.has(g.game));if(!gs.length){$('#out').innerHTML='<p class="mut">Select at least one game.</p>';return}
@@ -78,21 +78,21 @@ ${rows.map(r=>`<tr><td>${E(r.name)}</td><td>${E(r.num)}</td><td>${E(r.side)}</td
 <p><small>Tap a column heading to sort. BA = H ÷ AB. OBP = (H + BB + HBP) ÷ PA. SLG = total bases ÷ AB. AB excludes walks and hit-by-pitch; errors count as at-bats without a hit. Swing % = swings ÷ pitches seen; Whiff % = swinging strikes ÷ swings. Only plate appearances that were charted are counted. Runs, RBI and stolen bases are not tracked. Generated ${new Date().toLocaleDateString()}.</small></p>`}
 function listGames(){const gs=games($('#tm').value);$('#games').innerHTML=gs.map(g=>`<label><input type="checkbox" data-g="${E(g.game)}" ${sel.has(g.game)?'checked':''}>${E(g.date)} · vs ${E(g.opp)}</label>`).join('')||'<span class="mut">No games for this team.</span>'}
 function setTeam(){sel=new Set(games($('#tm').value).map(g=>g.game));listGames();build()}
-function afterLoad(src){const teams=[...new Set(R.map(p=>p.bt))].sort((a,b)=>cal(b)-cal(a));if(!teams.length){status('Connected, but there are no pitches yet. Chart a game and tap "Send game to Sheet now" in the charting app.',1);return}
-$('#tm').innerHTML=teams.map(t=>`<option>${E(t)}</option>`).join('');setTeam();status(`Loaded ${new Set(R.map(p=>p.game)).size} games, ${R.length} pitches (${src}) · ${new Date().toLocaleTimeString()}`)}
+function afterLoad(src){const teams=[...new Set(R.map(p=>p.bt))].sort((a,b)=>cal(b)-cal(a));if(!teams.length){setSt('Connected, but there are no pitches yet. Chart a game and tap "Send game to Sheet now" in the charting app.',1);return}
+$('#tm').innerHTML=teams.map(t=>`<option>${E(t)}</option>`).join('');setTeam();setSt(`Loaded ${new Set(R.map(p=>p.game)).size} games, ${R.length} pitches (${src}) · ${new Date().toLocaleTimeString()}`)}
 async function load(){let url=($('#u').value||cfg.url||'').trim(),tok=($('#t').value||cfg.token||'').trim();
-if(!url){$('#conn').open=true;status('Paste your Apps Script URL first, or upload a CSV.',1);return}
-if(!/\/exec(\?|$)/.test(url)){$('#conn').open=true;status('That URL should end in /exec (Deploy > Manage deployments > Web app URL).',1);return}
+if(!url){$('#conn').open=true;setSt('Paste your Apps Script URL first, or upload a CSV.',1);return}
+if(!/\/exec(\?|$)/.test(url)){$('#conn').open=true;setSt('That URL should end in /exec (Deploy > Manage deployments > Web app URL).',1);return}
 cfg={url,token:tok};let old={};try{old=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}ls.set('sbcfg',JSON.stringify({...old,url,token:tok}));
-status('Loading…');let txt;
+setSt('Loading…');let txt;
 try{const r=await fetch(url+(url.includes('?')?'&':'?')+'action=all'+(tok?'&token='+encodeURIComponent(tok):''));txt=await r.text();if(!r.ok)throw new Error('HTTP '+r.status)}
-catch(e){$('#conn').open=true;status('Could not reach the script ('+(e.message||'network error')+'). Check the URL and that access is "Anyone", or upload a CSV below.',1);return}
-let d;try{d=JSON.parse(txt)}catch(e){$('#conn').open=true;status(/<html|<!DOCTYPE/i.test(txt)?'Google returned a page instead of data. Set "Who has access" to Anyone and redeploy.':'The script is the old version without report support. Update it, or upload the Pitches tab as a CSV below.',1);return}
-if(d.error){$('#conn').open=true;status(d.error=='bad token'?'Token does not match the one in the script.':'Script error: '+d.error,1);return}
-if(!d.header||!d.header.length){status('Connected, but the Pitches tab is empty.',1);return}
+catch(e){$('#conn').open=true;setSt('Could not reach the script ('+(e.message||'network error')+'). Check the URL and that access is "Anyone", or upload a CSV below.',1);return}
+let d;try{d=JSON.parse(txt)}catch(e){$('#conn').open=true;setSt(/<html|<!DOCTYPE/i.test(txt)?'Google returned a page instead of data. Set "Who has access" to Anyone and redeploy.':'The script is the old version without report support. Update it, or upload the Pitches tab as a CSV below.',1);return}
+if(d.error){$('#conn').open=true;setSt(d.error=='bad token'?'Token does not match the one in the script.':'Script error: '+d.error,1);return}
+if(!d.header||!d.header.length){setSt('Connected, but the Pitches tab is empty.',1);return}
 R=norm(d.header,d.rows||[]);afterLoad('Sheet')}
 $('#ld').onclick=load;
-$('#fl').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const a=parseCSV(String(rd.result));if(a.length<2||!a[0].includes('GameID'))throw 0;R=norm(a[0],a.slice(1));afterLoad('CSV file')}catch(x){status('That file does not look like the Pitches tab. It needs the header row starting with GameID.',1)}};rd.readAsText(f)};
+$('#fl').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const a=parseCSV(String(rd.result));if(a.length<2||!a[0].includes('GameID'))throw 0;R=norm(a[0],a.slice(1));afterLoad('CSV file')}catch(x){setSt('That file does not look like the Pitches tab. It needs the header row starting with GameID.',1)}};rd.readAsText(f)};
 $('#tm').onchange=setTeam;$('#fa').onchange=$('#fh').onchange=build;
 $('#games').onchange=e=>{const g=e.target.dataset.g;e.target.checked?sel.add(g):sel.delete(g);build()};
 const pick=f=>{sel=new Set(games($('#tm').value).filter(f).map(g=>g.game));listGames();build()};

@@ -27,7 +27,7 @@ small,.mut{color:var(--mut)}.wrap{overflow-x:auto}
 @media print{header,.noprint{display:none!important}body,main{background:#fff;padding:0}#out{border:0;padding:0}@page{margin:12mm}h3{break-after:avoid}}
 [hidden]{display:none!important}
 </style></head><body>
-<header><img src="logo.jpg" alt="Cal Softball"><b>Pitching Report</b><button class="noprint go" id="pr">Print / PDF</button><button class="noprint" id="cv">Download CSV</button></header>
+<header><img src="logo.jpg" alt="Cal Softball"><b>Pitching Report</b><a href="batters.html" class="noprint" style="color:#fff;font-weight:600;text-decoration:none;padding:8px 10px">Batting report</a><button class="noprint go" id="pr">Print / PDF</button><button class="noprint" id="cv">Download CSV</button></header>
 <main>
 <div class="card noprint">
 <details id="conn"><summary>Data source</summary>
@@ -61,7 +61,7 @@ const tr=(cls,a)=>`<tr class="${cls}">${a.map(x=>`<td>${x}</td>`).join('')}</tr>
 const tbl=(h,body)=>`<div class="wrap"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${body}</table></div>`;
 const key=p=>p.game+'|'+p.pit;
 function outings(team){const m=new Map();R.filter(p=>p.pt==team).forEach(p=>{const k=key(p);if(!m.has(k))m.set(k,{k,game:p.game,pit:p.pit,date:p.date,opp:p.pt==p.home?p.away:p.home,n:0});m.get(k).n++});return[...m.values()].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:a.pit<b.pit?-1:1)}
-const status=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
+const setSt=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
 function build(){const team=$('#tm').value,fh=$('#fh').value;if(!R.length||!team)return;
 const os=outings(team).filter(o=>sel.has(o.k));if(!os.length){$('#out').innerHTML='<p class="mut">Select at least one outing.</p>';return}
 const L=R.filter(p=>p.pt==team&&sel.has(key(p))&&(fh=='all'||p.side==fh));if(!L.length){$('#out').innerHTML='<p class="mut">No pitches match those filters.</p>';return}
@@ -79,21 +79,21 @@ h+=`<p><small>Strike % counts called strikes, swinging strikes, fouls and balls 
 $('#out').innerHTML=h}
 function listOutings(){const team=$('#tm').value,os=outings(team);$('#games').innerHTML=os.map(o=>`<label><input type="checkbox" data-k="${E(o.k)}" ${sel.has(o.k)?'checked':''}>${E(o.date)} · vs ${E(o.opp)} · <b>${E(o.pit)}</b> (${o.n})</label>`).join('')||'<span class="mut">No outings for this team.</span>'}
 function setTeam(){const team=$('#tm').value,os=outings(team);const ps=[...new Set(os.map(o=>o.pit))];$('#pf').innerHTML='<option value="">All pitchers</option>'+ps.map(p=>`<option>${E(p)}</option>`).join('');sel=new Set(os.map(o=>o.k));listOutings();build()}
-function afterLoad(src){const teams=[...new Set(R.map(p=>p.pt))].sort((a,b)=>cal(b)-cal(a));if(!teams.length){status('Connected, but there are no pitches yet. Chart a game and tap "Send game to Sheet now" in the charting app.',1);return}
-$('#tm').innerHTML=teams.map(t=>`<option>${E(t)}</option>`).join('');setTeam();status(`Loaded ${new Set(R.map(p=>p.game)).size} games, ${R.length} pitches (${src}) · ${new Date().toLocaleTimeString()}`)}
+function afterLoad(src){const teams=[...new Set(R.map(p=>p.pt))].sort((a,b)=>cal(b)-cal(a));if(!teams.length){setSt('Connected, but there are no pitches yet. Chart a game and tap "Send game to Sheet now" in the charting app.',1);return}
+$('#tm').innerHTML=teams.map(t=>`<option>${E(t)}</option>`).join('');setTeam();setSt(`Loaded ${new Set(R.map(p=>p.game)).size} games, ${R.length} pitches (${src}) · ${new Date().toLocaleTimeString()}`)}
 async function load(){let url=($('#u').value||cfg.url||'').trim(),tok=($('#t').value||cfg.token||'').trim();
-if(!url){$('#conn').open=true;status('Paste your Apps Script URL first.',1);return}
-if(!/\/exec(\?|$)/.test(url)){$('#conn').open=true;status('That URL should end in /exec (copy it from Deploy > Manage deployments > Web app URL).',1);return}
+if(!url){$('#conn').open=true;setSt('Paste your Apps Script URL first.',1);return}
+if(!/\/exec(\?|$)/.test(url)){$('#conn').open=true;setSt('That URL should end in /exec (copy it from Deploy > Manage deployments > Web app URL).',1);return}
 cfg={url,token:tok};let old={};try{old=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}ls.set('sbcfg',JSON.stringify({...old,url,token:tok}));
-status('Loading…');let txt;
+setSt('Loading…');let txt;
 try{const r=await fetch(url+(url.includes('?')?'&':'?')+'action=all'+(tok?'&token='+encodeURIComponent(tok):''));txt=await r.text();if(!r.ok)throw new Error('HTTP '+r.status)}
-catch(e){$('#conn').open=true;status('Could not reach the script ('+(e.message||'network error')+'). Check the URL and that the deployment access is "Anyone". You can also upload a CSV below.',1);return}
-let d;try{d=JSON.parse(txt)}catch(e){$('#conn').open=true;status(/<html|<!DOCTYPE/i.test(txt)?'Google returned a page instead of data. Set "Who has access" to Anyone and redeploy.':'The script answered, but it is the old version without the report feature. Paste the new google-sheets-script.gs into Apps Script, then Deploy > Manage deployments > pencil > Version: New version > Deploy. Or skip that for now and upload the Pitches tab as a CSV below.',1);return}
-if(d.error){$('#conn').open=true;status(d.error=='bad token'?'Token does not match the one in the script.':'Script error: '+d.error,1);return}
-if(!d.header||!d.header.length){status('Connected, but the Pitches tab is empty. Tap "Send game to Sheet now" in the charting app.',1);return}
+catch(e){$('#conn').open=true;setSt('Could not reach the script ('+(e.message||'network error')+'). Check the URL and that the deployment access is "Anyone". You can also upload a CSV below.',1);return}
+let d;try{d=JSON.parse(txt)}catch(e){$('#conn').open=true;setSt(/<html|<!DOCTYPE/i.test(txt)?'Google returned a page instead of data. Set "Who has access" to Anyone and redeploy.':'The script answered, but it is the old version without the report feature. Paste the new google-sheets-script.gs into Apps Script, then Deploy > Manage deployments > pencil > Version: New version > Deploy. Or skip that for now and upload the Pitches tab as a CSV below.',1);return}
+if(d.error){$('#conn').open=true;setSt(d.error=='bad token'?'Token does not match the one in the script.':'Script error: '+d.error,1);return}
+if(!d.header||!d.header.length){setSt('Connected, but the Pitches tab is empty. Tap "Send game to Sheet now" in the charting app.',1);return}
 R=norm(d.header,d.rows||[]);afterLoad('Sheet')}
 $('#ld').onclick=load;
-$('#fl').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const a=parseCSV(String(rd.result));if(a.length<2||!a[0].includes('GameID'))throw 0;R=norm(a[0],a.slice(1));afterLoad('CSV file')}catch(x){status('That file does not look like the Pitches tab. It needs the header row starting with GameID.',1)}};rd.readAsText(f)};
+$('#fl').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const a=parseCSV(String(rd.result));if(a.length<2||!a[0].includes('GameID'))throw 0;R=norm(a[0],a.slice(1));afterLoad('CSV file')}catch(x){setSt('That file does not look like the Pitches tab. It needs the header row starting with GameID.',1)}};rd.readAsText(f)};
 $('#tm').onchange=setTeam;$('#fh').onchange=build;
 $('#pf').onchange=()=>{const p=$('#pf').value,os=outings($('#tm').value).filter(o=>!p||o.pit==p);sel=new Set(os.map(o=>o.k));listOutings();build()};
 $('#games').onchange=e=>{const k=e.target.dataset.k;e.target.checked?sel.add(k):sel.delete(k);build()};
