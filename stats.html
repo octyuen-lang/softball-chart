@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cal Softball Stats</title>
+<title>Cal Softball Data</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="logo.jpg">
 <style>
@@ -31,8 +31,8 @@ svg{display:block;width:100%;max-width:360px;margin:auto}.zin{fill:rgba(253,181,
 #gl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;max-height:240px;overflow:auto;margin-top:8px;border:1px solid var(--ln);border-radius:8px;padding:8px}#gl label{flex-direction:row;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--tx)}#gl input{min-height:0;width:18px;height:18px}
 summary{cursor:pointer;font-weight:600;color:var(--ink)}
 [hidden]{display:none!important}
-</style></head><body>
-<header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Team Stats</b><nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html" class="on">Stats</a><a href="report.html">Pitching report</a><a href="batters.html">Batting report</a></nav><button id="rf">Refresh</button></header>
+@media print{header,.tabs,#gate,#rf,button,details,.card .row,#typseg{display:none!important}body{background:#fff}main{padding:0}.card{box-shadow:none;break-inside:avoid}@page{margin:12mm}}</style></head><body>
+<header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Team Data</b><nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html" class="on">Data</a></nav><button id="pr">Print / PDF</button><button id="rf">Refresh</button></header>
 <main>
 <div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the passcode that was set as <b>TEAM_PASSCODE</b> in Vercel.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
 <div id="app" hidden>
@@ -186,6 +186,7 @@ else if(t.id=='fp'||t.id=='fg'){const f=t.files[0];if(!f)return;const rd=new Fil
 document.addEventListener('input',e=>{if(e.target.id=='q'){renderTable()}});
 function upUI(){const m=$('#upm'),b=$('#upb');if(!m)return;m.className='mut';if(up.msg){m.textContent=up.msg;m.className='bad';b.disabled=true;return}if(!up.list||!up.list.length){m.textContent='Choose the Pitches file to begin.';b.disabled=true;return}
 const ex=up.list.filter(g=>GAMES.some(x=>x.id==g.id)).length,pc=sum(up.list.map(g=>g.rows.length));m.textContent=`Found ${up.list.length} game${up.list.length>1?'s':''} (${pc} pitches), dated ${up.list.map(g=>g.meta.date).sort()[0]} to ${up.list.map(g=>g.meta.date).sort().pop()}.${ex?' '+ex+' already in the database and will be replaced.':''}`;b.disabled=false}
+$('#pr').onclick=()=>window.print();
 $('#rf').onclick=async()=>{try{await loadAll();renderView()}catch(e){setSt(e.message,1)}};
 function applyQuery(){const q=new URLSearchParams(location.search),g=q.get('game');
 if(q.get('typ'))st.typ=q.get('typ');if(q.get('team'))st.team=q.get('team');if(['p','b','d'].includes(q.get('tab')))st.tab=q.get('tab');

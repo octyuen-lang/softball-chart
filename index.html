@@ -33,7 +33,7 @@ th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-
 .bad{color:var(--bad)}#st{font-weight:600}[hidden]{display:none!important}
 </style></head><body>
 <header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Cal Softball Data Hub</b>
-<nav class="hnav"><a class="on" href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Stats</a><a href="report.html">Pitching report</a><a href="batters.html">Batting report</a></nav><button id="rf">Refresh</button></header>
+<nav class="hnav"><a class="on" href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a></nav><button id="rf">Refresh</button></header>
 <main>
 <div class="tiles" id="tiles"></div>
 <div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the team passcode to load the shared database.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
@@ -43,9 +43,8 @@ th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-
 <div id="empty" class="card" hidden><h3>No games yet</h3><p>The database is empty. <a href="stats.html?tab=d">Upload past data</a> from your Google Sheet, or <a href="chart.html">chart a game</a> and it will appear here automatically.</p></div>
 <div id="body">
 <div class="card"><h3>Season snapshot</h3><div id="kpi"></div></div>
-<div class="two">
-<div class="card"><h3>Cal pitching leaders</h3><div id="lp" class="cols"></div><small id="lpn"></small></div>
-<div class="card"><h3>Cal batting leaders</h3><div id="lb" class="cols"></div><small id="lbn"></small></div></div>
+<div class="card"><h3>Cal pitchers</h3><div class="wrap" id="lp"></div><small>All pitchers with at least one charted pitch. Click a name for the full breakdown.</small></div>
+<div class="card"><h3>Cal batting leaders</h3><div id="lb" class="cols"></div><small id="lbn"></small></div>
 <div class="card"><h3>Recent games</h3><div class="wrap" id="rg"></div></div>
 <div class="card"><h3>Opponents</h3><div class="wrap" id="op"></div></div>
 </div></div>
@@ -84,13 +83,13 @@ const k=(v,lb)=>`<div><b>${v}</b><small>${lb}</small></div>`;
 $('#kpi').innerHTML=`<div class="kgrp">Team</div><div class="kp">${k(gs.length,'Games')}${k(w+'-'+l+(t?'-'+t:''),'Record')}${k(rf+' / '+ra,'Runs for / against')}${k(R.length.toLocaleString(),'Pitches charted')}</div>
 <div class="kgrp">Cal batting</div><div class="kp">${k(f3(B.ba),'BA')}${k(f3(B.obp),'OBP')}${k(f3(B.slg),'SLG')}${k(B.hr,'HR')}${k(B.bb,'BB')}${k(B.k,'K')}</div>
 <div class="kgrp">Cal pitching</div><div class="kp">${k(f3(P.ba),'BAA')}${k(fp(P.sp),'Strike %')}${k(fp(P.whp),'Whiff %')}${k(P.k,'K')}${k(P.bb,'BB')}${k(P.H,'H allowed')}</div>`;
-const MINP=30,MINPA=10,pm=by(R.filter(p=>cal(p.pt)),'pit'),bm=by(R.filter(p=>cal(p.bt)),'bat');
-const PL=Object.entries(pm).map(([name,L])=>({name,...agg(L)})).filter(x=>x.n>=MINP),BL=Object.entries(bm).map(([name,L])=>({name,...agg(L)})).filter(x=>x.PA>=MINPA);
+const MINPA=2*gs.length,pm=by(R.filter(p=>cal(p.pt)),'pit'),bm=by(R.filter(p=>cal(p.bt)),'bat');
+const PL=Object.entries(pm).map(([name,L])=>({name,g:new Set(L.map(p=>p.game)).size,...agg(L)})).sort((a,b)=>b.n-a.n),BL=Object.entries(bm).map(([name,L])=>({name,...agg(L)})).filter(x=>x.PA>=MINPA);
 const top=(A,key,asc,n=5)=>A.filter(x=>x[key]!=null).sort((a,b)=>asc?a[key]-b[key]:b[key]-a[key]).slice(0,n);
-const pl=n=>'stats.html?tab=p&player='+encodeURIComponent(n),bl=n=>'stats.html?tab=b&player='+encodeURIComponent(n);
-$('#lp').innerHTML=leaders('Strikeouts',top(PL,'k'),x=>x.k,pl)+leaders('Strike %',top(PL,'sp'),x=>fp(x.sp),pl)+leaders('Whiff %',top(PL,'whp'),x=>fp(x.whp),pl)+leaders('Lowest BAA',top(PL,'ba',1),x=>f3(x.ba),pl);
+const bl=n=>'stats.html?tab=b&player='+encodeURIComponent(n);
+$('#lp').innerHTML=PL.length?`<table><thead><tr><th>Pitcher</th><th>G</th><th>Pitches</th><th>BF</th><th>H</th><th>BB</th><th>K</th><th>BAA</th><th>Strike %</th><th>Whiff %</th></tr></thead><tbody>${PL.map(x=>`<tr><td><a href="stats.html?tab=p&player=${encodeURIComponent(x.name)}">${E(x.name)}</a></td><td>${x.g}</td><td>${x.n}</td><td>${x.PA}</td><td>${x.H}</td><td>${x.bb}</td><td>${x.k}</td><td>${f3(x.ba)}</td><td>${fp(x.sp)}</td><td>${fp(x.whp)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">No Cal pitchers in this selection.</p>';
 $('#lb').innerHTML=leaders('Batting average',top(BL,'ba'),x=>f3(x.ba),bl)+leaders('On-base %',top(BL,'obp'),x=>f3(x.obp),bl)+leaders('Slugging',top(BL,'slg'),x=>f3(x.slg),bl)+leaders('Home runs',top(BL.filter(x=>x.hr>0),'hr'),x=>x.hr,bl);
-$('#lpn').textContent=`Pitchers with at least ${MINP} pitches.`;$('#lbn').textContent=`Batters with at least ${MINPA} plate appearances.`;
+$('#lbn').textContent=`Batters with at least ${MINPA} plate appearances (2 per game × ${gs.length} game${gs.length==1?'':'s'}).`;
 const pc={};R.forEach(p=>pc[p.game]=(pc[p.game]||0)+1);
 const recent=[...gs].sort((a,b)=>fmtDate(b.date).localeCompare(fmtDate(a.date))).slice(0,10);
 $('#rg').innerHTML=`<table><thead><tr><th>Date</th><th>Matchup</th><th>Score</th><th></th><th>Pitches</th><th></th></tr></thead><tbody>${recent.map(g=>`<tr><td>${E(fmtDate(g.date))}</td><td>${E(g.away)} at ${E(g.home)}</td><td>${g.awayScore===''||g.awayScore==null?'—':E(g.awayScore)+'–'+E(g.homeScore)}</td><td>${result(g)}</td><td>${pc[g.id]||0}</td><td><a href="stats.html?game=${encodeURIComponent(g.id)}">Open stats</a></td></tr>`).join('')}</tbody></table>`;
@@ -98,7 +97,7 @@ const om={};gs.forEach(g=>[g.home,g.away].filter(x=>x&&!cal(x)).forEach(x=>{cons
 const ops=Object.entries(om).sort((a,b)=>b[1].last.localeCompare(a[1].last));
 $('#op').innerHTML=ops.length?`<table><thead><tr><th>Opponent</th><th>Games</th><th>Last played</th><th>Scouting</th></tr></thead><tbody>${ops.map(([x,o])=>`<tr><td>${E(x)}</td><td>${o.n}</td><td>${E(o.last)}</td><td><a href="stats.html?typ=${typ}&team=${encodeURIComponent(x)}&tab=b">Their batters</a> · <a href="stats.html?typ=${typ}&team=${encodeURIComponent(x)}&tab=p">Their pitchers</a></td></tr>`).join('')}</tbody></table>`:'<p class="mut">No opponents in this selection.</p>'}
 function tiles(){let live='';try{const d=JSON.parse(ls.get('sbk')||'null');if(d&&d.S&&(d.S.pitches||[]).length){live=`<a class="tile live" href="chart.html"><b>Resume game in progress</b><span>${E(d.S.g.away||'Away')} at ${E(d.S.g.home||'Home')} · ${d.S.pitches.length} pitches charted on this device</span></a>`}}catch(e){}
-$('#tiles').innerHTML=live+`<a class="tile" href="chart.html"><b>Chart a game</b><span>Live pitch charting and scorebook</span></a><a class="tile" href="stats.html"><b>Stats explorer</b><span>Filter any player, team, pitch type or count</span></a><a class="tile" href="stats.html?tab=d"><b>Upload past data</b><span>Load Sheet CSVs, manage games</span></a><a class="tile" href="report.html"><b>Pitching report</b><span>Outing summaries for coaches</span></a><a class="tile" href="batters.html"><b>Batting report</b><span>Batter lines and team totals</span></a>`}
+$('#tiles').innerHTML=live+`<a class="tile" href="chart.html"><b>Chart a game</b><span>Live pitch charting and scorebook</span></a><a class="tile" href="stats.html"><b>Data</b><span>Filter any player, team, pitch type or count</span></a><a class="tile" href="stats.html?tab=d"><b>Upload past data</b><span>Load Sheet CSVs, manage games</span></a><a class="tile" href="stats.html?tab=p"><b>Pitching</b><span>Every pitcher: lines, splits, locations</span></a><a class="tile" href="stats.html?tab=b"><b>Batting</b><span>Every batter: lines, splits, spray charts</span></a>`}
 tiles();
 document.addEventListener('click',e=>{const b=e.target.closest('#typseg button');if(b){typ=b.dataset.v;render()}});
 $('#df').onchange=e=>{since=e.target.value;render()};
