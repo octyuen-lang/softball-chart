@@ -26,8 +26,8 @@ tr.t td{font-weight:700;background:#FFF6DC;border-top:2px solid #003262}tr{break
 small,.mut{color:var(--mut)}.wrap{overflow-x:auto}
 @media print{header,.noprint{display:none!important}body,main{background:#fff;padding:0}#out{border:0;padding:0}@page{margin:12mm;size:landscape}th{cursor:default}th.s:after{content:""}}
 [hidden]{display:none!important}
-</style></head><body>
-<header><img src="logo.jpg" alt="Cal Softball"><b>Batting Report</b><a href="report.html" class="noprint">Pitching report</a><button class="noprint go" id="pr">Print / PDF</button><button class="noprint" id="cv">Download CSV</button></header>
+header b{flex:1}.hnav{display:flex;flex-wrap:wrap;gap:2px}.hnav a{color:#fff;font-weight:600;text-decoration:none;padding:8px 10px;border-radius:6px;font-size:14px}.hnav a:hover{background:rgba(255,255,255,.14)}.hnav a.on{box-shadow:inset 0 -3px 0 #FDB515}@media print{.hnav{display:none}}</style></head><body>
+<header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Batting Report</b><nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Stats</a><a href="report.html">Pitching report</a><a href="batters.html" class="on">Batting report</a></nav><button class="noprint go" id="pr">Print / PDF</button><button class="noprint" id="cv">Download CSV</button></header>
 <main>
 <div class="card noprint">
 <details id="conn"><summary>Data source</summary>
