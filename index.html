@@ -33,7 +33,7 @@ th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-
 .bad{color:var(--bad)}#st{font-weight:600}[hidden]{display:none!important}
 </style></head><body>
 <header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Cal Softball Data Hub</b>
-<nav class="hnav"><a class="on" href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a></nav><button id="rf">Refresh</button></header>
+<nav class="hnav"><a class="on" href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a><a href="rapsodo.html">Rapsodo</a></nav><button id="rf">Refresh</button></header>
 <main>
 <div class="tiles" id="tiles"></div>
 <div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the team passcode to load the shared database.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
@@ -97,7 +97,7 @@ const om={};gs.forEach(g=>[g.home,g.away].filter(x=>x&&!cal(x)).forEach(x=>{cons
 const ops=Object.entries(om).sort((a,b)=>b[1].last.localeCompare(a[1].last));
 $('#op').innerHTML=ops.length?`<table><thead><tr><th>Opponent</th><th>Games</th><th>Last played</th><th>Scouting</th></tr></thead><tbody>${ops.map(([x,o])=>`<tr><td>${E(x)}</td><td>${o.n}</td><td>${E(o.last)}</td><td><a href="stats.html?typ=${typ}&team=${encodeURIComponent(x)}&tab=b">Their batters</a> · <a href="stats.html?typ=${typ}&team=${encodeURIComponent(x)}&tab=p">Their pitchers</a></td></tr>`).join('')}</tbody></table>`:'<p class="mut">No opponents in this selection.</p>'}
 function tiles(){let live='';try{const d=JSON.parse(ls.get('sbk')||'null');if(d&&d.S&&(d.S.pitches||[]).length){live=`<a class="tile live" href="chart.html"><b>Resume game in progress</b><span>${E(d.S.g.away||'Away')} at ${E(d.S.g.home||'Home')} · ${d.S.pitches.length} pitches charted on this device</span></a>`}}catch(e){}
-$('#tiles').innerHTML=live+`<a class="tile" href="chart.html"><b>Chart a game</b><span>Live pitch charting and scorebook</span></a><a class="tile" href="stats.html"><b>Data</b><span>Filter any player, team, pitch type or count</span></a><a class="tile" href="stats.html?tab=d"><b>Upload past data</b><span>Load Sheet CSVs, manage games</span></a><a class="tile" href="stats.html?tab=p"><b>Pitching</b><span>Every pitcher: lines, splits, locations</span></a><a class="tile" href="stats.html?tab=b"><b>Batting</b><span>Every batter: lines, splits, spray charts</span></a>`}
+$('#tiles').innerHTML=live+`<a class="tile" href="chart.html"><b>Chart a game</b><span>Live pitch charting and scorebook</span></a><a class="tile" href="stats.html"><b>Data</b><span>Filter any player, team, pitch type or count</span></a><a class="tile" href="rapsodo.html"><b>Rapsodo</b><span>Upload sessions, view movement, spin and location</span></a><a class="tile" href="stats.html?tab=d"><b>Upload past data</b><span>Load Sheet CSVs, manage games</span></a><a class="tile" href="stats.html?tab=p"><b>Pitching</b><span>Every pitcher: lines, splits, locations</span></a><a class="tile" href="stats.html?tab=b"><b>Batting</b><span>Every batter: lines, splits, spray charts</span></a>`}
 tiles();
 document.addEventListener('click',e=>{const b=e.target.closest('#typseg button');if(b){typ=b.dataset.v;render()}});
 $('#df').onchange=e=>{since=e.target.value;render()};

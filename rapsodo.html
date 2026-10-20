@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cal Softball Rapsodo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.jpg">
+<style>
+:root{--bg:#F3F5F8;--p:#fff;--ink:#003262;--tx:#1B2533;--mut:#5B6778;--ln:#DDE2E9;--acc:#FDB515;--bad:#C42B2B}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 16px;background:#003262;color:#fff;border-bottom:3px solid var(--acc)}
+header img{height:46px;width:46px;border-radius:8px;display:block}header b{font-size:18px;flex:1}
+.hnav{display:flex;flex-wrap:wrap;gap:2px}.hnav a{color:#fff;font-weight:600;text-decoration:none;padding:8px 10px;border-radius:6px;font-size:14px}.hnav a:hover{background:rgba(255,255,255,.14)}.hnav a.on{box-shadow:inset 0 -3px 0 #FDB515}
+header button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);font-weight:600;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
+button,select,input{font:inherit;color:inherit;min-height:40px;border:1px solid var(--ln);border-radius:8px;background:var(--p);padding:0 12px}
+button{cursor:pointer;font-weight:600}button.go{background:var(--acc);color:#003262;border-color:var(--acc)}button.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--acc)}button:disabled{opacity:.5;cursor:default}
+main{max-width:1300px;margin:auto;padding:14px}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink)}.card h3:before{content:"";display:inline-block;width:4px;height:12px;background:var(--acc);border-radius:2px;margin-right:8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}label{font-size:12px;font-weight:600;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:8px 0 0 8px;margin:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{min-height:44px;padding:0 22px;font-size:15px}
+.chips button{min-height:32px;font-size:12.5px;padding:0 10px;margin:2px}.chips button.off{opacity:.4}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.kp div{border:1px solid var(--ln);border-radius:8px;padding:8px 10px}.kp b{display:block;font-size:22px;color:var(--ink);line-height:1.15}.kp small{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;color:var(--mut)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{border:1px solid var(--ln);padding:5px 7px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.04em}tr.t td{font-weight:700;background:#FFF6DC;border-top:2px solid #003262}
+.wrap{overflow-x:auto}.mut,small{color:var(--mut)}a{color:var(--ink);font-weight:600}
+svg{display:block;width:100%;max-width:380px;margin:auto}svg.wide{max-width:900px}
+.pv{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;background:#FDB515;color:#003262;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.bar{display:flex;height:18px;border-radius:4px;overflow:hidden;background:#EEF1F5;min-width:120px}.bar i{display:block;height:100%}
+.bad{color:var(--bad)}#st{font-weight:600}[hidden]{display:none!important}
+.ttl{font-size:20px;font-weight:700;color:var(--ink);margin:0}
+@media print{header,.tabs,#gate,.noprint,button{display:none!important}body{background:#fff}main{padding:0}.card{box-shadow:none;break-inside:avoid}@page{margin:10mm}}
+</style></head><body>
+<header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Rapsodo</b>
+<nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a><a class="on" href="rapsodo.html">Rapsodo</a></nav><button id="pr">Print / PDF</button><button id="rf">Refresh</button></header>
+<main>
+<div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the team passcode to load the shared database.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
+<div id="app" hidden>
+<div class="tabs"><button data-tab="rep">Report</button><button data-tab="up">Upload &amp; manage</button></div>
+<div id="view"></div>
+</div></main>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let cfg={};try{cfg=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}
+let PASS=cfg.dbpass||'';
+const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827'},col=t=>TC[t]||'#6B7280';
+/* ---- zone geometry (inches). Approximate softball zone used only for drawing; strike % uses Rapsodo's own Y/N. ---- */
+const ZX=10,ZB=18,ZT=42;
+const HDR=['PitchID','Time','Type','Strike','Side','Height','Velo','Spin','TrueSpin','Eff','Dir','Conf','VB','HB','VBs','HBs','HAng','RAng','RelHt','RelSide','Gyro','HApp','VApp','Seg','Intent','Stride'];
+const SRC={PitchID:'Pitch ID',Time:'Date',Type:'Pitch Type',Strike:'Is Strike',Side:'Strike Zone Side',Height:'Strike Zone Height',Velo:'Velocity',Spin:'Total Spin',TrueSpin:'True Spin (release)',Eff:'Spin Efficiency (release)',Dir:'Spin Direction',Conf:'Spin Confidence',VB:'VB (trajectory)',HB:'HB (trajectory)',VBs:'VB (spin)',HBs:'HB (spin)',HAng:'Horizontal Angle',RAng:'Release Angle',RelHt:'Release Height',RelSide:'Release Side',Gyro:'Gyro Degree (deg)',HApp:'Horizontal Approach Angle',VApp:'Vertical Approach Angle',Seg:'Session Name',Intent:'Intent Type',Stride:'Stride Length'};
+const TXT=new Set(['PitchID','Time','Type','Dir','Seg','Intent']);
+/* ---- api ---- */
+async function api(q,opt={}){let r;try{r=await fetch('/api/rapsodo'+(q||''),{...opt,headers:{'Content-Type':'application/json','x-passcode':PASS}})}catch(e){throw new Error('Could not reach the server. Open this page from your Vercel site.')}
+const t=await r.text();let j=null;try{j=JSON.parse(t)}catch(e){}
+if(!j)throw Object.assign(new Error(r.status==404?'The Rapsodo storage function was not found. Add api/rapsodo.js to your project and redeploy.':'Unexpected response (HTTP '+r.status+').'),{status:r.status});
+if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
+/* ---- csv ---- */
+function parseCSV(t){t=t.replace(/^﻿/,'');const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;r.push(f);rows.push(r);r=[];f=''}else f+=c}if(f!==''||r.length){r.push(f);rows.push(r)}return rows}
+const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+function isoTime(s){const m=/(\w{3})\s+(\d{1,2})\s+(\d{4})\s+(\d{1,2}):(\d\d):(\d\d)\s*(AM|PM)/i.exec(String(s));if(!m)return null;let h=+m[4]%12;if(/pm/i.test(m[7]))h+=12;const p=n=>String(n).padStart(2,'0');return`${m[3]}-${p(MON[m[1].toLowerCase()]||1)}-${p(m[2])}T${p(h)}:${m[5]}:${m[6]}`}
+const normType=t=>{t=String(t||'');return/curve/i.test(t)?'Curve':/change/i.test(t)?'Changeup':/ris/i.test(t)?'Rise':/drop/i.test(t)?'Drop':/screw/i.test(t)?'Screw':/fast/i.test(t)?'Fastball':/off/i.test(t)?'Offspeed':t||'Unknown'};
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50)||'player';
+function parseFile(text,fname){const rows=parseCSV(text);let pid='',pname='';const hi=rows.findIndex(r=>r.includes('Pitch Type'));
+if(hi<0)throw new Error('No "Pitch Type" column found. This does not look like a Rapsodo pitching export.');
+rows.slice(0,hi).forEach(r=>{if(/^Player ID/i.test(r[0]))pid=String(r[1]||'').trim();if(/^Player Name/i.test(r[0]))pname=String(r[1]||'').trim()});
+if(!pname)pname=fname.replace(/\.csv$/i,'').replace(/[_-]+/g,' ').trim();
+const ix={};rows[hi].forEach((h,i)=>ix[h]=i);const out=[];
+rows.slice(hi+1).forEach(r=>{if(r.length<10||!ix['Pitch Type'])return;const o={};let bad=false;
+HDR.forEach(k=>{const v=r[ix[SRC[k]]];if(TXT.has(k)){o[k]=k=='Type'?normType(v):k=='Time'?isoTime(v):String(v==null||v=='-'?'':v)}else if(k=='Strike'){o[k]=v=='Y'?1:v=='N'?0:null}else{const n=v==null||v===''||v=='-'?null:+v;o[k]=n==null||isNaN(n)?null:Math.round(n*100)/100}});
+if(!o.Time||!o.PitchID)return;if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}out.push(o)});
+if(!out.length)throw new Error('No pitches found in this file.');
+const key=pid||slug(pname),days={};out.forEach(o=>{const d=o.Time.slice(0,10);(days[d]=days[d]||[]).push(o)});
+return{player:pname,playerId:pid,key,days,fname}}
+/* ---- stats ---- */
+const nums=a=>a.filter(v=>v!=null&&!isNaN(v)),avg=a=>{a=nums(a);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null},mxv=a=>{a=nums(a);return a.length?Math.max(...a):null},mnv=a=>{a=nums(a);return a.length?Math.min(...a):null};
+const f0=v=>v==null?'—':Math.round(v),f1=v=>v==null?'—':v.toFixed(1),fp=v=>v==null?'—':Math.round(v*100)+'%',sg=v=>v==null?'—':(v>0?'+':'')+v.toFixed(1);
+const dirDeg=s=>{const m=/^(\d{1,2}):(\d\d)$/.exec(s||'');return m?((+m[1]%12)+(+m[2])/60)*30:null};
+const degClock=d=>{if(d==null)return'—';d=(d%360+360)%360;let h=Math.floor(d/30),m=Math.round((d/30-h)*60);if(m==60){m=0;h++}h=h%12;return(h==0?12:h)+':'+String(m).padStart(2,'0')};
+const circMean=a=>{a=nums(a);if(!a.length)return null;const s=a.reduce((x,d)=>x+Math.sin(d*Math.PI/180),0),c=a.reduce((x,d)=>x+Math.cos(d*Math.PI/180),0);return(Math.atan2(s,c)*180/Math.PI+360)%360};
+const groupBy=(L,f)=>{const m=new Map();L.forEach(p=>{const k=f(p);(m.get(k)||m.set(k,[]).get(k)).push(p)});return m};
+/* ---- state ---- */
+let METAS=[],CACHE={},up={files:[],msg:''};
+const st={tab:'rep',player:'',sess:'all',segOff:new Set(),tyOff:new Set(),loc:'type',view:'catcher',mv:'traj',load:false};
+const dayLabel=d=>{const t=new Date(d+'T12:00:00');return isNaN(t)?d:t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+const players=()=>{const m=new Map();METAS.forEach(x=>{const k=x.playerId||slug(x.player);if(!m.has(k))m.set(k,{key:k,name:x.player,metas:[]});m.get(k).metas.push(x)});return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name))};
+const curPlayer=()=>players().find(p=>p.key==st.player);
+const rowsOf=s=>s.rows.map(r=>{const o={};s.header.forEach((k,i)=>o[k]=r[i]);if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}return o});
+async function ensureLoaded(metas){const need=metas.filter(m=>!CACHE[m.id]).map(m=>m.id);for(let i=0;i<need.length;i+=10){const j=await api('?ids='+need.slice(i,i+10).join(','));(j.sessions||[]).forEach(s=>CACHE[s.meta.id]=rowsOf(s))}}
+async function loadList(){const j=await api('');METAS=j.sessions||[];const pl=players();if(!pl.some(p=>p.key==st.player)){st.player=pl[0]?pl[0].key:'';st.sess=pl[0]?pl[0].metas[0].date:'all'}}
+function selMetas(){const p=curPlayer();if(!p)return[];return st.sess=='all'?p.metas:p.metas.filter(m=>m.date==st.sess)}
+/* ---- svg ---- */
+const niceStep=r=>r>60?10:r>30?5:r>14?2:r>6?1:.5;
+function locSvg(L){const mir=st.view=='pitcher',X=p=>150+(mir?-1:1)*p.Side*6,Y=p=>(70-p.Height)*5,zx0=150-ZX*6,zw=ZX*12,zy0=(70-ZT)*5,zh=(ZT-ZB)*5;
+let g='';for(let h=0;h<=70;h+=10)g+=`<line x1="0" x2="300" y1="${(70-h)*5}" y2="${(70-h)*5}" stroke="#E5E9EF"/><text x="3" y="${(70-h)*5-2}" font-size="9" fill="#8A94A3">${h}"</text>`;
+let z=`<rect x="${zx0}" y="${zy0}" width="${zw}" height="${zh}" fill="rgba(253,181,21,.14)" stroke="#003262" stroke-width="2.5"/>`;
+for(let i=1;i<3;i++)z+=`<line x1="${zx0+zw*i/3}" x2="${zx0+zw*i/3}" y1="${zy0}" y2="${zy0+zh}" stroke="#003262" stroke-opacity=".3"/><line y1="${zy0+zh*i/3}" y2="${zy0+zh*i/3}" x1="${zx0}" x2="${zx0+zw}" stroke="#003262" stroke-opacity=".3"/>`;
+const pts=L.filter(p=>p.Side!=null&&p.Height!=null).map(p=>`<circle cx="${X(p).toFixed(1)}" cy="${Y(p).toFixed(1)}" r="7" fill="${st.loc=='type'?col(p.Type):p.Strike?'#DC2626':'#3B82F6'}" fill-opacity=".82" stroke="#fff" stroke-width="1.5"/>`).join('');
+return`<svg viewBox="0 0 300 400">${g}${z}${pts}</svg>`}
+function moveSvg(L,by){const vk=st.mv=='traj'?'VB':'VBs',hk=st.mv=='traj'?'HB':'HBs',P=L.filter(p=>p[vk]!=null&&p[hk]!=null);if(!P.length)return'<p class="mut">No movement data for this selection.</p>';
+const xs=P.map(p=>p[hk]),ys=P.map(p=>p[vk]);let x0=Math.min(0,...xs)-1.5,x1=Math.max(0,...xs)+1.5,y0=Math.min(0,...ys)-1.5,y1=Math.max(0,...ys)+1.5;
+const L0=34,W=250,Hh=250,T0=10,sx=v=>L0+(v-x0)/(x1-x0)*W,sy=v=>T0+(1-(v-y0)/(y1-y0))*Hh;let g='';
+const stx=niceStep(x1-x0),sty=niceStep(y1-y0);
+for(let v=Math.ceil(x0/stx)*stx;v<=x1;v+=stx)g+=`<line x1="${sx(v)}" x2="${sx(v)}" y1="${T0}" y2="${T0+Hh}" stroke="${v==0?'#003262':'#E5E9EF'}" stroke-width="${v==0?1.5:1}"/><text x="${sx(v)}" y="${T0+Hh+12}" font-size="9" fill="#8A94A3" text-anchor="middle">${+v.toFixed(1)}</text>`;
+for(let v=Math.ceil(y0/sty)*sty;v<=y1;v+=sty)g+=`<line y1="${sy(v)}" y2="${sy(v)}" x1="${L0}" x2="${L0+W}" stroke="${v==0?'#003262':'#E5E9EF'}" stroke-width="${v==0?1.5:1}"/><text x="${L0-4}" y="${sy(v)+3}" font-size="9" fill="#8A94A3" text-anchor="end">${+v.toFixed(1)}</text>`;
+const dots=P.map(p=>`<circle cx="${sx(p[hk]).toFixed(1)}" cy="${sy(p[vk]).toFixed(1)}" r="4.5" fill="${col(p.Type)}" fill-opacity=".55"/>`).join('');
+const av=[...groupBy(P,p=>p.Type)].map(([t,a])=>`<circle cx="${sx(avg(a.map(p=>p[hk]))).toFixed(1)}" cy="${sy(avg(a.map(p=>p[vk]))).toFixed(1)}" r="9" fill="${col(t)}" stroke="#fff" stroke-width="2.5"/>`).join('');
+return`<svg viewBox="0 0 300 295">${g}${dots}${av}<text x="${L0+W/2}" y="292" font-size="10" fill="#5B6778" text-anchor="middle">Horizontal break (in)</text><text transform="rotate(-90 9 ${T0+Hh/2})" x="9" y="${T0+Hh/2}" font-size="10" fill="#5B6778" text-anchor="middle">Vertical break (in)</text></svg><small>Small dots = pitches · large dots = pitch-type average.</small>`}
+function spinSvg(L){const P=L.filter(p=>dirDeg(p.Dir)!=null&&p.Eff!=null),R=108,C=150;if(!P.length)return'<p class="mut">No spin data for this selection.</p>';
+let g=`<circle cx="${C}" cy="${C}" r="${R}" fill="#fff" stroke="#003262" stroke-width="1.5"/><circle cx="${C}" cy="${C}" r="${R*.5}" fill="none" stroke="#E5E9EF"/><circle cx="${C}" cy="${C}" r="${R*.75}" fill="none" stroke="#E5E9EF"/>`;
+for(let h=0;h<12;h++){const a=h*30*Math.PI/180,x=C+Math.sin(a)*(R+14),y=C-Math.cos(a)*(R+14);g+=`<line x1="${C}" y1="${C}" x2="${C+Math.sin(a)*R}" y2="${C-Math.cos(a)*R}" stroke="#EEF1F5"/><text x="${x}" y="${y+4}" font-size="11" fill="#5B6778" text-anchor="middle">${h==0?12:h}</text>`}
+const pos=(d,e)=>{const a=d*Math.PI/180,r=R*Math.min(e,100)/100;return[C+Math.sin(a)*r,C-Math.cos(a)*r]};
+const dots=P.map(p=>{const[x,y]=pos(dirDeg(p.Dir),p.Eff);return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col(p.Type)}" fill-opacity=".6"/>`}).join('');
+const av=[...groupBy(P,p=>p.Type)].map(([t,a])=>{const d=circMean(a.map(p=>dirDeg(p.Dir))),[x,y]=pos(d,avg(a.map(p=>p.Eff)));return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="${col(t)}" stroke="#fff" stroke-width="2.5"/>`}).join('');
+return`<svg viewBox="0 0 300 300">${g}${dots}${av}</svg><small>Clock = spin axis (tilt). Distance from the center = spin efficiency (rim = 100%). Large dots = averages.</small>`}
+function veloSvg(L,segs){const P=L.filter(p=>p.Velo!=null);if(!P.length)return'<p class="mut">No velocity data.</p>';const W=640,H=230,l=36,r=8,t=14,b=26,n=L.length;
+const lo=Math.floor(mnv(P.map(p=>p.Velo))-2),hi=Math.ceil(mxv(P.map(p=>p.Velo))+2),sx=i=>l+(n<2?.5:i/(n-1))*(W-l-r),sy=v=>t+(1-(v-lo)/(hi-lo))*(H-t-b);let g='';
+const step=niceStep(hi-lo)>=2?5:niceStep(hi-lo)>=1?2:1;for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step)g+=`<line x1="${l}" x2="${W-r}" y1="${sy(v)}" y2="${sy(v)}" stroke="#E5E9EF"/><text x="${l-4}" y="${sy(v)+3}" font-size="9.5" fill="#8A94A3" text-anchor="end">${v}</text>`;
+let prev=null;L.forEach((p,i)=>{if(prev!==null&&p.Seg!==prev)g+=`<line x1="${sx(i-.5)}" x2="${sx(i-.5)}" y1="${t}" y2="${H-b}" stroke="#003262" stroke-dasharray="3 3" stroke-opacity=".5"/>`;if(p.Seg!==prev)g+=`<text x="${sx(i)+2}" y="${H-b+14}" font-size="9.5" fill="#5B6778">${E(p.Seg||'')}</text>`;prev=p.Seg});
+const dots=L.map((p,i)=>p.Velo==null?'':`<circle cx="${sx(i).toFixed(1)}" cy="${sy(p.Velo).toFixed(1)}" r="4" fill="${col(p.Type)}" fill-opacity=".85" stroke="#fff"/>`).join('');
+return`<svg class="wide" viewBox="0 0 ${W} ${H}">${g}${dots}</svg><small>Each dot is one pitch in the order thrown. Dashed lines separate segments (innings).</small>`}
+/* ---- report ---- */
+async function renderReport(){const v=$('#view');
+if(!METAS.length){v.innerHTML='<div class="card"><h3>No Rapsodo sessions yet</h3><p>Upload a Rapsodo CSV on the <a href="#" data-tab="up">Upload &amp; manage</a> tab and your reports will appear here.</p></div>';return}
+const pl=players(),p=curPlayer();if(st.sess!='all'&&!p.metas.some(m=>m.date==st.sess))st.sess=p.metas[0].date;const metas=selMetas();
+const head=`<div class="card noprint"><div class="row"><label>Player<select id="selp">${pl.map(x=>`<option value="${E(x.key)}" ${x.key==st.player?'selected':''}>${E(x.name)}</option>`).join('')}</select></label>
+<label>Session<select id="sels"><option value="all" ${st.sess=='all'?'selected':''}>All sessions (${p.metas.reduce((a,m)=>a+m.pitches,0)} pitches)</option>${p.metas.map(m=>`<option value="${E(m.date)}" ${m.date==st.sess?'selected':''}>${E(dayLabel(m.date))} · ${m.pitches} pitches</option>`).join('')}</select></label><span id="st" class="mut"></span></div></div>`;
+v.innerHTML=head+'<div class="card"><p class="mut">Loading…</p></div>';
+try{await ensureLoaded(metas)}catch(e){v.innerHTML=head+`<div class="card"><p class="bad">${E(e.message)}</p></div>`;return}
+let all=metas.flatMap(m=>CACHE[m.id]||[]).sort((a,b)=>a.Time<b.Time?-1:1);
+const segs=[...new Set(all.map(x=>x.Seg))];const D=all.filter(x=>!st.segOff.has(x.Seg)),Dv=D.filter(x=>!st.tyOff.has(x.Type));
+const types=[...groupBy(D,x=>x.Type)].sort((a,b)=>b[1].length-a[1].length);const tot=D.length;
+const stk=D.filter(x=>x.Strike!=null),sp=stk.length?stk.filter(x=>x.Strike==1).length/stk.length:null;
+const days=[...new Set(D.map(x=>x.Time.slice(0,10)))];
+const kp=(a,b)=>`<div><b>${a}</b><small>${b}</small></div>`;
+const kpi=`<div class="kp">${kp(tot,'Pitches')}${kp(fp(sp),'Strike %')}${kp(f1(mxv(D.map(x=>x.Velo))),'Max velo (mph)')}${kp(f0(avg(D.map(x=>x.Spin))),'Avg spin (rpm)')}${kp(f0(avg(D.map(x=>x.Eff)))+'%','Avg spin efficiency')}${kp(f1(avg(D.map(x=>x.RelHt)))+'"','Avg release height')}</div>`;
+const mvk=st.mv=='traj'?['VB','HB']:['VBs','HBs'],sl=st.mv=='traj'?'trajectory':'spin';
+const rowsT=types.map(([t,a])=>{const dd=circMean(a.map(x=>dirDeg(x.Dir))),s2=a.filter(x=>x.Strike!=null);return`<tr><td><span class="sw" style="background:${col(t)}"></span>${E(t)}</td><td>${a.length}</td><td>${fp(a.length/tot)}</td><td>${fp(s2.length?s2.filter(x=>x.Strike==1).length/s2.length:null)}</td><td>${f1(avg(a.map(x=>x.Velo)))}</td><td>${f1(mxv(a.map(x=>x.Velo)))}</td><td>${f1(mnv(a.map(x=>x.Velo)))}</td><td>${f0(avg(a.map(x=>x.Spin)))}</td><td>${f0(mxv(a.map(x=>x.Spin)))}</td><td>${f0(avg(a.map(x=>x.TrueSpin)))}</td><td>${f0(avg(a.map(x=>x.Eff)))}%</td><td>${degClock(dd)}</td><td>${sg(avg(a.map(x=>x[mvk[0]])))}</td><td>${sg(avg(a.map(x=>x[mvk[1]])))}</td><td>${f1(avg(a.map(x=>x.RelHt)))}</td><td>${f1(avg(a.map(x=>x.RelSide)))}</td></tr>`}).join('');
+const tabl=`<div class="wrap"><table><thead><tr><th>Pitch</th><th>#</th><th>Usage</th><th>Strike %</th><th>Avg mph</th><th>Max mph</th><th>Min mph</th><th>Avg spin</th><th>Max spin</th><th>True spin</th><th>Eff %</th><th>Tilt</th><th>VB</th><th>HB</th><th>Rel ht</th><th>Rel side</th></tr></thead><tbody>${rowsT}</tbody></table></div><small>Spin in rpm, movement in inches (${sl}), release in inches. Strike % uses Rapsodo's own strike call.</small>`;
+const usage=types.map(([t,a])=>`<div style="display:flex;align-items:center;gap:8px;margin:5px 0"><span style="width:100px;white-space:nowrap"><span class="sw" style="background:${col(t)}"></span>${E(t)}</span><div class="bar" style="flex:1"><i style="width:${a.length/tot*100}%;background:${col(t)}"></i></div><span style="width:78px;text-align:right">${fp(a.length/tot)} · ${a.length}</span></div>`).join('');
+const sg2=[...groupBy(D,x=>x.Seg)].map(([s,a])=>`<div style="display:flex;align-items:center;gap:8px;margin:5px 0"><span style="width:110px;font-size:12px">${E(s||'—')}</span><div class="bar" style="flex:1">${types.map(([t])=>{const c=a.filter(x=>x.Type==t).length;return c?`<i title="${E(t)} ${c}" style="width:${c/a.length*100}%;background:${col(t)}"></i>`:''}).join('')}</div><span style="width:34px;text-align:right">${a.length}</span></div>`).join('');
+const chips=`<div class="chips noprint"><small>Pitch types shown in the charts:</small> ${[...groupBy(all,x=>x.Type).keys()].map(t=>`<button data-ty="${E(t)}" class="${st.tyOff.has(t)?'off':''}"><span class="sw" style="background:${col(t)}"></span>${E(t)}</button>`).join('')}</div>`;
+const segc=segs.length>1?`<div class="chips noprint" style="margin-bottom:8px"><small>Segments:</small> ${segs.map(s=>`<button data-sg="${E(s)}" class="${st.segOff.has(s)?'off':'on'}">${E(s||'—')}</button>`).join('')}</div>`:'';
+const when=days.length==1?dayLabel(days[0]):days.length?dayLabel(days[0])+' – '+dayLabel(days[days.length-1])+' ('+days.length+' days)':'';
+const seg=(k,a)=>`<div class="seg noprint">${a.map(([v,l])=>`<button data-${k}="${v}" class="${st[k=='mvs'?'mv':k]==v?'on':''}">${l}</button>`).join('')}</div>`;
+v.innerHTML=head+`<div class="card"><p class="ttl">${E(p.name)}</p><p class="mut" style="margin:0 0 10px">${E(when)} · ${types.length} pitch type${types.length==1?'':'s'}</p>${segc}${kpi}</div>
+<div class="card"><h3>Pitch summary</h3><div class="row noprint" style="margin-bottom:6px"><small>Movement basis:</small>${seg('mvs',[['traj','Trajectory'],['spin','Spin-based']])}</div>${tabl}</div>
+<div class="card"><h3>Usage</h3><div class="cols"><div>${usage}</div><div><small>By segment</small>${sg2}</div></div></div>
+<div class="card"><div class="noprint">${chips}</div></div>
+<div class="cols"><div class="card"><h3>Location <span class="pv">${st.view=='catcher'?"CATCHER'S VIEW":'PITCHER VIEW'}</span></h3><div class="row noprint" style="margin-bottom:6px">${seg('loc',[['type','Pitch type'],['res','Strike / ball']])}${seg('view',[['catcher',"Catcher's view"],['pitcher','Pitcher view']])}</div>${locSvg(Dv)}<small>${Dv.filter(x=>x.Side!=null).length} pitches plotted. ${st.loc=='res'?'Red = strike · blue = ball. ':''}Zone is approximate; the strike % above uses Rapsodo's call.</small></div>
+<div class="card"><h3>Movement</h3>${moveSvg(Dv)}</div>
+<div class="card"><h3>Spin axis</h3>${spinSvg(Dv)}</div></div>
+<div class="card"><h3>Velocity by pitch</h3>${veloSvg(Dv)}</div>
+<div class="card"><h3>Pitch log</h3><details><summary style="cursor:pointer;font-weight:600;color:var(--ink)">Show all ${D.length} pitches</summary><div class="wrap" style="margin-top:8px"><table><thead><tr><th>#</th><th>Time</th><th>Segment</th><th>Pitch</th><th>Strike</th><th>mph</th><th>Spin</th><th>Eff %</th><th>Tilt</th><th>VB</th><th>HB</th><th>Side</th><th>Height</th></tr></thead><tbody>${D.map((x,i)=>`<tr><td>${i+1}</td><td>${E(x.Time.slice(5,10)+' '+x.Time.slice(11,16))}</td><td>${E(x.Seg)}</td><td><span class="sw" style="background:${col(x.Type)}"></span>${E(x.Type)}</td><td>${x.Strike==null?'—':x.Strike?'Y':'N'}</td><td>${f1(x.Velo)}</td><td>${f0(x.Spin)}</td><td>${f0(x.Eff)}</td><td>${E(x.Dir||'—')}</td><td>${sg(x[mvk[0]])}</td><td>${sg(x[mvk[1]])}</td><td>${f1(x.Side)}</td><td>${f1(x.Height)}</td></tr>`).join('')}</tbody></table></div></details></div>`}
+/* ---- upload ---- */
+function renderUpload(){const v=$('#view');
+const files=up.files.map(f=>f.err?`<li class="bad">${E(f.name)}: ${E(f.err)}</li>`:`<li><b>${E(f.res.player)}</b> · ${Object.keys(f.res.days).sort().map(d=>`${E(dayLabel(d))}: ${f.res.days[d].length} pitches${METAS.some(m=>m.id==f.res.key+'_'+d.replace(/-/g,''))?' <span class="pv">ALREADY STORED, WILL MERGE</span>':''}`).join(' · ')}</li>`).join('');
+const ok=up.files.some(f=>!f.err);
+v.innerHTML=`<div class="card"><h3>Upload Rapsodo CSV</h3><p>Export a pitching session from Rapsodo (CSV) and choose the file here. A file can hold several innings or days. Each player-day is stored as one session. Uploading the same pitches twice never creates duplicates.</p>
+<div class="row"><label>CSV file(s)<input type="file" id="fl" accept=".csv,text/csv" multiple></label><button class="go" id="upb" ${ok?'':'disabled'}>Upload to database</button></div>
+<ul>${files}</ul><p id="upm" class="${up.bad?'bad':'mut'}">${E(up.msg)}</p></div>
+<div class="card"><h3>Stored sessions</h3>${METAS.length?`<div class="wrap"><table><thead><tr><th>Player</th><th>Date</th><th>Pitches</th><th>Segments</th><th></th><th></th></tr></thead><tbody>${METAS.map(m=>`<tr><td>${E(m.player)}</td><td>${E(dayLabel(m.date))}</td><td>${m.pitches}</td><td style="white-space:normal;text-align:left">${E((m.names||[]).join(', '))}</td><td><a href="#" data-open="${E(m.id)}">Open report</a></td><td><button data-del="${E(m.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="mut">Nothing stored yet.</p>'}</div>`;
+const fl=$('#fl');if(fl)fl.onchange=async()=>{up.files=[];up.msg='';for(const f of fl.files){try{up.files.push({name:f.name,res:parseFile(await f.text(),f.name)})}catch(e){up.files.push({name:f.name,err:e.message})}}renderUpload()};
+const ub=$('#upb');if(ub)ub.onclick=doUpload}
+async function doUpload(){const b=$('#upb');b.disabled=true;up.bad=false;let added=0,dup=0,sess=0;
+try{for(const f of up.files.filter(x=>!x.err))for(const d of Object.keys(f.res.days).sort()){const id=f.res.key+'_'+d.replace(/-/g,'');let have=[];
+$('#upm').textContent=`Uploading ${f.res.player} ${d}…`;
+try{const ex=await api('?id='+encodeURIComponent(id));have=rowsOf(ex)}catch(e){if(e.status!=404)throw e}
+const m=new Map(have.map(r=>[r.PitchID,r]));const before=m.size;f.res.days[d].forEach(r=>{if(m.has(r.PitchID))dup++;else added++;m.set(r.PitchID,r)});
+const rows=[...m.values()].sort((a,b)=>a.Time<b.Time?-1:1);const names=[...new Set(rows.map(r=>r.Seg).filter(Boolean))];
+await api('',{method:'POST',body:JSON.stringify({meta:{id,player:f.res.player,playerId:f.res.playerId,date:d,names},header:HDR,rows:rows.map(r=>HDR.map(k=>r[k]))})});delete CACHE[id];sess++}
+up.msg=`Done: ${sess} session${sess==1?'':'s'} saved, ${added} new pitch${added==1?'':'es'}${dup?`, ${dup} already stored (kept once)`:''}.`;up.files=[];await loadList();
+}
+catch(e){up.msg='Stopped: '+e.message;up.bad=true}
+renderUpload()}
+/* ---- wiring ---- */
+const render=()=>{document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab==st.tab));st.tab=='rep'?renderReport():renderUpload()};
+document.addEventListener('click',async e=>{const t=e.target;let b;
+if(b=t.closest('[data-tab]')){e.preventDefault();st.tab=b.dataset.tab;render();return}
+if(b=t.closest('[data-ty]')){const k=b.dataset.ty;st.tyOff.has(k)?st.tyOff.delete(k):st.tyOff.add(k);render();return}
+if(b=t.closest('[data-sg]')){const k=b.dataset.sg;st.segOff.has(k)?st.segOff.delete(k):st.segOff.add(k);render();return}
+if(b=t.closest('[data-loc]')){st.loc=b.dataset.loc;render();return}
+if(b=t.closest('[data-view]')){st.view=b.dataset.view;render();return}
+if(b=t.closest('[data-mvs]')){st.mv=b.dataset.mvs;render();return}
+if(b=t.closest('[data-open]')){e.preventDefault();const m=METAS.find(x=>x.id==b.dataset.open);if(m){st.player=m.playerId||slug(m.player);st.sess=m.date;st.segOff=new Set();st.tab='rep';render()}return}
+if(b=t.closest('[data-del]')){const m=METAS.find(x=>x.id==b.dataset.del);if(!m||!confirm('Delete '+m.player+' on '+dayLabel(m.date)+' ('+m.pitches+' pitches)? This cannot be undone.'))return;try{await api('?id='+encodeURIComponent(m.id),{method:'DELETE'});delete CACHE[m.id];await loadList();render()}catch(x){alert(x.message)}}});
+document.addEventListener('change',e=>{if(e.target.id=='selp'){st.player=e.target.value;st.sess=curPlayer().metas[0].date;st.segOff=new Set();st.tyOff=new Set();render()}if(e.target.id=='sels'){st.sess=e.target.value;st.segOff=new Set();render()}});
+$('#pr').onclick=()=>window.print();
+$('#rf').onclick=async()=>{CACHE={};try{await loadList();render()}catch(e){$('#view').innerHTML=`<div class="card"><p class="bad">${E(e.message)}</p></div>`}};
+$('#pwb').onclick=()=>{PASS=$('#pw').value;cfg.dbpass=PASS;ls.set('sbcfg',JSON.stringify(cfg));connect()};
+$('#pw').onkeydown=e=>{if(e.key=='Enter')$('#pwb').click()};
+async function connect(){try{await loadList();$('#gate').hidden=true;$('#app').hidden=false;if(!METAS.length)st.tab='up';render()}catch(e){$('#app').hidden=true;$('#gate').hidden=false;$('#gmsg').textContent=e.status==401?(PASS?'That passcode is not right.':''):e.message}}
+if(PASS)connect();else $('#gate').hidden=false;
+</script></body></html>
