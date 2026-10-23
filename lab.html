@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cal Softball Analytics Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.jpg">
+<style>
+:root{--bg:#F3F5F8;--p:#fff;--ink:#003262;--tx:#1B2533;--mut:#5B6778;--ln:#DDE2E9;--acc:#FDB515;--bad:#C42B2B;--good:#1F7A3A}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 16px;background:#003262;color:#fff;border-bottom:3px solid var(--acc)}
+header img{height:46px;width:46px;border-radius:8px;display:block}header b{font-size:18px;flex:1}
+.hnav{display:flex;flex-wrap:wrap;gap:2px}.hnav a{color:#fff;font-weight:600;text-decoration:none;padding:8px 10px;border-radius:6px;font-size:14px}.hnav a:hover{background:rgba(255,255,255,.14)}.hnav a.on{box-shadow:inset 0 -3px 0 #FDB515}
+header button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);font-weight:600;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
+button,select,input{font:inherit;color:inherit;min-height:40px;border:1px solid var(--ln);border-radius:8px;background:var(--p);padding:0 12px}
+input[type=range]{padding:0;min-height:28px}input[type=checkbox]{min-height:0;width:18px;height:18px}
+button{cursor:pointer;font-weight:600}button.go{background:var(--acc);color:#003262;border-color:var(--acc)}button.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--acc)}button:disabled{opacity:.5}
+main{max-width:1300px;margin:auto;padding:14px}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink)}.card h3:before{content:"";display:inline-block;width:4px;height:12px;background:var(--acc);border-radius:2px;margin-right:8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}label{font-size:12px;font-weight:600;color:var(--mut);display:flex;flex-direction:column;gap:3px}label.ck{flex-direction:row;align-items:center;gap:6px;min-height:40px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:8px 0 0 8px;margin:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.tabs{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}.tabs button{min-height:44px;padding:0 18px;font-size:14.5px}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}.kp div{border:1px solid var(--ln);border-radius:8px;padding:8px 10px}.kp b{display:block;font-size:22px;color:var(--ink);line-height:1.15}.kp small{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;color:var(--mut)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{border:1px solid var(--ln);padding:5px 7px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.04em}tr.hl td{background:#FFF6DC}
+.wrap{overflow-x:auto}.mut,small{color:var(--mut)}a{color:var(--ink);font-weight:600}
+svg{display:block;width:100%;max-width:400px;margin:auto}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.pv{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;background:#FDB515;color:#003262;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
+.note{background:#FFF9E6;border:1px solid #F3DFA0;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
+.say{font-size:15px;margin:4px 0}.card h3+*{margin-top:0}.card .say+h3,.card p+h3{margin-top:14px}label b{color:var(--ink)}.say b{color:var(--ink)}
+.bad{color:var(--bad)}#st{font-weight:600}[hidden]{display:none!important}
+</style></head><body>
+<header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Analytics Lab</b>
+<nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a><a href="rapsodo.html">Rapsodo</a><a class="on" href="lab.html">Lab</a></nav><button id="rf">Reload data</button></header>
+<main>
+<div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the team passcode to load the shared database.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
+<div id="app" hidden>
+<div class="card"><div class="row"><div><small>Games to include</small><div class="seg" id="typseg"><button data-a="typ" data-v="game">Games</button><button data-a="typ" data-v="scrimmage">Scrimmages</button><button data-a="typ" data-v="all">All</button></div></div><span id="st" class="mut"></span></div></div>
+<div class="tabs" id="tabs"><button data-a="tab" data-v="pl">Link Rapsodo &amp; games</button><button data-a="tab" data-v="sq">Tunneling &amp; sequencing</button><button data-a="tab" data-v="eo">Expected outcomes</button><button data-a="tab" data-v="sh">Pitch shapes</button><button data-a="tab" data-v="wp">Win probability</button></div>
+<div id="view"></div>
+</div></main>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let cfg={};try{cfg=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}
+let PASS=cfg.dbpass||'';
+const cal=t=>/\b(cal|california|berkeley)\b/i.test(t||'');
+const TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827','Drop Curve':'#8B5E3C','Offspeed Curve':'#0D9488','Offspeed Drop':'#DB2777'},col=t=>TC[t]||'#6B7280';
+const SWG=['Swinging Strike','Foul','In Play'],STRK=['Called Strike','Swinging Strike','Foul','In Play'],HB={Single:1,Double:2,Triple:3,'Home Run':4};
+/* ---------- helpers ---------- */
+const sum=a=>a.reduce((x,y)=>x+y,0),nums=a=>a.filter(v=>v!=null&&!isNaN(v)),avg=a=>{a=nums(a);return a.length?sum(a)/a.length:null},ratio=(a,b)=>b?a/b:null;
+const fp=v=>v==null?'—':Math.round(v*100)+'%',f1=v=>v==null?'—':v.toFixed(1),f2=v=>v==null?'—':v.toFixed(2),f3=v=>v==null?'—':v.toFixed(3).replace(/^0(?=\.)/,''),sg1=v=>v==null?'—':(v>0?'+':'')+v.toFixed(1);
+const wn=v=>v==null?'—':(v>=0?'+':'')+v.toFixed(2),pp=v=>v==null?'—':(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+const groupBy=(L,f)=>{const m=new Map();L.forEach(p=>{const k=f(p);(m.get(k)||m.set(k,[]).get(k)).push(p)});return m};
+const fmtDate=v=>{v=String(v||'');const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(v);if(m)return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');if(/^\d{4}-\d\d-\d\dT.*Z$/.test(v)){const d=new Date(v);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}return v.slice(0,10)};
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50)||'player';
+const nrm=s=>String(s||'').toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
+const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const ticks=(a,b,n=5)=>{const r=b-a||1,raw=r/n,mag=Math.pow(10,Math.floor(Math.log10(raw))),st=[1,2,5,10].map(x=>x*mag).find(x=>x>=raw)||mag*10,o=[];for(let v=Math.ceil(a/st)*st;v<=b+1e-9;v+=st)o.push(+v.toFixed(6));return o};
+/* ---------- api ---------- */
+async function call(ep,q,opt={}){let r;try{r=await fetch('/api/'+ep+(q||''),{...opt,headers:{'Content-Type':'application/json','x-passcode':PASS}})}catch(e){throw new Error('Could not reach the server. Open this page from your Vercel site.')}
+const t=await r.text();let j=null;try{j=JSON.parse(t)}catch(e){}
+if(!j)throw Object.assign(new Error(r.status==404?'The /api/'+ep+' function was not found. Check that the api folder is deployed.':'Unexpected response (HTTP '+r.status+').'),{status:r.status});
+if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
+/* ---------- data ---------- */
+let GAMES=[],GM={},PIT=[],RAP=[],RAPERR='',LINKS={},TMAP={};
+function normG(g){const h=g.header,m=g.meta,ix={};h.forEach((k,i)=>ix[k]=i);const v=(r,k)=>ix[k]==null?'':r[ix[k]],n=(r,k)=>{const x=v(r,k);return x===''||x==null?null:+x};
+return g.rows.map(r=>{let b=String(v(r,'Bases')??'');if(/^\d{1,3}$/.test(b))b=b.padStart(3,'0');else b='';
+return{game:m.id,date:fmtDate(m.date||v(r,'Date')),gt:m.type||'game',home:m.home,away:m.away,inn:n(r,'Inning'),half:v(r,'Half'),pa:+v(r,'PA'),n:+v(r,'Pitch#'),bat:v(r,'Batter'),bt:v(r,'Batting Team'),side:/^(L|S|Slapper)$/.test(v(r,'Bats'))?'L':'R',pit:v(r,'Pitcher'),pt:v(r,'Pitcher Team'),arm:v(r,'Throws'),ty:v(r,'Pitch Type'),v:n(r,'Velo'),x:n(r,'Zone X'),y:n(r,'Zone Y'),cnt:String(v(r,'Count')),res:v(r,'Pitch Result'),par:v(r,'PA Result')||'',outs:n(r,'Outs'),bases:b,hs:n(r,'Home Score'),as:n(r,'Away Score')}}).filter(p=>p.pit&&p.bat)}
+function rowsOfR(s){return s.rows.map(r=>{const o={};s.header.forEach((k,i)=>o[k]=r[i]);if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}if(o.RelHt===0&&o.RelSide===0){o.RelHt=o.RelSide=o.RAng=o.HAng=null}o.player=s.meta.player;o.rkey=s.meta.playerId||slug(s.meta.player);return o})}
+async function loadAll(){setSt('Loading games…');const l=await call('games','');GAMES=l.games||[];GM=Object.fromEntries(GAMES.map(g=>[g.id,g]));PIT=[];
+for(let off=0;off<GAMES.length;off+=20){const j=await call('games','?all=1&offset='+off+'&limit=20');(j.games||[]).forEach(g=>PIT.push(...normG(g)))}
+RAP=[];RAPERR='';LINKS={};TMAP={};setSt('Loading Rapsodo…');
+try{const r=await call('rapsodo','');const ids=(r.sessions||[]).map(x=>x.id);for(let i=0;i<ids.length;i+=10){const j=await call('rapsodo','?ids='+ids.slice(i,i+10).join(','));(j.sessions||[]).forEach(s=>RAP.push(...rowsOfR(s)))}
+try{LINKS=(await call('rapsodo','?links=1')).links||{}}catch(e){}try{TMAP=((await call('rapsodo','?aliases=1')).aliases||{}).types||{}}catch(e){}}catch(e){RAPERR=e.message}
+setSt(GAMES.length+' games · '+PIT.length+' charted pitches · '+RAP.length+' Rapsodo pitches')}
+const setSt=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
+/* ---------- state ---------- */
+const S={tab:'pl',typ:'game',seq:{pit:'*',scope:'cal',group:'type',min:3,d:25},eo:{scope:'cal',pit:'*',bat:'*',ty:'*',side:'*',cnt:'*',metric:'whiff',cell:null},sh:{pit:'*',spin:true,mv:'traj'},lv:{pit:'*'}};
+const setPath=(k,v)=>{const p=k.split('.');let o=S;p.slice(0,-1).forEach(x=>o=o[x]);o[p[p.length-1]]=v};
+const typeOK=p=>S.typ=='all'||p.gt==S.typ;
+const pool=scope=>PIT.filter(p=>typeOK(p)&&(scope=='cal'?cal(p.pt):scope=='opp'?!cal(p.pt):true));
+const calPitchers=()=>[...groupBy(PIT.filter(p=>cal(p.pt)),p=>p.pit)].sort((a,b)=>b[1].length-a[1].length).map(x=>x[0]);
+const sel=(k,opts,cur,label)=>`<label>${label}<select data-k="${k}">${opts.map(o=>{const[v,l]=Array.isArray(o)?o:[o,o];return`<option value="${E(v)}" ${String(v)==String(cur)?'selected':''}>${E(l)}</option>`}).join('')}</select></label>`;
+const seg=(k,opts,cur,label)=>`<div>${label?`<small>${label}</small>`:''}<div class="seg">${opts.map(([v,l])=>`<button data-sk="${k}" data-v="${E(v)}" class="${String(cur)==String(v)?'on':''}">${E(l)}</button>`).join('')}</div></div>`;
+function scat(pts,avgs,xl,yl,o={}){const all=pts.concat(avgs);if(!all.length)return'<p class="mut">Not enough data for this chart.</p>';const W=300,H=280,L=40,B=32,T=8,R=8;
+let x0=Math.min(...all.map(p=>p.x)),x1=Math.max(...all.map(p=>p.x)),y0=Math.min(...all.map(p=>p.y)),y1=Math.max(...all.map(p=>p.y));const px=(x1-x0||2)*.08,py=(y1-y0||2)*.08;x0-=px;x1+=px;y0-=py;y1+=py;
+const sx=v=>L+(v-x0)/(x1-x0)*(W-L-R),sy=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);let g='';
+ticks(x0,x1).forEach(v=>g+=`<line x1="${sx(v)}" x2="${sx(v)}" y1="${T}" y2="${H-B}" stroke="${v==0?'#003262':'#E5E9EF'}"/><text x="${sx(v)}" y="${H-B+12}" font-size="9" fill="#8A94A3" text-anchor="middle">${v}</text>`);
+ticks(y0,y1).forEach(v=>g+=`<line y1="${sy(v)}" y2="${sy(v)}" x1="${L}" x2="${W-R}" stroke="${v==0?'#003262':'#E5E9EF'}"/><text x="${L-4}" y="${sy(v)+3}" font-size="9" fill="#8A94A3" text-anchor="end">${v}</text>`);
+const d=pts.map(p=>`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.6" fill="${p.c}" fill-opacity=".5"/>`).join('');
+const a=avgs.map(p=>`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="8" fill="${p.c}" stroke="#fff" stroke-width="2.5"/>`).join('');
+return`<svg viewBox="0 0 ${W} ${H}">${g}${d}${a}<text x="${L+(W-L-R)/2}" y="${H-3}" font-size="10" fill="#5B6778" text-anchor="middle">${E(xl)}</text><text transform="rotate(-90 9 ${T+(H-T-B)/2})" x="9" y="${T+(H-T-B)/2}" font-size="10" fill="#5B6778" text-anchor="middle">${E(yl)}</text></svg>`}
+const legend=ts=>ts.map(t=>`<span style="margin-right:10px"><span class="sw" style="background:${col(t)}"></span>${E(t)}</span>`).join('');
+
+/* =====================================================================
+   1) LINKING RAPSODO <-> CHARTED GAMES
+   ===================================================================== */
+const rapPlayers=()=>{const m=new Map();RAP.forEach(r=>{const o=m.get(r.rkey)||m.set(r.rkey,{key:r.rkey,name:r.player,n:0}).get(r.rkey);o.n++});return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name))};
+function autoLink(gname){const a=nrm(gname).split(' ');let best=[],bs=0;rapPlayers().forEach(p=>{const b=nrm(p.name).split(' ');let sc=0;
+if(a.join(' ')==b.join(' '))sc=3;else if(a.length>1&&b.length>1&&a[a.length-1]==b[b.length-1]&&a[0][0]==b[0][0])sc=2;else if(a.length==1&&a[0]==b[0])sc=1;
+if(sc>bs){bs=sc;best=[p]}else if(sc==bs&&sc)best.push(p)});return bs&&best.length==1?best[0].key:''}
+const linkOf=g=>LINKS[g]!=null?(LINKS[g]=='-'?'':LINKS[g]):autoLink(g);
+const rapRowsFor=g=>{const k=linkOf(g);return k?RAP.filter(r=>r.rkey==k):[]};
+const rapNameOfKey=k=>(rapPlayers().find(p=>p.key==k)||{}).name||'';
+const gameTypeOf=t=>TMAP[t]&&TMAP[t]!='-'?TMAP[t]:t;
+const GTYPES=['Rise','Drop','Curve','Screw','Changeup','Offspeed','Fastball','Unknown'];
+function tabLink(){const gp=[...groupBy(PIT.filter(p=>cal(p.pt)),p=>p.pit)].sort((a,b)=>b[1].length-a[1].length).map(x=>x[0]),rp=rapPlayers();
+const rtypes=[...new Set(RAP.map(r=>r.Type))].sort();
+const unmatchedR=rp.filter(p=>!gp.some(g=>linkOf(g)==p.key));
+let h=`<div class="card"><h3>How the two data sets connect</h3><p>Rapsodo bullpens and charted games describe the same pitchers, so the link is made on the <b>pitcher</b> and the <b>pitch type</b>, not on individual pitches. Each charted Cal pitcher is matched to a Rapsodo player by name below, and Rapsodo's pitch labels are matched to your charted labels. Matches that look right are filled in automatically; change anything that's wrong and press Save.</p>${RAPERR?`<p class="bad">Rapsodo data could not be loaded: ${E(RAPERR)}</p>`:''}</div>`;
+h+=`<div class="card"><h3>Pitcher matching</h3><div class="wrap"><table><thead><tr><th>Charted pitcher</th><th>Charted pitches</th><th>Linked Rapsodo player</th><th>Rapsodo pitches</th></tr></thead><tbody>${gp.map(g=>{const k=linkOf(g),n=PIT.filter(p=>p.pit==g&&cal(p.pt)).length;return`<tr><td>${E(g)}</td><td>${n}</td><td style="text-align:left"><select data-lk="${E(g)}"><option value="-">— not linked —</option>${rp.map(p=>`<option value="${E(p.key)}" ${p.key==k?'selected':''}>${E(p.name)}</option>`).join('')}</select> ${LINKS[g]==null&&k?'<span class="pv">AUTO</span>':''}</td><td>${k?RAP.filter(r=>r.rkey==k).length:'—'}</td></tr>`}).join('')||'<tr><td colspan="4" class="mut">No charted Cal pitchers yet.</td></tr>'}</tbody></table></div>
+${unmatchedR.length?`<p class="mut">Rapsodo players with no charted match: ${unmatchedR.map(p=>E(p.name)).join(', ')}. They still appear in the Rapsodo page and in Pitch shapes.</p>`:''}</div>`;
+const needMap=rtypes.filter(t=>!GTYPES.includes(t));
+h+=`<div class="card"><h3>Pitch-type matching</h3><p class="mut">Rapsodo labels that don't exist in the charting app. Choose which charted type each should count as when the two are compared (leave as is to keep them separate).</p><div class="row">${needMap.length?needMap.map(t=>`<label>${E(t)} counts as<select data-tm="${E(t)}"><option value="-">(its own type)</option>${GTYPES.map(g=>`<option ${TMAP[t]==g?'selected':''}>${g}</option>`).join('')}</select></label>`).join(''):'<span class="mut">All Rapsodo labels already match your charted types.</span>'}</div>
+<p style="margin-top:10px"><button class="go" data-a="savelinks">Save matches</button> <span id="lkmsg" class="mut"></span></p></div>`;
+const linked=gp.filter(g=>linkOf(g));
+h+=`<div class="card"><h3>Pitcher profile: bullpen vs game</h3>${linked.length?`<div class="row">${sel('lv.pro',linked,S.lv.pro&&linked.includes(S.lv.pro)?S.lv.pro:linked[0],'Pitcher')}</div>${profile(S.lv.pro&&linked.includes(S.lv.pro)?S.lv.pro:linked[0])}`:'<p class="mut">Link at least one pitcher above to see this comparison.</p>'}</div>`;return h}
+function profile(g){const G=PIT.filter(p=>p.pit==g&&cal(p.pt)&&typeOK(p)),R=rapRowsFor(g),gt=[...new Set(G.map(p=>p.ty).concat(R.map(r=>gameTypeOf(r.Type))))].filter(Boolean);
+const rows=gt.map(t=>{const a=G.filter(p=>p.ty==t),b=R.filter(r=>gameTypeOf(r.Type)==t),sw=a.filter(p=>SWG.includes(p.res)),wh=a.filter(p=>p.res=='Swinging Strike'),bs=b.filter(r=>r.Strike!=null),gv=avg(a.map(p=>p.v)),rv=avg(b.map(r=>r.Velo));
+return`<tr><td><span class="sw" style="background:${col(t)}"></span>${E(t)}</td><td>${a.length}</td><td>${fp(ratio(a.length,G.length))}</td><td>${f1(gv)}</td><td>${fp(ratio(a.filter(p=>STRK.includes(p.res)).length,a.length))}</td><td>${fp(ratio(wh.length,sw.length))}</td>
+<td>${b.length}</td><td>${fp(ratio(b.length,R.length))}</td><td>${f1(rv)}</td><td>${f1(avg(b.map(r=>r.Spin)))}</td><td>${sg1(avg(b.map(r=>S.sh.mv=='traj'?r.VB:r.VBs)))}</td><td>${sg1(avg(b.map(r=>S.sh.mv=='traj'?r.HB:r.HBs)))}</td><td>${fp(ratio(bs.filter(r=>r.Strike==1).length,bs.length))}</td><td>${gv!=null&&rv!=null?sg1(rv-gv):'—'}</td></tr>`}).join('');
+return`<div class="wrap"><table><thead><tr><th rowspan="2">Pitch</th><th colspan="5">Charted games</th><th colspan="8">Rapsodo bullpens</th></tr><tr><th>#</th><th>Usage</th><th>Avg mph</th><th>Strike %</th><th>Whiff %</th><th>#</th><th>Usage</th><th>Avg mph</th><th>Spin</th><th>VB</th><th>HB</th><th>Strike %</th><th>Δ mph</th></tr></thead><tbody>${rows||'<tr><td colspan="14" class="mut">No data.</td></tr>'}</tbody></table></div><small>Charted velocity comes from the preset buttons you tap in the app, so it is rounded. Δ mph = Rapsodo minus charted. A big gap usually means the bullpen pitch differs from the game pitch (or the velocity was tapped loosely).</small>`}
+
+/* =====================================================================
+   2) TUNNELING & SEQUENCING
+   ===================================================================== */
+const vy=y=>y==null?null:y<130?'Up':y>=200?'Down':'Mid';
+function seqPairs(P){const out=[];groupBy(P,p=>p.game+'|'+p.pa).forEach(a=>{a.sort((x,y)=>x.n-y.n);for(let i=1;i<a.length;i++)out.push([a[i-1],a[i]])});return out}
+function seqStats(P,group){const pairs=seqPairs(P),base={},m=new Map();
+groupBy(P,p=>p.ty).forEach((a,t)=>{const sw=a.filter(p=>SWG.includes(p.res)).length;base[t]={whiff:ratio(a.filter(p=>p.res=='Swinging Strike').length,sw),strike:ratio(a.filter(p=>STRK.includes(p.res)).length,a.length)}});
+pairs.forEach(([a,b])=>{if(group=='loc'&&(vy(a.y)==null||vy(b.y)==null))return;const k=group=='type'?a.ty+'>'+b.ty:a.ty+'|'+vy(a.y)+'>'+b.ty+'|'+vy(b.y);const o=m.get(k)||m.set(k,{a:a.ty,b:b.ty,ay:group=='loc'?vy(a.y):null,by:group=='loc'?vy(b.y):null,n:0,sw:0,wh:0,st:0}).get(k);
+o.n++;if(SWG.includes(b.res))o.sw++;if(b.res=='Swinging Strike')o.wh++;if(STRK.includes(b.res))o.st++});
+return{list:[...m.values()].map(o=>({...o,whiff:ratio(o.wh,o.sw),strike:o.st/o.n,lift:o.sw&&base[o.b]&&base[o.b].whiff!=null?ratio(o.wh,o.sw)-base[o.b].whiff:null})),base,total:pairs.length}}
+function tunnelRows(g,d){const R=rapRowsFor(g).filter(r=>r.RelHt!=null&&r.RAng!=null&&r.HAng!=null&&r.RelSide!=null&&r.Side!=null&&r.Height!=null);
+const T=[...groupBy(R,r=>r.Type)].filter(([t,a])=>a.length>=5).map(([t,a])=>{const rel={ht:avg(a.map(r=>r.RelHt)),sd:avg(a.map(r=>r.RelSide)),ra:avg(a.map(r=>r.RAng)),ha:avg(a.map(r=>r.HAng))};
+return{t,n:a.length,rel,v:avg(a.map(r=>r.Velo)),pl:{x:avg(a.map(r=>r.Side)),y:avg(a.map(r=>r.Height))},px:(rel.sd+d*Math.tan(rel.ha*Math.PI/180))*12,py:(rel.ht+d*Math.tan(rel.ra*Math.PI/180))*12,rows:a}});
+const pairs=[];for(let i=0;i<T.length;i++)for(let j=i+1;j<T.length;j++){const A=T[i],B=T[j],tg=Math.hypot(A.px-B.px,A.py-B.py),pg=Math.hypot(A.pl.x-B.pl.x,A.pl.y-B.pl.y);pairs.push({A,B,tg,pg,ratio:pg/Math.max(tg,.5),dv:Math.abs((A.v||0)-(B.v||0))})}
+return{T,pairs:pairs.sort((x,y)=>y.ratio-x.ratio)}}
+function tabSeq(){const q=S.seq,names=calPitchers(),P0=pool(q.scope),single=q.pit!='*';let P=single?P0.filter(p=>p.pit==q.pit):P0;
+const sq=seqStats(P,q.group),shown=sq.list.filter(o=>o.n>=q.min).sort((a,b)=>(b.whiff??-1)-(a.whiff??-1)||b.n-a.n);
+const ctrl=`<div class="card"><div class="row">${seg('seq.scope',[['cal','Cal pitchers'],['opp','Opposing pitchers'],['all','Everyone']],q.scope,'Pitchers')}${sel('seq.pit',[['*','All pitchers in scope']].concat((q.scope=='opp'?[...new Set(P0.map(p=>p.pit))]:q.scope=='all'?[...new Set(P0.map(p=>p.pit))]:names).map(n=>[n,n])),q.pit,'Pitcher')}${seg('seq.group',[['type','Pitch types'],['loc','Types + height']],q.group,'Group sequences by')}
+<label>Min. times thrown: <b>${q.min}</b><input type="range" min="2" max="15" value="${q.min}" data-rk="seq.min"></label></div></div>`;
+const top=shown.filter(o=>o.sw>=3).slice(0,3);
+let h=ctrl+`<div class="card"><h3>Sequencing: what works after what</h3><div class="note">Each row is "pitch A, then pitch B on the very next pitch of the same at-bat". <b>Whiff %</b> = swings and misses ÷ swings on pitch B. <b>vs avg</b> is how much better or worse that is than pitch B's whiff rate in general, so you can tell a good sequence from a pitch that just gets whiffs anyway. Small samples swing wildly; read anything under about 5 swings as a hint, not a finding.</div>
+${top.length?top.map(o=>`<p class="say">${seqLabel(o)}: <b>${fp(o.whiff)}</b> whiffs (${o.wh} of ${o.sw} swings, ${o.n} pitches).</p>`).join(''):`<p class="mut">${sq.total?'No sequence has enough swings yet for a headline. Lower the minimum or add more games.':'No consecutive pitches found for this selection.'}</p>`}
+<div class="wrap"><table><thead><tr><th>Sequence</th><th>Times</th><th>Swings</th><th>Whiff %</th><th>vs avg</th><th>Strike %</th></tr></thead><tbody>${shown.slice(0,40).map(o=>`<tr><td>${seqLabel(o)}</td><td>${o.n}</td><td>${o.sw}</td><td>${fp(o.whiff)}</td><td class="${o.lift>0?'pos':o.lift<0?'neg':''}">${o.lift==null?'—':pp(o.lift)}</td><td>${fp(o.strike)}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">Nothing to show with these settings.</td></tr>'}</tbody></table></div>
+<small>${sq.total} consecutive-pitch pairs in this selection. Height: Up = above or top row of the zone, Down = bottom row or below.</small></div>`;
+/* tunneling */
+h+=`<div class="card"><h3>Tunneling (from Rapsodo)</h3>`;
+if(!single||q.scope!='cal')h+='<p class="mut">Choose one Cal pitcher above (with Cal pitchers selected) to see her pitch tunnels. Tunneling needs her Rapsodo release data, so she must be linked on the first tab.</p>';
+else if(!rapRowsFor(q.pit).length)h+='<p class="mut">This pitcher is not linked to a Rapsodo player yet. Link her on the first tab.</p>';
+else{const tr=tunnelRows(q.pit,q.d);
+h+=`<div class="note">Two pitches <b>tunnel</b> when they leave the hand along nearly the same path, then break apart late. For each pair of this pitcher's pitch types we project each type's average release point and angle straight ahead to a decision point ${q.d} ft from release and measure the gap there, then compare it with how far apart they finish at the plate. <b>Tunnel ratio</b> = plate gap ÷ decision-point gap: higher means "looks the same, ends up different". This is an approximation (it ignores early break), so use it to compare pairs, not as an exact physics number.</div>
+<div class="row"><label>Decision point: <b>${q.d} ft</b> from release<input type="range" min="15" max="35" value="${q.d}" data-rk="seq.d"></label></div>`;
+if(tr.T.length<2)h+='<p class="mut">Need at least two pitch types with 5+ Rapsodo pitches that have release data.</p>';
+else{const base=seqStats(P,'type').list;
+const sqo=(a,b)=>base.find(o=>o.a==gameTypeOf(a)&&o.b==gameTypeOf(b));
+h+=`<div class="cols"><div><small>Where each pitch type is heading at the decision point (inches, projected)</small>${scat(tr.T.flatMap(t=>t.rows.filter(r=>r.RelHt!=null&&r.RAng!=null&&r.HAng!=null&&r.RelSide!=null).map(r=>({x:(r.RelSide+q.d*Math.tan(r.HAng*Math.PI/180))*12,y:(r.RelHt+q.d*Math.tan(r.RAng*Math.PI/180))*12,c:col(t.t)}))),tr.T.map(t=>({x:t.px,y:t.py,c:col(t.t)})),'Side (in)','Height (in)')}</div>
+<div><small>Where they finish at the plate (inches, Rapsodo zone)</small>${scat(tr.T.flatMap(t=>t.rows.filter(r=>r.Side!=null&&r.Height!=null).map(r=>({x:r.Side,y:r.Height,c:col(t.t)}))),tr.T.map(t=>({x:t.pl.x,y:t.pl.y,c:col(t.t)})),'Side (in)','Height (in)')}</div></div><p style="text-align:center">${legend(tr.T.map(t=>t.t))}</p>
+<div class="wrap"><table><thead><tr><th>Pair</th><th>Gap at decision point</th><th>Gap at plate</th><th>Tunnel ratio</th><th>Δ mph</th><th>In games: A→B</th><th>In games: B→A</th></tr></thead><tbody>${tr.pairs.map(p=>{const ab=sqo(p.A.t,p.B.t),ba=sqo(p.B.t,p.A.t),f=o=>o?`${o.n}× · ${fp(o.whiff)} whiff (${o.sw} sw)`:'—';
+return`<tr><td><span class="sw" style="background:${col(p.A.t)}"></span>${E(p.A.t)} ↔ <span class="sw" style="background:${col(p.B.t)}"></span>${E(p.B.t)}</td><td>${f1(p.tg)}"</td><td>${f1(p.pg)}"</td><td><b>${f1(p.ratio)}</b></td><td>${f1(p.dv)}</td><td>${f(ab)}</td><td>${f(ba)}</td></tr>`}).join('')}</tbody></table></div>
+<small>This table is where the two data sets meet: the first columns come from Rapsodo bullpens, the last two from what actually happened when she threw those pitches back to back in games.</small>`}}
+return h+'</div>'}
+const seqLabel=o=>{const lab=(t,y)=>`<span class="sw" style="background:${col(t)}"></span>${E(t)}${y?` <small>(${y.toLowerCase()})</small>`:''}`;return`${lab(o.a,o.ay)} → ${lab(o.b,o.by)}`};
+
+/* =====================================================================
+   3) EXPECTED OUTCOMES BY LOCATION  (kernel-smoothed, shrunk toward average)
+   ===================================================================== */
+const GWd=300,GHt=330,CELL=15,NC=GWd/CELL,NR=GHt/CELL,BW=30,KPRIOR=4;
+const cb=c=>c=='0-0'?'first':['0-1','0-2','1-2'].includes(c)?'ahead':['1-0','2-0','3-0','2-1','3-1'].includes(c)?'behind':['1-1','2-2','3-2'].includes(c)?'even':'other';
+const CB_L={first:'First pitch (0-0)',ahead:'Pitcher ahead',even:'Even count',behind:'Hitter ahead'};
+const MET={strike:{l:'Strike %',num:p=>STRK.includes(p.res)?1:0,den:()=>1,good:'max'},swing:{l:'Swing %',num:p=>SWG.includes(p.res)?1:0,den:()=>1,good:'max'},whiff:{l:'Whiff % (per swing)',num:p=>p.res=='Swinging Strike'?1:0,den:p=>SWG.includes(p.res)?1:0,good:'max'},hit:{l:'Hit % when ball is put in play',num:p=>HB[p.par]?1:0,den:p=>p.res=='In Play'&&p.par?1:0,good:'min'}};
+function eoPool(){const e=S.eo;let P=pool(e.scope).filter(p=>p.x!=null&&p.y!=null);return P}
+function eoFilter(P){const e=S.eo;return P.filter(p=>(e.ty=='*'||p.ty==e.ty)&&(e.side=='*'||p.side==e.side)&&(e.cnt=='*'||cb(p.cnt)==e.cnt))}
+function eoCell(P,cx,cy,m,focus){let wn=0,wd=0,ef=0;const M=MET[m];for(const p of P){const dx=p.x-cx,dy=p.y-cy,d2=dx*dx+dy*dy;if(d2>9*BW*BW)continue;let w=Math.exp(-d2/(2*BW*BW));if(focus)w*=focus(p);const dn=M.den(p);if(!dn)continue;wd+=w;wn+=w*M.num(p);ef+=w}return{wn,wd,ef}}
+function eoGrid(P,m,focus){const M=MET[m];let tn=0,td=0;P.forEach(p=>{const d=M.den(p);if(d){td++;tn+=M.num(p)}});const prior=td?tn/td:0,cells=[];
+for(let r=0;r<NR;r++)for(let c=0;c<NC;c++){const cx=c*CELL+CELL/2,cy=r*CELL+CELL/2,o=eoCell(P,cx,cy,m,focus);cells.push({r,c,cx,cy,v:(o.wn+KPRIOR*prior)/(o.wd+KPRIOR),ef:o.wd})}return{cells,prior,td}}
+const rowWord=y=>y<60?'above the zone':y<130?'top of the zone':y<200?'middle':y<270?'bottom of the zone':'below the zone',colWord=x=>x<60?'far left':x<120?'left':x<180?'middle':x<240?'right':'far right';
+function looLogLoss(P){if(P.length<30)return null;const S2=P.length>1500?P.filter((_,i)=>i%Math.ceil(P.length/1500)==0):P;let ll=0,bl=0,n=0;const rate=P.filter(p=>STRK.includes(p.res)).length/P.length,rc=Math.min(Math.max(rate,.02),.98);
+for(const q of S2){let wn=0,wd=0;for(const p of P){if(p===q)continue;const dx=p.x-q.x,dy=p.y-q.y,d2=dx*dx+dy*dy;if(d2>9*BW*BW)continue;let w=Math.exp(-d2/(2*BW*BW));if(p.ty!=q.ty)w*=.4;if(cb(p.cnt)!=cb(q.cnt))w*=.5;wd+=w;wn+=w*(STRK.includes(p.res)?1:0)}
+const pr=Math.min(Math.max((wn+KPRIOR*rc)/(wd+KPRIOR),.02),.98),y=STRK.includes(q.res)?1:0;ll-=y?Math.log(pr):Math.log(1-pr);bl-=y?Math.log(rc):Math.log(1-rc);n++}
+return{model:ll/n,base:bl/n,n}}
+function tabEO(){const e=S.eo,Pall=eoPool(),Pf=eoFilter(Pall);const pits=[...new Set(Pall.map(p=>p.pit))].sort(),bats=[...new Set(Pall.map(p=>p.bat))].sort(),tys=[...new Set(Pall.map(p=>p.ty))].sort();
+const focus=p=>(e.pit=='*'||p.pit==e.pit?1:.3)*(e.bat=='*'||p.bat==e.bat?1:.3);const G=eoGrid(Pf,e.metric,(e.pit!='*'||e.bat!='*')?focus:null),M=MET[e.metric];
+const vals=G.cells.filter(c=>c.ef>=2).map(c=>c.v),lo=Math.min(...vals,G.prior),hi=Math.max(...vals,G.prior);const color=v=>{const t=hi>lo?(v-lo)/(hi-lo):.5;const a=[238,243,250],b=[0,50,98],c=a.map((x,i)=>Math.round(x+(b[i]-x)*t));return`rgb(${c})`};
+const cellsSvg=G.cells.map(c=>`<rect x="${c.c*CELL}" y="${c.r*CELL}" width="${CELL}" height="${CELL}" fill="${color(c.v)}" fill-opacity="${Math.max(.15,Math.min(1,c.ef/8)).toFixed(2)}" data-cell="${c.r},${c.c}" style="cursor:pointer"/>`).join('');
+const selc=e.cell?G.cells.find(c=>c.r==e.cell[0]&&c.c==e.cell[1]):null;
+const svg=`<svg viewBox="0 0 300 330" style="max-width:420px">${cellsSvg}<rect x="60" y="60" width="180" height="210" fill="none" stroke="#FDB515" stroke-width="3"/>${[1,2].map(i=>`<line x1="${60+60*i}" x2="${60+60*i}" y1="60" y2="270" stroke="#FDB515" stroke-opacity=".6"/><line y1="${60+70*i}" y2="${60+70*i}" x1="60" x2="240" stroke="#FDB515" stroke-opacity=".6"/>`).join('')}${selc?`<rect x="${selc.c*CELL}" y="${selc.r*CELL}" width="${CELL}" height="${CELL}" fill="none" stroke="#C42B2B" stroke-width="2.5"/>`:''}</svg>`;
+/* best zones */
+const cand=G.cells.filter(c=>c.ef>=4).sort((a,b)=>M.good=='max'?b.v-a.v:a.v-b.v),best=[];for(const c of cand){if(best.every(b=>Math.hypot(b.cx-c.cx,b.cy-c.cy)>55))best.push(c);if(best.length>=3)break}
+const goalTxt={strike:'most likely to be a strike',swing:'most likely to draw a swing',whiff:'most likely to get a swing and miss',hit:'least likely to become a hit if put in play'}[e.metric];
+const descr=c=>{let t=`${rowWord(c.cy)}, ${colWord(c.cx)}`;if(e.side!='*')t+=' ('+((e.side=='R')==(c.cx<150)?'inside':'outside')+' to a '+(e.side=='R'?'righty':'lefty')+')';return t};
+const ll=looLogLoss(Pall);
+let h=`<div class="card"><div class="row">${seg('eo.scope',[['cal','Cal pitchers'],['opp','Opposing pitchers']],e.scope,'Pitchers')}${sel('eo.pit',[['*','All pitchers']].concat(pits.map(x=>[x,x])),e.pit,'Focus pitcher')}${sel('eo.bat',[['*','All batters']].concat(bats.map(x=>[x,x])),e.bat,'Focus batter')}${sel('eo.ty',[['*','All pitch types']].concat(tys.map(x=>[x,x])),e.ty,'Pitch type')}${sel('eo.side',[['*','Any batter side'],['R','Righty batters'],['L','Lefty batters']],e.side,'Batter side')}${sel('eo.cnt',[['*','Any count']].concat(Object.entries(CB_L)),e.cnt,'Count')}${sel('eo.metric',Object.entries(MET).map(([k,v])=>[k,v.l]),e.metric,'Show')}</div></div>`;
+h+=`<div class="card"><h3>Expected outcome by pitch location</h3><div class="note">Every cell shows the smoothed rate for pitches thrown <i>near</i> that spot under the filters above (nearby pitches count more, far ones less), pulled toward the overall average when there are few pitches so one lucky pitch can't make a hot spot. Faded cells have little data behind them. Focus pitcher / batter gives their own pitches full weight and everyone else 30%, so the picture starts from the team and moves toward that player as her sample grows. Catcher's view, as charted.</div>
+<div class="cols"><div>${svg}<p style="text-align:center"><small>${M.l}: lighter = lower, darker = higher · overall ${fp(G.prior)} · ${Pf.length} pitches match the filters</small></p></div>
+<div><h3 style="margin-top:0">What works</h3>${best.length?`<p class="mut">The spots ${goalTxt} under these filters:</p>${best.map((c,i)=>`<p class="say">${i+1}. <b>${E(descr(c))}</b> → ${fp(c.v)} <small>(about ${Math.round(c.ef)} nearby pitches)</small></p>`).join('')}`:'<p class="mut">Not enough pitches under these filters for a recommendation yet. Loosen a filter or add more games.</p>'}
+${selc?cellDetail(selc,Pf,Pall):'<p class="mut">Click any cell for the full breakdown at that spot.</p>'}
+${ll?`<div class="note"><b>Model check.</b> Predicting strike vs ball from location, count and pitch type on pitches the model hasn't seen: error ${f3(ll.model)} vs ${f3(ll.base)} for just guessing the average (${ll.n} pitches; lower is better). ${ll.model<ll.base?`That's a real improvement of ${((1-ll.model/ll.base)*100).toFixed(1)}%.`:'Not better than the average yet, so treat the maps as rough until there are more pitches.'}</div>`:''}</div></div></div>`;return h}
+function cellDetail(c,Pf,Pall){const near=Pall.filter(p=>Math.hypot(p.x-c.cx,p.y-c.cy)<=BW*1.6);const rows=[...groupBy(near,p=>p.ty)].sort((a,b)=>b[1].length-a[1].length).map(([t,a])=>{const sw=a.filter(p=>SWG.includes(p.res)).length,bip=a.filter(p=>p.res=='In Play'&&p.par);return`<tr><td><span class="sw" style="background:${col(t)}"></span>${E(t)}</td><td>${a.length}</td><td>${fp(ratio(a.filter(p=>STRK.includes(p.res)).length,a.length))}</td><td>${fp(ratio(sw,a.length))}</td><td>${fp(ratio(a.filter(p=>p.res=='Swinging Strike').length,sw))}</td><td>${fp(ratio(bip.filter(p=>HB[p.par]).length,bip.length))}</td></tr>`}).join('');
+return`<h3>Selected spot: ${E(rowWord(c.cy))}, ${E(colWord(c.cx))}</h3><div class="wrap"><table><thead><tr><th>Type</th><th>Pitches</th><th>Strike</th><th>Swing</th><th>Whiff</th><th>Hit in play</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="mut">No pitches near this spot.</td></tr>'}</tbody></table></div><small>Raw counts of pitches within about 2 cells, before smoothing.</small>`}
+
+/* =====================================================================
+   4) PITCH SHAPES  (separation scores + k-means clusters)
+   ===================================================================== */
+function kmeans(X,k,seed){const rnd=mulberry(seed),n=X.length,d=X[0].length,dist=(a,b)=>{let s=0;for(let i=0;i<d;i++)s+=(a[i]-b[i])**2;return s};
+let C=[X[Math.floor(rnd()*n)].slice()];while(C.length<k){const D=X.map(x=>Math.min(...C.map(c=>dist(x,c)))),t=sum(D);let r=rnd()*t,i=0;for(;i<n-1&&r>D[i];i++)r-=D[i];C.push(X[i].slice())}
+let lab=new Array(n).fill(0);for(let it=0;it<60;it++){let ch=false;X.forEach((x,i)=>{let b=0,bd=1e18;C.forEach((c,j)=>{const dd=dist(x,c);if(dd<bd){bd=dd;b=j}});if(lab[i]!=b){lab[i]=b;ch=true}});
+C=C.map((c,j)=>{const m=X.filter((_,i)=>lab[i]==j);return m.length?c.map((_,q)=>avg(m.map(x=>x[q]))):c});if(!ch)break}
+return{lab,C,inertia:sum(X.map((x,i)=>dist(x,C[lab[i]])))}}
+function silhouette(X,lab,k){const n=X.length,dist=(a,b)=>Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0));let tot=0;
+for(let i=0;i<n;i++){const ds=new Array(k).fill(0),cn=new Array(k).fill(0);for(let j=0;j<n;j++)if(j!=i){ds[lab[j]]+=dist(X[i],X[j]);cn[lab[j]]++}const own=lab[i];if(cn[own]==0)continue;const a=ds[own]/cn[own];let b=1e18;for(let c=0;c<k;c++)if(c!=own&&cn[c])b=Math.min(b,ds[c]/cn[c]);tot+=b>=1e17?0:(b-a)/Math.max(a,b)}return tot/n}
+function ari(a,b){const A=[...new Set(a)],B=[...new Set(b)],tab=A.map(x=>B.map(y=>a.reduce((s,v,i)=>s+(v==x&&b[i]==y?1:0),0))),c2=n=>n*(n-1)/2,n=a.length;
+const si=sum(tab.map(r=>c2(sum(r)))),sj=sum(B.map((_,j)=>c2(sum(tab.map(r=>r[j]))))),sij=sum(tab.flat().map(c2)),ex=si*sj/c2(n),mx=(si+sj)/2;return mx==ex?1:(sij-ex)/(mx-ex)}
+function shapeData(){const q=S.sh,vk=q.mv=='traj'?'VB':'VBs',hk=q.mv=='traj'?'HB':'HBs';let R=RAP;if(q.pit!='*')R=R.filter(r=>r.rkey==q.pit);
+const need=[ 'Velo',vk,hk].concat(q.spin?['Spin']:[]);R=R.filter(r=>need.every(k=>r[k]!=null));return{R,vk,hk,need}}
+function tabSh(){const q=S.sh,rp=rapPlayers();let h=`<div class="card"><div class="row">${sel('sh.pit',[['*','All pitchers (team)']].concat(rp.map(p=>[p.key,p.name])),q.pit,'Pitcher')}${seg('sh.mv',[['traj','Trajectory'],['spin','Spin-based']],q.mv,'Movement basis')}<label class="ck"><input type="checkbox" data-ck="sh.spin" ${q.spin?'checked':''}> Include spin rate</label></div></div>`;
+if(!RAP.length)return h+`<div class="card"><p class="mut">No Rapsodo data loaded yet. Upload sessions on the Rapsodo page first.</p></div>`;
+const{R,vk,hk,need}=shapeData();if(R.length<15)return h+`<div class="card"><p class="mut">Only ${R.length} pitches have all of ${need.join(', ')}. Need at least 15 for this analysis.</p></div>`;
+const raw=R.map(r=>need.map(k=>r[k])),mu=raw[0].map((_,i)=>avg(raw.map(x=>x[i]))),sd=raw[0].map((_,i)=>Math.sqrt(avg(raw.map(x=>(x[i]-mu[i])**2)))||1),X=raw.map(x=>x.map((v,i)=>(v-mu[i])/sd[i]));
+const labels=R.map(r=>r.Type),types=[...new Set(labels)].sort((a,b)=>labels.filter(x=>x==b).length-labels.filter(x=>x==a).length);
+/* separation between labels */
+const erf=x=>{const t=1/(1+.3275911*Math.abs(x)),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);return x>=0?y:-y},Phi=z=>.5*(1+erf(z/Math.SQRT2));
+function solveLin(A,b){const n=b.length,M=A.map((r,i)=>r.concat(b[i]));for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(M[r][i])>Math.abs(M[p][i]))p=r;[M[i],M[p]]=[M[p],M[i]];for(let r=0;r<n;r++)if(r!=i){const f=M[r][i]/M[i][i];for(let c=i;c<=n;c++)M[r][c]-=f*M[i][c]}}return M.map((r,i)=>r[n]/r[i])}
+function sep(A,B){const d=A[0].length,mu=M=>M[0].map((_,j)=>avg(M.map(x=>x[j]))),ma=mu(A),mb=mu(B),Sg=Array.from({length:d},()=>new Array(d).fill(0));[[A,ma],[B,mb]].forEach(([M,m])=>M.forEach(x=>{for(let i=0;i<d;i++)for(let j=0;j<d;j++)Sg[i][j]+=(x[i]-m[i])*(x[j]-m[j])}));const dof=Math.max(1,A.length+B.length-2);for(let i=0;i<d;i++){for(let j=0;j<d;j++)Sg[i][j]/=dof;Sg[i][i]+=.05}
+const df=ma.map((v,i)=>v-mb[i]),so=solveLin(Sg,df);return Math.sqrt(Math.max(0,sum(df.map((v,i)=>v*so[i]))))}
+const usable=types.filter(t=>labels.filter(x=>x==t).length>=5);const pairs=[];for(let i=0;i<usable.length;i++)for(let j=i+1;j<usable.length;j++){const d=sep(X.filter((_,k)=>labels[k]==usable[i]),X.filter((_,k)=>labels[k]==usable[j]));pairs.push({a:usable[i],b:usable[j],d,acc:Phi(d/2)})}pairs.sort((x,y)=>x.d-y.d);
+const grade=d=>d>=3?['Clearly different','pos']:d>=2?['Somewhat different','']:['Overlapping','neg'];
+/* clusters */
+let best=null;const kmax=Math.min(6,Math.max(2,Math.floor(R.length/8)));for(let k=2;k<=kmax;k++){let bk=null;for(let s=1;s<=8;s++){const r=kmeans(X,k,s*7919+k);if(!bk||r.inertia<bk.inertia)bk=r}const sil=silhouette(X,bk.lab,k);if(!best||sil>best.sil)best={k,sil,...bk}}
+const cl=best.lab,A=ari(labels,cl),ncl=best.k;
+const tab=types.map(t=>({t,cnt:Array.from({length:ncl},(_,c)=>labels.reduce((s,l,i)=>s+(l==t&&cl[i]==c?1:0),0))}));
+const CCOL=['#2563EB','#DC2626','#16A34A','#9333EA','#F59E0B','#0891B2'];
+const pts=R.map((r,i)=>({x:r[hk],y:r[vk],c:CCOL[cl[i]]})),pts2=R.map(r=>({x:r[hk],y:r[vk],c:col(r.Type)}));
+const cavg=Array.from({length:ncl},(_,c)=>{const m=R.filter((_,i)=>cl[i]==c);return{x:avg(m.map(r=>r[hk])),y:avg(m.map(r=>r[vk])),c:CCOL[c],n:m.length,v:avg(m.map(r=>r.Velo)),sp:avg(m.map(r=>r.Spin)),vb:avg(m.map(r=>r[vk]))}});
+const verdict=[];const pur=sum(tab.map(r=>Math.max(...r.cnt)))/R.length;
+verdict.push(`The pitches fall into <b>${ncl} natural groups</b> (silhouette ${f2(best.sil)}; above ~0.5 is well separated, below ~0.25 is weak). Rapsodo labelled them as <b>${types.length} types</b>. Agreement between the two groupings: ${f2(A)} on a 0–1 scale (1 = identical), and ${fp(pur)} of pitches sit in the group that matches their label.`);
+const ov=pairs.filter(p=>p.d<2);if(ov.length)verdict.push(`Labels that overlap: ${ov.map(p=>`<b>${E(p.a)}</b> and <b>${E(p.b)}</b> (you'd tell them apart only ${fp(p.acc)} of the time, where 50% is a coin flip)`).join('; ')}. By velocity, movement${q.spin?' and spin':''} they behave like the same pitch.`);else verdict.push('Every pair of labels is separated by at least 2 on the scale below, so the labels look consistent.');
+h+=`<div class="card"><h3>What the data says</h3>${verdict.map(v=>`<p class="say">${v}</p>`).join('')}<small>${R.length} Rapsodo pitches used (features: ${need.map(k=>({Velo:'velocity',VB:'vertical break',HB:'horizontal break',VBs:'vertical break (spin)',HBs:'horizontal break (spin)',Spin:'spin rate'}[k]||k)).join(', ')}; each scaled so no single feature dominates).${q.pit=='*'?' Pitchers are pooled, so different pitchers\' versions of a pitch can blur together; pick one pitcher for a cleaner read.':''}</small></div>
+<div class="cols"><div class="card"><h3>Coloured by Rapsodo label</h3>${scat(pts2,[],'Horizontal break (in)','Vertical break (in)')}<p style="text-align:center">${legend(types)}</p></div>
+<div class="card"><h3>Coloured by data-driven group</h3>${scat(pts,cavg,'Horizontal break (in)','Vertical break (in)')}<p style="text-align:center">${cavg.map((c,i)=>`<span style="margin-right:10px"><span class="sw" style="background:${c.c}"></span>Group ${i+1} (${c.n})</span>`).join('')}</p></div></div>
+<div class="card"><h3>Labels vs groups</h3><div class="wrap"><table><thead><tr><th>Rapsodo label</th>${cavg.map((c,i)=>`<th><span class="sw" style="background:${c.c}"></span>Group ${i+1}</th>`).join('')}</tr></thead><tbody>${tab.map(r=>{const tot=sum(r.cnt);return`<tr><td><span class="sw" style="background:${col(r.t)}"></span>${E(r.t)} (${tot})</td>${r.cnt.map(c=>`<td style="${c==Math.max(...r.cnt)&&c?'background:#FFF6DC;font-weight:700':''}">${c?c+' ('+Math.round(c/tot*100)+'%)':'·'}</td>`).join('')}</tr>`}).join('')}</tbody></table></div>
+<table style="margin-top:8px"><thead><tr><th>Group</th><th>Pitches</th><th>Avg mph</th><th>Avg spin</th><th>Avg VB</th><th>Avg HB</th></tr></thead><tbody>${cavg.map((c,i)=>`<tr><td><span class="sw" style="background:${c.c}"></span>Group ${i+1}</td><td>${c.n}</td><td>${f1(c.v)}</td><td>${q.spin?Math.round(c.sp):'—'}</td><td>${sg1(c.y)}</td><td>${sg1(c.x)}</td></tr>`).join('')}</tbody></table></div>
+<div class="card"><h3>How different is each pair of labels?</h3><div class="wrap"><table><thead><tr><th>Pair</th><th>Separation</th><th>Right-guess rate</th><th>Verdict</th></tr></thead><tbody>${pairs.map(p=>{const g=grade(p.d);return`<tr><td><span class="sw" style="background:${col(p.a)}"></span>${E(p.a)} vs <span class="sw" style="background:${col(p.b)}"></span>${E(p.b)}</td><td>${f1(p.d)}</td><td>${fp(p.acc)}</td><td class="${g[1]}">${g[0]}</td></tr>`}).join('')||'<tr><td colspan="4" class="mut">Need two labels with at least 5 pitches each.</td></tr>'}</tbody></table></div><small>Separation measures how far apart two labels are given how much each one varies (a standard statistical distance across velocity, movement and spin). "Right-guess rate" is how often you could correctly tell which of the two labels a pitch belongs to using only those numbers: 50% means you can't, 90%+ means they're clearly different pitches. Below 2: heavy overlap; 2–3: some; 3+: distinct.</small></div>`;return h}
+
+/* =====================================================================
+   5) WIN PROBABILITY & LEVERAGE
+   ===================================================================== */
+const EV=['K','BB','HBP','1B','2B','3B','HR','OUT'],DEF={K:.16,BB:.10,HBP:.02,'1B':.17,'2B':.045,'3B':.006,HR:.03,OUT:.469};
+const evOf=r=>({K:'K',BB:'BB',HBP:'HBP',Single:'1B',Error:'1B',Double:'2B',Triple:'3B','Home Run':'HR',Out:'OUT',"Fielder's Choice":'OUT'}[r]||null);
+const bitsOf=bi=>[bi&1,(bi>>1)&1,(bi>>2)&1],idxOf=b=>b[0]+2*b[1]+4*b[2];
+function branches(ev,bi,o){const[b1,b2,b3]=bitsOf(bi),B=[];const add=(p,r,nb,no)=>B.push({p,r,bi:idxOf(nb),o:no});
+if(ev=='K')add(1,0,[b1,b2,b3],o+1);
+else if(ev=='OUT'){[[0,0],[0,1],[1,0],[1,1]].forEach(([dp,sf])=>{let p=1;if(b1&&o<2){p*=dp?.12:.88}else if(dp)return;if(b3&&o<2){p*=sf?.3:.7}else if(sf)return;
+ const no=o+1+(dp?1:0);if(dp){add(p,0,[0,b2,b3],no)}else if(sf)add(p,1,[b1,b2,0],no);else add(p,0,[b1,b2,b3],no)})}
+else if(ev=='BB'||ev=='HBP'){add(1,(b1&&b2&&b3)?1:0,[1,b1?1:b2,(b1&&b2)?1:b3],o)}
+else if(ev=='1B'){const s2=b2?[[.6,1],[.4,0]]:[[1,0]];s2.forEach(([p2,sc2])=>{const hold3=b2&&!sc2;const s1=b1?(hold3?[[1,'2']]:[[.7,'2'],[.3,'3']]):[[1,'']];s1.forEach(([p1,w])=>{const nb=[1,0,0];if(w=='2')nb[1]=1;if(w=='3')nb[2]=1;if(hold3)nb[2]=1;add(p2*p1,b3+(b2&&sc2?1:0),nb,o)})})}
+else if(ev=='2B'){(b1?[[.4,1,[0,1,0]],[.6,0,[0,1,1]]]:[[1,0,[0,1,0]]]).forEach(([p,sc,nb])=>add(p,b3+b2+sc,nb,o))}
+else if(ev=='3B')add(1,b1+b2+b3,[0,0,1],o);else if(ev=='HR')add(1,b1+b2+b3+1,[0,0,0],o);return B}
+const BR={};EV.forEach(ev=>{BR[ev]=[];for(let o=0;o<3;o++)for(let bi=0;bi<8;bi++)BR[ev][o*8+bi]=branches(ev,bi,o)});
+const KRUN=14;
+function runDist(P){const D=Array.from({length:24},()=>new Array(KRUN+1).fill(0));for(let it=0;it<70;it++){const N=Array.from({length:24},()=>new Array(KRUN+1).fill(0));
+for(let s=0;s<24;s++)EV.forEach(ev=>BR[ev][s].forEach(br=>{const pr=P[ev]*br.p;if(br.o>=3)N[s][Math.min(br.r,KRUN)]+=pr;else{const nx=D[br.o*8+br.bi];for(let k=0;k<=KRUN;k++)if(nx[k])N[s][Math.min(k+br.r,KRUN)]+=pr*nx[k]}}));
+for(let s=0;s<24;s++)D[s]=N[s]}return D}
+function buildWP(P){const D=runDist(P),N=7,MX=10,DL=15,cl=d=>Math.max(-DL,Math.min(DL,d)),Wt=[],Wb=[],D0=D[0];
+const afterBot=(inn,nd)=>inn>=N?(nd>0?1:nd<0?0:(inn>=MX?.5:Wt[inn+1][DL])):Wt[inn+1][cl(nd)+DL];
+for(let inn=MX;inn>=1;inn--){Wb[inn]=[];Wt[inn]=[];for(let d=-DL;d<=DL;d++){let w=0;for(let r=0;r<=KRUN;r++)w+=D0[r]*afterBot(inn,d+r);Wb[inn][d+DL]=w}
+for(let d=-DL;d<=DL;d++){let w=0;for(let r=0;r<=KRUN;r++)w+=D0[r]*Wb[inn][cl(d-r)+DL];Wt[inn][d+DL]=w}}
+const wp=(inn,half,o,bi,diff)=>{inn=Math.min(inn,MX);const dist=D[o*8+bi];let w=0;if(half=='Top'){for(let r=0;r<=KRUN;r++)w+=dist[r]*Wb[inn][cl(diff-r)+DL]}else for(let r=0;r<=KRUN;r++)w+=dist[r]*afterBot(inn,diff+r);return w};
+const outc=(inn,half,o,bi,diff)=>{const out=[];EV.forEach(ev=>BR[ev][o*8+bi].forEach(br=>{const pr=P[ev]*br.p,nd=half=='Top'?diff-br.r:diff+br.r;let w;if(br.o>=3){w=half=='Top'?Wb[Math.min(inn,MX)][cl(nd)+DL]:afterBot(Math.min(inn,MX),nd)}else w=wp(inn,half,br.o,br.bi,nd);out.push({ev,p:pr,w})}));return out};
+const er=sum(D0.map((p,k)=>p*k));return{wp,outc,perHalf:er,perGame:er*7}}
+function leverage(){const gs=GAMES.filter(g=>S.typ=='all'||(g.type||'game')==S.typ),ok=new Set(),rowsBy=groupBy(PIT.filter(typeOK),p=>p.game);
+/* observed PA outcome frequencies -> league mix */
+const cnt={};EV.forEach(e=>cnt[e]=0);let nPA=0;const paList=[];
+rowsBy.forEach((rows,gid)=>{const byPa=groupBy(rows,p=>p.pa);const pas=[...byPa.entries()].sort((a,b)=>a[0]-b[0]).map(([pa,a])=>a.sort((x,y)=>x.n-y.n));
+pas.forEach(a=>{const f=a[0],l=a[a.length-1],ev=evOf(l.par);if(ev){cnt[ev]++;nPA++}paList.push({gid,a,f,l,ev})})});
+const P={};EV.forEach(e=>P[e]=(cnt[e]+150*DEF[e])/(nPA+150));
+const W=buildWP(P);
+const valid=x=>x.f.outs!=null&&/^[01]{3}$/.test(x.f.bases)&&x.f.hs!=null&&x.f.as!=null&&x.f.inn!=null&&(x.f.half=='Top'||x.f.half=='Bottom');
+const byG=groupBy(paList.filter(valid),x=>x.gid),PAS=[];let used=0;
+byG.forEach((list,gid)=>{list.sort((x,y)=>x.f.pa-y.f.pa);const m=GM[gid]||{},fin=(m.homeScore!==''&&m.homeScore!=null&&m.awayScore!==''&&m.awayScore!=null&&!isNaN(+m.homeScore)&&!isNaN(+m.awayScore))?(+m.homeScore>+m.awayScore?1:+m.homeScore<+m.awayScore?0:.5):null;used++;
+list.forEach((x,i)=>{const s=x.f,bi=parseInt(s.bases.split('').reverse().join(''),2),diff=s.hs-s.as,wb=W.wp(s.inn,s.half,s.outs,bi,diff),oc=W.outc(s.inn,s.half,s.outs,bi,diff);
+let wa=null;const nx=list[i+1];if(nx){const t=nx.f,tb=parseInt(t.bases.split('').reverse().join(''),2);wa=W.wp(t.inn,t.half,t.outs,tb,t.hs-t.as)}else if(fin!=null)wa=fin;
+const batHome=s.half=='Bottom',sgn=batHome?1:-1;
+const evw={};EV.forEach(e=>{const a=oc.filter(o=>o.ev==e);evw[e]=a.length?sum(a.map(o=>o.p*o.w))/sum(a.map(o=>o.p)):wb});
+PAS.push({...x,st:{inn:s.inn,half:s.half,o:s.outs,bi,diff,hs:s.hs,as:s.as},wb,wa,sgn,evw,absE:sum(oc.map(o=>o.p*Math.abs(o.w-wb))),wpaBat:wa==null?null:sgn*(wa-wb),date:s.date,bt:s.bt,pt:s.pt,bat:s.bat,pit:s.pit,home:s.home,away:s.away})})});
+const avgAbs=avg(PAS.map(x=>x.absE))||1;PAS.forEach(x=>x.li=x.absE/avgAbs);
+/* count -> outcome distributions for pitch-level credit */
+const cc={};PAS.forEach(x=>{if(!x.ev)return;x.a.forEach(p=>{const o=cc[p.cnt]||(cc[p.cnt]={n:0});o.n++;o[x.ev]=(o[x.ev]||0)+1})});
+const pEc=cnt0=>{const o=cc[cnt0]||{n:0},k=20,r={};EV.forEach(e=>r[e]=((o[e]||0)+k*P[e])/(o.n+k));return r};
+const ewp=(x,cnt0)=>{const pe=pEc(cnt0);return sum(EV.map(e=>pe[e]*x.evw[e]))};
+const PITCH=[];PAS.forEach(x=>{x.a.forEach((p,i)=>{const nx=x.a[i+1],before=ewp(x,p.cnt);let after;if(nx)after=ewp(x,nx.cnt);else after=x.wa;if(after==null)return;PITCH.push({p,x,li:x.li,wpaBat:x.sgn*(after-before),before,after})})});
+return{PAS,PITCH,P,model:W,nPA,gamesUsed:used,gamesTotal:gs.length,avgAbs}}
+const LVL=li=>li<.85?'Low':li<1.6?'Medium':'High';
+function tabWP(){const L=leverage();if(!L.PAS.length)return`<div class="card"><h3>Win probability &amp; leverage</h3><p>None of the charted games in this selection carry the game situation (outs, runners on base, score) for each pitch. Those columns are saved by the charting app for games charted from now on, so this page fills in as new games are charted. Games uploaded from the old Google Sheet don't have them.</p></div>`;
+const pitchers=[...new Set(L.PAS.filter(x=>cal(x.pt)).map(x=>x.pit))].sort(),q=S.lv;let h=`<div class="card"><div class="kp"><div><b>${L.PAS.length}</b><small>Plate appearances analysed</small></div><div><b>${L.gamesUsed} of ${L.gamesTotal}</b><small>Games with game-state data</small></div><div><b>${f1(L.model.perGame)}</b><small>Modelled runs per team per game</small></div><div><b>${L.PITCH.length}</b><small>Pitches credited</small></div></div>
+<div class="note"><b>How this works.</b> For every plate appearance we know the inning, outs, runners and score. A simple model of how softball innings unfold (built from the outcome mix of the plate appearances you've charted, blended with typical college rates, with plain base-running assumptions) gives the <b>win probability</b> of each situation. <b>Leverage</b> compares how much one plate appearance can swing the game to the average one: 1.0 is average, 2.0 is twice as important. <b>Win probability added (WPA)</b> is how much a plate appearance or pitch actually moved the win chance, credited to the batting team and charged to the pitching team. The model isn't calibrated to NCAA softball yet and gets steadier with more games; compare players against each other rather than reading the exact percentages as truth.</div></div>`;
+const PA=L.PAS.filter(x=>x.wpaBat!=null),PI=L.PITCH;
+const pitCal=PA.filter(x=>cal(x.pt)),pr=[...groupBy(pitCal,x=>x.pit)].map(([n,a])=>{const pi=PI.filter(z=>z.x.pit==n&&cal(z.x.pt));return{n,pa:a.length,li:avg(a.map(x=>x.li)),wpa:-sum(a.map(x=>x.wpaBat)),pitches:pi.length,hi:a.filter(x=>x.li>=1.6).length}}).sort((a,b)=>b.wpa-a.wpa);
+h+=`<div class="cols"><div class="card"><h3>Cal pitchers: win probability added</h3><div class="wrap"><table><thead><tr><th>Pitcher</th><th>Batters faced</th><th>Avg leverage</th><th>High-lev. PAs</th><th>WPA (wins)</th></tr></thead><tbody>${pr.map(r=>`<tr><td>${E(r.n)}</td><td>${r.pa}</td><td>${f2(r.li)}</td><td>${r.hi}</td><td class="${r.wpa>0?'pos':'neg'}">${wn(r.wpa)}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">No Cal pitchers with a known result yet.</td></tr>'}</tbody></table></div><small>Positive = she moved the game toward Cal. WPA is in wins: +1.00 means the equivalent of one full extra win.</small></div>
+<div class="card"><h3>Cal batters: win probability added</h3><div class="wrap"><table><thead><tr><th>Batter</th><th>PA</th><th>Avg leverage</th><th>High-lev. PAs</th><th>WPA (wins)</th></tr></thead><tbody>${[...groupBy(PA.filter(x=>cal(x.bt)),x=>x.bat)].map(([n,a])=>({n,pa:a.length,li:avg(a.map(x=>x.li)),hi:a.filter(x=>x.li>=1.6).length,wpa:sum(a.map(x=>x.wpaBat))})).sort((a,b)=>b.wpa-a.wpa).map(r=>`<tr><td>${E(r.n)}</td><td>${r.pa}</td><td>${f2(r.li)}</td><td>${r.hi}</td><td class="${r.wpa>0?'pos':'neg'}">${wn(r.wpa)}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">No Cal batters yet.</td></tr>'}</tbody></table></div></div></div>`;
+/* leverage splits */
+const sp=q.pit=='*'?L.PITCH.filter(z=>cal(z.x.pt)):L.PITCH.filter(z=>cal(z.x.pt)&&z.x.pit==q.pit);
+const bucket=['Low','Medium','High'].map(b=>{const a=sp.filter(z=>LVL(z.li)==b),pas=L.PAS.filter(x=>cal(x.pt)&&(q.pit=='*'||x.pit==q.pit)&&LVL(x.li)==b&&x.ev),sw=a.filter(z=>SWG.includes(z.p.res)),H=pas.filter(x=>['1B','2B','3B','HR'].includes(x.ev)).length,AB=pas.filter(x=>!['BB','HBP'].includes(x.ev)).length;return{b,n:a.length,pa:pas.length,st:ratio(a.filter(z=>STRK.includes(z.p.res)).length,a.length),wh:ratio(a.filter(z=>z.p.res=='Swinging Strike').length,sw.length),ba:ratio(H,AB),k:ratio(pas.filter(x=>x.ev=='K').length,pas.length),bb:ratio(pas.filter(x=>x.ev=='BB').length,pas.length)}});
+h+=`<div class="card"><h3>Does she hold up when it matters?</h3><div class="row">${sel('lv.pit',[['*','All Cal pitchers']].concat(pitchers.map(x=>[x,x])),q.pit,'Pitcher')}</div><div class="wrap"><table><thead><tr><th>Leverage</th><th>PAs</th><th>Pitches</th><th>Strike %</th><th>Whiff %</th><th>BAA</th><th>K %</th><th>BB %</th></tr></thead><tbody>${bucket.map(r=>`<tr><td>${r.b}</td><td>${r.pa}</td><td>${r.n}</td><td>${fp(r.st)}</td><td>${fp(r.wh)}</td><td>${f3(r.ba)}</td><td>${fp(r.k)}</td><td>${fp(r.bb)}</td></tr>`).join('')}</tbody></table></div><small>Low &lt; 0.85, Medium 0.85–1.6, High ≥ 1.6 leverage. Expect High to be a small group until more games are charted.</small></div>`;
+/* pitch types */
+const pt=[...groupBy(L.PITCH.filter(z=>cal(z.x.pt)),z=>z.p.ty)].map(([t,a])=>({t,n:a.length,li:avg(a.map(z=>z.li)),wpa:-sum(a.map(z=>z.wpaBat))})).sort((a,b)=>b.wpa-a.wpa);
+h+=`<div class="cols"><div class="card"><h3>Cal pitch types: win probability added</h3><div class="wrap"><table><thead><tr><th>Pitch</th><th>Pitches</th><th>Avg leverage</th><th>WPA (wins)</th><th>Per 100 pitches</th></tr></thead><tbody>${pt.map(r=>`<tr><td><span class="sw" style="background:${col(r.t)}"></span>${E(r.t)}</td><td>${r.n}</td><td>${f2(r.li)}</td><td class="${r.wpa>0?'pos':'neg'}">${wn(r.wpa)}</td><td class="${r.wpa>0?'pos':'neg'}">${wn(r.wpa/r.n*100)}</td></tr>`).join('')}</tbody></table></div></div>`;
+const mom=[...PI].filter(z=>cal(z.x.pt)||cal(z.x.bt)).sort((a,b)=>Math.abs(b.wpaBat)-Math.abs(a.wpaBat)).slice(0,12);
+const sit=s=>`${s.half=='Top'?'T':'B'}${s.inn}, ${s.o} out${s.o==1?'':'s'}, ${s.bi?['','1st','2nd','1st & 2nd','3rd','1st & 3rd','2nd & 3rd','loaded'][s.bi]:'bases empty'}, ${s.diff==0?'tied':(s.diff>0?'home +':'away +')+Math.abs(s.diff)}`;
+h+=`<div class="card"><h3>Pitches that mattered most</h3><div class="wrap"><table><thead><tr><th>Game</th><th>Situation</th><th>Pitch</th><th>Result</th><th>Moved win chance for Cal</th></tr></thead><tbody>${mom.map(z=>{const c=cal(z.x.pt)?-z.wpaBat:z.wpaBat;return`<tr><td>${E(z.x.date)} ${E(z.x.away)} at ${E(z.x.home)}</td><td style="text-align:left">${E(sit(z.x.st))}</td><td style="text-align:left"><span class="sw" style="background:${col(z.p.ty)}"></span>${E(z.p.ty)} ${E(z.p.cnt)} · ${E(z.p.pit)} to ${E(z.p.bat)}</td><td style="text-align:left">${E(z.p.par||z.p.res)}</td><td class="${c>0?'pos':'neg'}">${pp(c)}</td></tr>`}).join('')||'<tr><td colspan="5" class="mut">Nothing yet.</td></tr>'}</tbody></table></div><small>A pitch is credited by how the expected result of the at-bat changed with the count, and the last pitch by what actually happened.</small></div></div>`;return h}
+
+/* ---------- render & events ---------- */
+function render(){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.tab));document.querySelectorAll('#typseg button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.typ));
+const f={pl:tabLink,sq:tabSeq,eo:tabEO,sh:tabSh,wp:tabWP}[S.tab];try{$('#view').innerHTML=f()}catch(e){$('#view').innerHTML=`<div class="card"><p class="bad">Something went wrong building this view: ${E(e.message)}</p></div>`;console.error(e)}}
+document.addEventListener('click',async e=>{const t=e.target;let b;
+if(b=t.closest('[data-a="tab"]')){S.tab=b.dataset.v;render();return}
+if(b=t.closest('[data-a="typ"]')){S.typ=b.dataset.v;render();return}
+if(b=t.closest('[data-sk]')){setPath(b.dataset.sk,b.dataset.v);if(b.dataset.sk=='seq.scope')S.seq.pit='*';if(b.dataset.sk=='eo.scope'){S.eo.pit='*';S.eo.bat='*';S.eo.ty='*'}render();return}
+if(b=t.closest('[data-cell]')){S.eo.cell=b.dataset.cell.split(',').map(Number);render();return}
+if(b=t.closest('[data-a="savelinks"]')){const L={},T={};document.querySelectorAll('[data-lk]').forEach(s=>{L[s.dataset.lk]=s.value});document.querySelectorAll('[data-tm]').forEach(s=>{T[s.dataset.tm]=s.value});
+try{await call('rapsodo','',{method:'POST',body:JSON.stringify({links:L})});await call('rapsodo','',{method:'POST',body:JSON.stringify({aliases:{players:{},types:T}})});LINKS=L;TMAP=T;$('#lkmsg').textContent='Saved.'}catch(x){$('#lkmsg').textContent=x.message;$('#lkmsg').className='bad'}}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset.k){setPath(t.dataset.k,t.value);if(t.dataset.k=='eo.pit'||t.dataset.k=='eo.bat'||t.dataset.k=='eo.ty')S.eo.cell=null;render()}
+else if(t.dataset.ck){setPath(t.dataset.ck,t.checked);render()}
+else if(t.dataset.lk){LINKS[t.dataset.lk]=t.value;render()}else if(t.dataset.tm){TMAP[t.dataset.tm]=t.value;render()}});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.rk){setPath(t.dataset.rk,+t.value);clearTimeout(window._rt);window._rt=setTimeout(()=>{render();const el=document.querySelector(`[data-rk="${t.dataset.rk}"]`);if(el)el.focus()},120)}});
+$('#rf').onclick=async()=>{try{await loadAll();render()}catch(e){setSt(e.message,1)}};
+$('#pwb').onclick=()=>{PASS=$('#pw').value;cfg.dbpass=PASS;ls.set('sbcfg',JSON.stringify(cfg));connect()};
+$('#pw').onkeydown=e=>{if(e.key=='Enter')$('#pwb').click()};
+async function connect(){try{await loadAll();$('#gate').hidden=true;$('#app').hidden=false;render()}catch(e){$('#app').hidden=true;$('#gate').hidden=false;$('#gmsg').textContent=e.status==401?(PASS?'That passcode is not right.':''):e.message}}
+if(PASS)connect();else $('#gate').hidden=false;
+</script></body></html>

@@ -34,7 +34,7 @@ svg{display:block;width:100%;max-width:380px;margin:auto}svg.wide{max-width:900p
 @media print{header,.tabs,#gate,.noprint,button{display:none!important}body{background:#fff}main{padding:0}.card{box-shadow:none;break-inside:avoid}@page{margin:10mm}}
 </style></head><body>
 <header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Rapsodo</b>
-<nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a><a class="on" href="rapsodo.html">Rapsodo</a></nav><button id="pr">Print / PDF</button><button id="rf">Refresh</button></header>
+<nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a href="stats.html">Data</a><a class="on" href="rapsodo.html">Rapsodo</a><a href="lab.html">Lab</a></nav><button id="pr">Print / PDF</button><button id="rf">Refresh</button></header>
 <main>
 <div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the team passcode to load the shared database.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
 <div id="app" hidden>
@@ -74,7 +74,7 @@ if(!pname0)pname0=fname.replace(/\.csv$/i,'').replace(/[_-]+/g,' ').trim();
 const ix={};rows[hi].forEach((h,i)=>ix[h.trim()]=i);const pi=ix['Player ID'],pn=ix['Player Name'],G=new Map();let skipped=0,total=0;
 rows.slice(hi+1).forEach(r=>{if(r.length<10||r.every(x=>x===''))return;total++;const o={};
 HDR.forEach(k=>{const v=r[ix[SRC[k]]];if(TXT.has(k)){o[k]=k=='Type'?normType(v):k=='Time'?isoTime(v,r[ix[SRC.PitchID]]):String(v==null||v=='-'?'':v).trim()}else if(k=='Strike'){o[k]=v=='Y'?1:v=='N'?0:null}else{const n=v==null||v===''||v=='-'?null:+v;o[k]=n==null||isNaN(n)?null:Math.round(n*100)/100}});
-if(!o.Time||!o.PitchID){skipped++;return}if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}
+if(!o.Time||!o.PitchID){skipped++;return}if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}if(o.RelHt===0&&o.RelSide===0){o.RelHt=o.RelSide=o.RAng=o.HAng=null}
 const pid=String((pi!=null?r[pi]:'')||pid0||'').trim(),name=String((pn!=null?r[pn]:'')||pname0).trim()||pname0,key=pid&&pid!='-'?pid:slug(name),gk=key;
 const g=G.get(gk)||G.set(gk,{player:name,playerId:pid=='-'?'':pid,key,days:{}}).get(gk);const d=o.Time.slice(0,10);(g.days[d]=g.days[d]||[]).push(o)});
 const groups=[...G.values()].sort((a,b)=>a.player.localeCompare(b.player));if(!groups.length)throw new Error('No readable pitches found in this file.');
@@ -92,7 +92,7 @@ const st={tab:'rep',player:'',sess:'all',segOff:new Set(),tyOff:new Set(),loc:'t
 const dayLabel=d=>{const t=new Date(d+'T12:00:00');return isNaN(t)?d:t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
 const players=()=>{const m=new Map();METAS.forEach(x=>{const k=x.playerId||slug(x.player);if(!m.has(k))m.set(k,{key:k,name:x.player,metas:[]});m.get(k).metas.push(x)});return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name))};
 const curPlayer=()=>players().find(p=>p.key==st.player);
-const rowsOf=s=>s.rows.map(r=>{const o={};s.header.forEach((k,i)=>o[k]=r[i]);if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}return o});
+const rowsOf=s=>s.rows.map(r=>{const o={};s.header.forEach((k,i)=>o[k]=r[i]);if(!o.Conf){o.VBs=o.HBs=o.Gyro=null}if(o.RelHt===0&&o.RelSide===0){o.RelHt=o.RelSide=o.RAng=o.HAng=null}return o});
 async function ensureLoaded(metas){const need=metas.filter(m=>!CACHE[m.id]).map(m=>m.id);for(let i=0;i<need.length;i+=10){const j=await api('?ids='+need.slice(i,i+10).join(','));(j.sessions||[]).forEach(s=>CACHE[s.meta.id]=rowsOf(s))}}
 async function loadList(){const j=await api('');METAS=j.sessions||[];const pl=players();if(!pl.some(p=>p.key==st.player)){st.player=pl[0]?pl[0].key:'';st.sess=pl[0]?pl[0].metas[0].date:'all'}}
 function selMetas(){const p=curPlayer();if(!p)return[];return st.sess=='all'?p.metas:p.metas.filter(m=>m.date==st.sess)}
