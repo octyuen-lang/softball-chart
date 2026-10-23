@@ -7,7 +7,9 @@ const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const TOK = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 const PASS = process.env.TEAM_PASSCODE;
 const META = 'sb:rmeta';
+const ALIAS = 'sb:alias'; // shared name / pitch-type mappings used to link Rapsodo to charted games
 const key = id => 'sb:r:' + id;
+const LINKS = 'sb:links'; // charted pitcher name -> Rapsodo player key (manual overrides)
 
 async function redis(cmds) {
   const r = await fetch(URL_.replace(/\/$/, '') + '/pipeline', {
@@ -46,6 +48,16 @@ module.exports = async (req, res) => {
     const q = req.query || {};
 
     if (req.method === 'GET') {
+      if (q.links) {
+        const [v] = await redis([['GET', LINKS]]);
+        let links = {}; try { links = v ? JSON.parse(v) : {}; } catch (e) {}
+        return res.status(200).json({ links });
+      }
+      if (q.aliases) {
+        const [v] = await redis([['GET', ALIAS]]);
+        let a = {}; try { a = v ? JSON.parse(v) : {}; } catch (e) {}
+        return res.status(200).json({ aliases: { players: a.players || {}, types: a.types || {} } });
+      }
       if (q.id) {
         if (!validId(q.id)) return res.status(400).json({ error: 'Bad session id.' });
         const [v] = await redis([['GET', key(q.id)]]);
@@ -64,6 +76,20 @@ module.exports = async (req, res) => {
 
     let body = req.body;
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
+
+    if (req.method === 'POST' && body && body.links) {
+      const L = {}, ent = Object.entries(body.links).slice(0, 300);
+      ent.forEach(([k, v]) => { L[clip(k, 80)] = clip(v, 80); });
+      await redis([['SET', LINKS, JSON.stringify(L)]]);
+      return res.status(200).json({ ok: true, links: L });
+    }
+
+    if (req.method === 'POST' && body && body.aliases) {
+      const clean = o => { const out = {}; Object.keys(o || {}).slice(0, 300).forEach(k => { out[clip(k, 80)] = clip(o[k], 80); }); return out; };
+      const a = { players: clean(body.aliases.players), types: clean(body.aliases.types) };
+      await redis([['SET', ALIAS, JSON.stringify(a)]]);
+      return res.status(200).json({ ok: true, aliases: a });
+    }
 
     if (req.method === 'POST') {
       const m = body && body.meta, header = body && body.header, rows = body && body.rows;
