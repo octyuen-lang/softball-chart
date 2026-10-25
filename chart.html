@@ -301,19 +301,18 @@ const cbs=c=>String(c||'0-0').split('-').map(Number);
 const hBk=c=>{const[b,s]=cbs(c);return c=='0-0'?'first':s>b?'behind':(b>s&&s<2)?'ahead':'even'};
 const pBk=c=>{const k=hBk(c);return k=='ahead'?'behind':k=='behind'?'ahead':k};
 const rt=(a,b)=>b?Math.round(a/b*100)+'%':'—';
-function bm(L){const d=L.filter(p=>DECP.includes(p.o)),sw=d.filter(p=>SWG.includes(p.o)),z=d.filter(inZ),o=d.filter(p=>hasLoc(p)&&!inZ(p)),zs=z.filter(p=>SWG.includes(p.o)),os=o.filter(p=>SWG.includes(p.o));
-return{n:L.length,d:d.length,sw:rt(sw.length,d.length),zsw:rt(zs.length,z.length),ch:rt(os.length,o.length),wh:rt(sw.filter(p=>p.o=='ss').length,sw.length),zwh:rt(zs.filter(p=>p.o=='ss').length,zs.length),ip:rt(sw.filter(p=>p.o=='inplay').length,sw.length)}}
+function bm(L){const d=L.filter(p=>DECP.includes(p.o)),sw=d.filter(p=>SWG.includes(p.o));
+return{n:L.length,d:d.length,sw:rt(sw.length,d.length),wh:rt(sw.filter(p=>p.o=='ss').length,sw.length),cs:rt(d.filter(p=>p.o=='cs').length,d.length),ip:rt(sw.filter(p=>p.o=='inplay').length,sw.length)}}
 function batRow(L,pas){const s=bm(L),sub=f=>bm(L.filter(f)),pa=pas.length,
 fav=pas.filter(a=>L.some(p=>p.pa==a&&hBk(p.cnt)=='ahead')).length,
 bb=pas.filter(a=>{const x=S.plays.find(q=>q.pa==a);return x&&x.res=='BB'}).length,k=pas.filter(a=>{const x=S.plays.find(q=>q.pa==a);return x&&x.res=='K'}).length,
 f=sub(p=>p.cnt=='0-0'),ah=sub(p=>hBk(p.cnt)=='ahead'),be=sub(p=>hBk(p.cnt)=='behind'),t2=sub(p=>cbs(p.cnt)[1]==2);
-return[pa,L.length,pa?(L.length/pa).toFixed(1):'—',s.sw,s.zsw,s.ch,s.zwh,f.sw,ah.sw,ah.ch,be.sw,t2.sw,t2.ch,rt(fav,pa),bb,k]}
-const BH=['PA','Pit','P/PA','Swing %','Z-Swing %','Chase %','Z-Whiff %','0-0 Sw %','Ahead Sw %','Ahead Chase %','Behind Sw %','2K Sw %','2K Chase %','Hitter-ahead ct %','BB','K'];
+return[pa,L.length,pa?(L.length/pa).toFixed(1):'—',s.sw,s.wh,f.sw,ah.sw,be.sw,t2.sw,rt(fav,pa),bb,k]}
+const BH=['PA','Pit','P/PA','Swing %','Whiff %','0-0 Sw %','Ahead Sw %','Behind Sw %','2K Sw %','Hitter-ahead ct %','BB','K'];
 function pitRow(L,pas){const pa=pas.length,B=f=>L.filter(p=>f(pBk(p.cnt))),fp=L.filter(p=>p.n==1),ahd=B(x=>x=='ahead'),bhd=B(x=>x=='behind'),
-reach=pas.filter(a=>L.some(p=>p.pa==a&&pBk(p.cnt)=='ahead')).length,str=p=>STR.includes(p.o);
-const loc=a=>a.filter(hasLoc),zn=a=>rt(loc(a).filter(inZ).length,loc(a).length),sh=a=>rt(loc(a).filter(inSh).length,loc(a).length),ci=a=>{const o=a.filter(p=>hasLoc(p)&&!inZ(p)&&DECP.includes(p.o));return rt(o.filter(p=>SWG.includes(p.o)).length,o.length)};
-return[pa,L.length,rt(fp.filter(str).length,fp.length),rt(ahd.length,L.length),rt(L.length-ahd.length-bhd.length,L.length),rt(bhd.length,L.length),rt(reach,pa),rt(ahd.filter(str).length,ahd.length),zn(ahd),sh(ahd),ci(ahd),rt(bhd.filter(str).length,bhd.length),zn(bhd)]}
-const PH=['BF','Pit','FPS %','Ahead %','Even / 0-0 %','Behind %','PAs reaching ahead ct %','Ahead Str %','Ahead Zone %','Ahead Edge %','Ahead Chase-induced %','Behind Str %','Behind Zone %'];
+reach=pas.filter(a=>L.some(p=>p.pa==a&&pBk(p.cnt)=='ahead')).length,str=p=>STR.includes(p.o),sw=a=>a.filter(p=>SWG.includes(p.o)),wh=a=>rt(sw(a).filter(p=>p.o=='ss').length,sw(a).length);
+return[pa,L.length,rt(fp.filter(str).length,fp.length),rt(ahd.length,L.length),rt(L.length-ahd.length-bhd.length,L.length),rt(bhd.length,L.length),rt(reach,pa),rt(ahd.filter(str).length,ahd.length),wh(ahd),rt(bhd.filter(str).length,bhd.length),wh(bhd)]}
+const PH=['BF','Pit','FPS %','Ahead %','Even / 0-0 %','Behind %','PAs reaching ahead ct %','Ahead Str %','Ahead Whiff %','Behind Str %','Behind Whiff %'];
 function swingBlock(PF,vm,bookP,pks){
 const th=a=>a.map(h=>`<th>${h}</th>`).join(''),tr=(n,a,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${n}</td>${a.map(x=>`<td>${x}</td>`).join('')}</tr>`;
 const paOf=L=>[...new Set(L.map(p=>p.pa))];
@@ -322,13 +321,13 @@ if(!PF.length)return h+'<p><small>No pitches charted yet.</small></p></div>';
 if(vm!='pit'){['away','home'].filter(t=>PF.some(p=>p.t==t)).forEach(t=>{const L=PF.filter(p=>p.t==t),names=[...new Set(L.map(bname))];
 h+=`<h3>${E(tn(t))} batters${bookP=='all'?'':' vs '+E(pk(bookP))}</h3><table class="sdt"><tr><th>Batter</th>${th(BH)}</tr>${names.map(n=>{const l=L.filter(p=>bname(p)==n);return tr('<b>'+E(n)+'</b>',batRow(l,paOf(l)))}).join('')}${tr('<b>Team</b>',batRow(L,paOf(L)),'tot')}</table>`;
 const rows=[['0-0 (first pitch)',L.filter(p=>p.cnt=='0-0')],['Hitter ahead (1-0, 2-0, 3-0, 2-1, 3-1)',L.filter(p=>hBk(p.cnt)=='ahead')],['Even (1-1, 2-2, 3-2)',L.filter(p=>hBk(p.cnt)=='even')],['Hitter behind (0-1, 0-2, 1-2)',L.filter(p=>hBk(p.cnt)=='behind')],['Two strikes',L.filter(p=>cbs(p.cnt)[1]==2)]];
-h+=`<table class="sdt"><tr><th>${E(tn(t))} by count</th><th>Pitches</th><th>Swing %</th><th>Z-Swing %</th><th>Chase %</th><th>Whiff %</th><th>Z-Whiff %</th><th>In play % of swings</th></tr>${rows.map(([l,a])=>{const s=bm(a);return tr(l,[s.n,s.sw,s.zsw,s.ch,s.wh,s.zwh,s.ip])}).join('')}</table>`});
-h+=`<small><b>Swing %</b> swings ÷ pitches swung at or taken. <b>Z-Swing %</b> swings at pitches in the zone (good pitches). <b>Chase %</b> swings at pitches outside the zone (bad pitches). <b>Z-Whiff %</b> misses on swings at strikes. <b>Ahead / Behind</b> are from the hitter's side. <b>2K</b> two strikes. <b>Hitter-ahead ct %</b> share of PAs that reached a hitter's count (1-0, 2-0, 3-0, 2-1, 3-1). Zone stats use only pitches with a plotted location.</small>`}
+h+=`<table class="sdt"><tr><th>${E(tn(t))} by count</th><th>Pitches</th><th>Swing %</th><th>Called strike %</th><th>Whiff %</th><th>In play % of swings</th></tr>${rows.map(([l,a])=>{const s=bm(a);return tr(l,[s.n,s.sw,s.cs,s.wh,s.ip])}).join('')}</table>`});
+h+=`<small><b>Swing %</b> swings ÷ pitches swung at or taken. <b>Whiff %</b> swinging strikes ÷ swings. <b>Ahead / Behind</b> are from the hitter's side (ahead: 1-0, 2-0, 3-0, 2-1, 3-1; behind: 0-1, 0-2, 1-2). <b>2K</b> two strikes. <b>Hitter-ahead ct %</b> share of PAs that reached a hitter's count.</small>`}
 if(vm!='bat'){['away','home'].filter(t=>pks.some(k=>k.startsWith(t+':'))).forEach(t=>{const ks=pks.filter(k=>k.startsWith(t+':')),L=PF.filter(p=>p.pk.startsWith(t+':'));
 h+=`<h3>${E(tn(t))} pitchers — ahead vs behind in the count</h3><table class="sdt"><tr><th>Pitcher</th>${th(PH)}</tr>${ks.map(k=>{const l=PF.filter(p=>p.pk==k);return tr('<b>'+E(pn(k))+'</b>',pitRow(l,paOf(l)))}).join('')}${ks.length>1?tr('<b>Staff</b>',pitRow(L,paOf(L)),'tot'):''}</table>`;
 const rows=[['0-0 (first pitch)',L.filter(p=>p.cnt=='0-0')],['Pitcher ahead (0-1, 0-2, 1-2)',L.filter(p=>pBk(p.cnt)=='ahead')],['Even (1-1, 2-2, 3-2)',L.filter(p=>pBk(p.cnt)=='even')],['Pitcher behind (1-0, 2-0, 3-0, 2-1, 3-1)',L.filter(p=>pBk(p.cnt)=='behind')]];
-h+=`<table class="sdt"><tr><th>${E(tn(t))} by count</th><th>Pitches</th><th>% of pitches</th><th>Strike %</th><th>Zone %</th><th>Edge %</th><th>Chase-induced %</th><th>Whiff %</th></tr>${rows.map(([l,a])=>{const lc=a.filter(hasLoc),o=a.filter(p=>hasLoc(p)&&!inZ(p)&&DECP.includes(p.o)),sw=a.filter(p=>SWG.includes(p.o));return tr(l,[a.length,rt(a.length,L.length),rt(a.filter(p=>STR.includes(p.o)).length,a.length),rt(lc.filter(inZ).length,lc.length),rt(lc.filter(inSh).length,lc.length),rt(o.filter(p=>SWG.includes(p.o)).length,o.length),rt(sw.filter(p=>p.o=='ss').length,sw.length)])}).join('')}</table>`});
-h+=`<small><b>Ahead %</b> share of pitches thrown with the pitcher ahead (0-1, 0-2, 1-2); <b>Behind %</b> with the hitter ahead (1-0, 2-0, 3-0, 2-1, 3-1). <b>Zone %</b> pitches in the strike zone; <b>Edge %</b> just off the zone (about 3 inches); <b>Chase-induced %</b> swings at pitches outside the zone. Zone stats use only pitches with a plotted location.</small>`}
+h+=`<table class="sdt"><tr><th>${E(tn(t))} by count</th><th>Pitches</th><th>% of pitches</th><th>Strike %</th><th>Ball %</th><th>Whiff %</th></tr>${rows.map(([l,a])=>{const sw=a.filter(p=>SWG.includes(p.o));return tr(l,[a.length,rt(a.length,L.length),rt(a.filter(p=>STR.includes(p.o)).length,a.length),rt(a.filter(p=>p.o=='ball').length,a.length),rt(sw.filter(p=>p.o=='ss').length,sw.length)])}).join('')}</table>`});
+h+=`<small><b>Ahead %</b> share of pitches thrown with the pitcher ahead (0-1, 0-2, 1-2); <b>Behind %</b> with the hitter ahead (1-0, 2-0, 3-0, 2-1, 3-1). <b>Str %</b> strikes (called, swinging, foul, in play) ÷ pitches. <b>Whiff %</b> swinging strikes ÷ swings.</small>`}
 return h+'</div>'}
 function renderBook(){const g=S.g,keys=[],[vm,vt]=bookV=='all'?['all','']:bookV.split('-'),baseP=S.pitches.filter(p=>vm=='all'||(vm=='bat'?p.t==vt:p.pk.startsWith(vt+':'))),allK=[...new Set(baseP.map(p=>p.pk))];if(bookP!='all'&&!allK.includes(bookP))bookP='all';const PF=baseP.filter(p=>bookP=='all'||p.pk==bookP);PF.forEach(p=>{const k=p.inn+'-'+p.half;if(!keys.includes(k))keys.push(k)});
 const halves=keys.map(k=>{const[inn,h]=k.split('-'),ps=PF.filter(p=>p.inn==inn&&p.half==h),pas=[...new Set(ps.map(p=>p.pa))],t=h=='top'?'away':'home';
