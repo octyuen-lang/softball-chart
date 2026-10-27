@@ -33,7 +33,7 @@ svg{display:block;width:100%;max-width:340px;margin:auto;touch-action:manipulati
 .sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .bad{color:var(--bad)}.ok{color:var(--good)}[hidden]{display:none!important}.ttl{font-size:22px;font-weight:700;color:var(--ink);margin:0}
 #sync{font-size:12.5px;font-weight:600;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}#sync input{min-height:34px}
-.zd{cursor:pointer}
+.zd{cursor:pointer}.vg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px}.vg button{min-height:44px;font-size:16px;padding:0}
 @media print{header,.tabs,.noprint,button,#sync{display:none!important}body{background:#fff}main{padding:0}.card{box-shadow:none;break-inside:avoid}@page{margin:10mm}}
 </style></head><body>
 <header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Bullpen</b>
@@ -70,7 +70,7 @@ const t=await r.text();let j=null;try{j=JSON.parse(t)}catch(e){}
 if(!j)throw Object.assign(new Error(r.status==404?'The bullpen storage function was not found. Add api/bullpen.js to your project and redeploy.':'Unexpected response (HTTP '+r.status+').'),{status:r.status});
 if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
 /* ---------- state ---------- */
-let S=null,D={ty:'',ti:0,x:null,y:null,keep:false},V=ls.get('sbbv')||'catcher',tab='chart',METAS=[],PLIST=[],CACHE={};
+let S=null,D={ty:'',ti:0,x:null,y:null,keep:false,keepv:false,v:'',alt:false},V=ls.get('sbbv')||'catcher',tab='chart',METAS=[],PLIST=[],CACHE={};
 const rev={pit:'',from:'',to:'',off:new Set(),ty:new Set(),ti:0,mode:'hit',loaded:false,err:''};
 try{const s=JSON.parse(ls.get('sbb')||'null');if(s&&s.id&&Array.isArray(s.rows))S=s}catch(e){}
 const rowObj=(h,r)=>{const o={};h.forEach((k,i)=>o[k]=r[i]);return{t:o.Time,ty:o.Type,v:o.Velo===''||o.Velo==null?null:+o.Velo,ti:+o.Intended||0,x:o.X===''||o.X==null?null:+o.X,y:o.Y===''||o.Y==null?null:+o.Y,ar:+o.Actual||0}};
@@ -111,8 +111,8 @@ $('#view').innerHTML=`<div class="card"><div class="row" style="align-items:cent
 <div class="seg" title="Which way the zone is drawn. The numbers stay with the hitter's inside and outside."><button data-v="catcher" class="${V=='catcher'?'on':''}">Catcher's view</button><button data-v="pitcher" class="${V=='pitcher'?'on':''}">Pitcher's view</button></div><button id="endb">Switch pitcher / end session</button></div>
 <div class="kp" id="kp" style="margin-top:10px"></div></div>
 <div class="entry"><div class="card"><h3>1 · Pitch</h3><div class="chips" id="types">${T.map(t=>`<button data-t="${t}" class="${D.ty==t?'on':''}"><span class="sw" style="background:${col(t)}"></span>${t}</button>`).join('')}</div>
-<label>Velocity (mph) <span id="lastv" style="font-weight:400"></span><div class="row" style="gap:4px;flex-wrap:nowrap"><button id="vm" style="min-width:44px">−</button><input id="velo" type="number" inputmode="decimal" step="0.1" min="0" max="120" style="width:100px;font-size:18px;font-weight:700"><button id="vp" style="min-width:44px">+</button></div></label>
-<label class="chk" style="margin-top:10px"><input type="checkbox" id="keep" ${D.keep?'checked':''}> Keep the same target for the next pitch</label>
+<div style="margin-top:6px"><b>Velocity (mph)</b> <small>tap again to clear</small> <small id="lastv"></small><div class="vg" id="vel"></div></div>
+<label class="chk" style="margin-top:10px"><input type="checkbox" id="keep" ${D.keep?'checked':''}> Keep the same target for the next pitch</label><label class="chk"><input type="checkbox" id="keepv" ${D.keepv?'checked':''}> Keep the velocity for the next pitch</label>
 <div class="row" style="margin-top:10px"><button class="go big" id="logb">Log pitch</button><button id="undob">Undo last</button></div><p id="hint" class="mut" style="margin:8px 0 0"></p><p id="lastp" style="margin:6px 0 0"></p></div>
 <div class="card"><h3>2 · Intended target <span class="pv">${V=='pitcher'?"PITCHER'S VIEW":"CATCHER'S VIEW"}</span></h3><svg id="zi" viewBox="0 0 300 330"></svg><small>Tap the region the catcher is setting up for.</small></div>
 <div class="card"><h3>3 · Actual location <span class="pv">${V=='pitcher'?"PITCHER'S VIEW":"CATCHER'S VIEW"}</span></h3><svg id="za" viewBox="0 0 300 330"></svg><small id="areg">Tap where the pitch crossed the plate. The gold outline is the target.</small></div></div>
@@ -124,6 +124,8 @@ if(D.ti){const r=rect(D.ti);g+=`<rect x="${r.x+2}" y="${r.y+2}" width="${r.w-4}"
 S.rows.slice(-6).forEach((p,i,a)=>{if(p.x!=null)g+=`<circle cx="${pt(p.x)}" cy="${p.y}" r="6" fill="${col(p.ty)}" fill-opacity="${.25+.1*i}" stroke="#fff"/>`});
 if(D.x!=null)g+=`<circle cx="${pt(D.x)}" cy="${D.y}" r="11" fill="${D.ty?col(D.ty):'#003262'}" stroke="#FDB515" stroke-width="4"/>`;s.innerHTML=g;
 const a=$('#areg');if(a)a.textContent=D.x!=null?'Landed: region '+(rg(D.x,D.y)||'—')+' · '+rname(rg(D.x,D.y))+(D.ti?(rg(D.x,D.y)==D.ti?' ✓ hit the target':' ✗ missed the target'):''):'Tap where the pitch crossed the plate. The gold outline is the target.'}
+const velRange=()=>{const slow=D.ty=='Changeup'||D.ty=='Offspeed',lo=slow!=!!D.alt?43:55;return Array.from({length:14},(_,i)=>lo+i)};
+function drawVel(){const e=$('#vel');if(!e)return;const r=velRange();e.innerHTML=r.map(v=>`<button data-vel="${v}" class="${D.v==v?'on':''}">${v}</button>`).join('')+`<button id="valt" style="grid-column:1/-1">${r[0]==43?'Show 55–68 mph':'Show 43–56 mph'}</button>`}
 const ready=()=>!!(S&&D.ty&&D.ti&&D.x!=null);
 function updReady(){const b=$('#logb');if(!b)return;b.disabled=!ready();b.textContent='Log pitch #'+(S.rows.length+1);$('#undob').disabled=!S.rows.length;
 const miss=[!D.ty&&'a pitch type',!D.ti&&'an intended target',D.x==null&&'the actual location'].filter(Boolean);$('#hint').textContent=miss.length?'Still need: '+miss.join(', ')+'.':'Ready. Add velocity (optional) and log it.';
@@ -132,11 +134,11 @@ function drawLog(){const c=$('#logc');if(!c)return;const R=S.rows;
 $('#kp').innerHTML=[['Pitches',R.length],['Hit target',fp(rt(R.filter(hit).length,R.length))],['Right height',fp(rt(R.filter(rowOK).length,R.length))],['Right side',fp(rt(R.filter(sideOK).length,R.length))],['Avg velo',f1(avg(R.map(r=>r.v)))],['Max velo',R.length?(mx(R.map(r=>r.v))??'—'):'—']].map(([l,v])=>`<div><small>${l}</small><b>${v}</b></div>`).join('');
 const last=R[R.length-1];$('#lastp').innerHTML=last?`<small>Last: #${R.length} ${E(last.ty)}${last.v!=null?' '+last.v+' mph':''} · aimed ${last.ti}, landed ${last.ar||'out'} <b class="${hit(last)?'ok':'bad'}">${hit(last)?'✓':'✗'}</b></small>`:'';
 c.innerHTML=`<h3>This session's pitches</h3>${R.length?`<div class="scroll wrap"><table><tr><th>#</th><th>Type</th><th>Velo</th><th>Aimed</th><th>Landed</th><th>Result</th><th></th></tr>${R.map((r,i)=>`<tr><td>${i+1}</td><td><span class="sw" style="background:${col(r.ty)}"></span>${E(r.ty)}</td><td>${r.v??'—'}</td><td>${r.ti}</td><td>${r.ar||'out'}</td><td class="${hit(r)?'ok':'bad'}">${hit(r)?'Hit':rowOK(r)?'Wrong side':sideOK(r)?'Wrong height':'Missed'}</td><td><button data-del="${i}" style="min-height:26px;padding:0 8px" title="Delete this pitch">×</button></td></tr>`).reverse().join('')}</table></div>`:'<p class="mut">No pitches yet.</p>'}`}
-function updAll(){drawInt();drawAct();drawLog();updReady()}
-function logPitch(){if(!ready())return;const v=$('#velo').value;S.rows.push({t:new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,19),ty:D.ty,v:v===''?null:+v,ti:D.ti,x:Math.round(D.x),y:Math.round(D.y),ar:rg(D.x,D.y)});
-if(v!=='')lastV[D.ty]=+v;D.x=D.y=null;$('#velo').value='';if(!$('#keep').checked)D.ti=0;updAll();dirty()}
-function startSession(p,d,n){const t=new Date(),hm=String(t.getHours()).padStart(2,'0')+String(t.getMinutes()).padStart(2,'0');S={id:slug(p)+'_'+d.replace(/-/g,'')+'_'+hm,pitcher:p,date:d,notes:n||'',rows:[],sy:0};D={ty:D.ty,ti:0,x:null,y:null,keep:D.keep};local();renderChart()}
-async function resume(id){try{let full;if(S&&S.id==id)return;const j=await api('?id='+encodeURIComponent(id));full=j;S={id,pitcher:j.meta.pitcher,date:j.meta.date,notes:j.meta.notes||'',rows:j.rows.map(r=>rowObj(j.header,r)),sy:1};D={ty:D.ty,ti:0,x:null,y:null,keep:D.keep};local();renderChart();setSync('Resumed · '+S.rows.length+' pitches')}catch(e){setSync(e.message,1)}}
+function updAll(){drawInt();drawAct();drawLog();drawVel();updReady()}
+function logPitch(){if(!ready())return;const v=D.v;S.rows.push({t:new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,19),ty:D.ty,v:v===''?null:+v,ti:D.ti,x:Math.round(D.x),y:Math.round(D.y),ar:rg(D.x,D.y)});
+if(v!=='')lastV[D.ty]=+v;D.x=D.y=null;if(!D.keepv)D.v='';if(!$('#keep').checked)D.ti=0;updAll();dirty()}
+function startSession(p,d,n){const t=new Date(),hm=String(t.getHours()).padStart(2,'0')+String(t.getMinutes()).padStart(2,'0');S={id:slug(p)+'_'+d.replace(/-/g,'')+'_'+hm,pitcher:p,date:d,notes:n||'',rows:[],sy:0};D={ty:D.ty,ti:0,x:null,y:null,keep:D.keep,keepv:D.keepv,v:'',alt:false};local();renderChart()}
+async function resume(id){try{let full;if(S&&S.id==id)return;const j=await api('?id='+encodeURIComponent(id));full=j;S={id,pitcher:j.meta.pitcher,date:j.meta.date,notes:j.meta.notes||'',rows:j.rows.map(r=>rowObj(j.header,r)),sy:1};D={ty:D.ty,ti:0,x:null,y:null,keep:D.keep,keepv:D.keepv,v:'',alt:false};local();renderChart();setSync('Resumed · '+S.rows.length+' pitches')}catch(e){setSync(e.message,1)}}
 /* ---------- review tab ---------- */
 function allMetas(){return sessList()}
 async function loadRev(){if(!PASS){rev.err='Enter the passcode above to load saved bullpens.';return}
@@ -187,9 +189,10 @@ if(d.tab){tab=d.tab;document.querySelectorAll('.tabs button').forEach(x=>x.class
 if(b.id=='pwb'){const v=$('#pw').value.trim();if(!v)return;PASS=v;cfg.dbpass=v;ls.set('sbcfg',JSON.stringify(cfg));setSync('Connecting…');try{const j=await api('');METAS=j.sessions||[];PLIST=[...new Set(METAS.map(m=>m.pitcher))].sort();setSync('Connected');if(S&&(S.dirty||!S.sy))push();tab=='chart'?renderChart():renderRev()}catch(er){PASS='';setSync(er.message,1)}return}
 if(b.id=='pr'){print();return}
 if(tab=='chart'){
-if(d.t){D.ty=d.t;document.querySelectorAll('#types button').forEach(x=>x.classList.toggle('on',x.dataset.t==D.ty));drawAct();updReady();return}
+if(d.t){D.ty=d.t;D.alt=false;if(!velRange().includes(+D.v))D.v='';document.querySelectorAll('#types button').forEach(x=>x.classList.toggle('on',x.dataset.t==D.ty));drawAct();drawVel();updReady();return}
+if(d.vel){D.v=D.v==d.vel?'':+d.vel;drawVel();return}
+if(b.id=='valt'){D.alt=!D.alt;D.v='';drawVel();return}
 if(d.v&&b.closest('.seg')){V=d.v;ls.set('sbbv',V);renderChart();return}
-if(b.id=='vm'||b.id=='vp'){const i=$('#velo');i.value=Math.max(0,(+i.value||+lastV[D.ty]||50)+(b.id=='vp'?1:-1));return}
 if(b.id=='logb'){logPitch();return}
 if(b.id=='undob'){if(S.rows.length){S.rows.pop();updAll();dirty()}return}
 if(d.del!=null){S.rows.splice(+d.del,1);updAll();dirty();return}
@@ -205,11 +208,12 @@ if(d.open){const id=d.open;tab='chart';document.querySelectorAll('.tabs button')
 if(d.rm){const m=allMetas().find(x=>x.id==d.rm);if(!m||!confirm('Delete the '+dayLabel(m.date)+' bullpen for '+m.pitcher+'? This cannot be undone.'))return;try{await api('?id='+encodeURIComponent(m.id),{method:'DELETE'});if(S&&S.id==m.id){S=null;ls.set('sbb','')}delete CACHE[m.id];METAS=METAS.filter(x=>x.id!=m.id);drawRev()}catch(er){rev.err=er.message;drawRev()}return}}});
 document.addEventListener('change',e=>{const t=e.target;
 if(t.id=='keep'){D.keep=t.checked;return}
+if(t.id=='keepv'){D.keepv=t.checked;return}
 if(t.id=='sps'){$('#spo').hidden=t.value!='__o';if(t.value=='__o')$('#sp').focus();return}
 if(t.id=='rp'){rev.pit=t.value;rev.off=new Set();drawRev()}else if(t.id=='rf'){rev.from=t.value;drawRev()}else if(t.id=='rt'){rev.to=t.value;drawRev()}else if(t.id=='rti'){rev.ti=+t.value;drawRev()}
 else if(t.dataset&&t.dataset.inc){t.checked?rev.off.delete(t.dataset.inc):rev.off.add(t.dataset.inc);drawRev()}});
 document.addEventListener('input',e=>{if(e.target.id=='nts'&&S){S.notes=e.target.value;dirty()}});
-document.addEventListener('keydown',e=>{if(e.key=='Enter'){if(e.target.id=='velo'){e.preventDefault();logPitch()}if(e.target.id=='pw')$('#pwb').click()}});
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.id=='pw')$('#pwb').click()});
 /* ---------- start ---------- */
 (async function(){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==tab));drawSync();renderChart();
 if(S&&S.dirty&&PASS)push();
