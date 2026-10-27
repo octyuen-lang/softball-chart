@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cal Softball Bullpen</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.jpg">
+<style>
+:root{--bg:#F3F5F8;--p:#fff;--ink:#003262;--tx:#1B2533;--mut:#5B6778;--ln:#DDE2E9;--acc:#FDB515;--bad:#C42B2B;--good:#16A34A}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 16px;background:#003262;color:#fff;border-bottom:3px solid var(--acc)}
+header img{height:46px;width:46px;border-radius:8px;display:block}header b{font-size:18px;flex:1}
+.hnav{display:flex;flex-wrap:wrap;gap:2px}.hnav a{color:#fff;font-weight:600;text-decoration:none;padding:8px 10px;border-radius:6px;font-size:14px}.hnav a:hover{background:rgba(255,255,255,.14)}.hnav a.on{box-shadow:inset 0 -3px 0 #FDB515}
+header button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);font-weight:600;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit;min-height:0}
+button,select,input{font:inherit;color:inherit;min-height:40px;border:1px solid var(--ln);border-radius:8px;background:var(--p);padding:0 12px}
+button{cursor:pointer;font-weight:600}button.go{background:var(--acc);color:#003262;border-color:var(--acc)}button.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--acc)}button:disabled{opacity:.45;cursor:default}
+button.big{min-height:52px;font-size:17px;padding:0 22px}
+main{max-width:1300px;margin:auto;padding:14px}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink)}.card h3:before{content:"";display:inline-block;width:4px;height:12px;background:var(--acc);border-radius:2px;margin-right:8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}label{font-size:12px;font-weight:600;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+label.chk{flex-direction:row;align-items:center;gap:8px;font-size:13px}label.chk input{min-height:0;width:18px;height:18px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:8px 0 0 8px;margin:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{min-height:44px;padding:0 22px;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chips button{min-height:44px;font-size:14px;padding:0 14px}.chips.sm button{min-height:32px;font-size:12.5px;padding:0 10px}.chips button.off{opacity:.4}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.kp div{border:1px solid var(--ln);border-radius:8px;padding:8px 10px}.kp b{display:block;font-size:22px;color:var(--ink);line-height:1.15}.kp small{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;color:var(--mut)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}
+.entry{display:grid;grid-template-columns:minmax(230px,290px) 1fr 1fr;gap:12px}@media(max-width:980px){.entry{grid-template-columns:1fr 1fr}.entry>.card:first-child{grid-column:1/-1}}@media(max-width:640px){.entry{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{border:1px solid var(--ln);padding:5px 7px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.wrap{overflow-x:auto}.scroll{max-height:340px;overflow:auto}.mut,small{color:var(--mut)}a{color:var(--ink);font-weight:600}
+svg{display:block;width:100%;max-width:340px;margin:auto;touch-action:manipulation}
+.pv{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;background:#FDB515;color:#003262;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.bad{color:var(--bad)}.ok{color:var(--good)}[hidden]{display:none!important}.ttl{font-size:22px;font-weight:700;color:var(--ink);margin:0}
+#sync{font-size:12.5px;font-weight:600;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}#sync input{min-height:34px}
+.zd{cursor:pointer}
+@media print{header,.tabs,.noprint,button,#sync{display:none!important}body{background:#fff}main{padding:0}.card{box-shadow:none;break-inside:avoid}@page{margin:10mm}}
+</style></head><body>
+<header><a href="index.html"><img src="logo.jpg" alt="Cal Softball"></a><b>Bullpen</b>
+<nav class="hnav"><a href="index.html">Home</a><a href="chart.html">Chart a game</a><a class="on" href="bullpen.html">Bullpen</a><a href="stats.html">Data</a><a href="rapsodo.html">Rapsodo</a><a href="lab.html">Lab</a></nav><button id="pr">Print / PDF</button></header>
+<main>
+<div id="sync"></div>
+<div class="tabs"><button data-tab="chart">Chart a bullpen</button><button data-tab="rev">Review</button></div>
+<div id="view"></div>
+</main>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let cfg={};try{cfg=JSON.parse(ls.get('sbcfg')||'{}')}catch(e){}
+let PASS=cfg.dbpass||'';
+const T=['Rise','Drop','Curve','Screw','Changeup','Offspeed','Fastball'],TC={Rise:'#2563EB',Drop:'#DC2626',Curve:'#16A34A',Screw:'#9333EA',Changeup:'#F59E0B',Offspeed:'#0891B2',Fastball:'#111827'},col=t=>TC[t]||'#6B7280';
+const CAL=['Ainsley Berlingeri', 'Alanna Clincy', 'Alyssa Herrera', 'Anaya Togia', 'Carly Raven', 'Charlotte White', 'Emalee Cargill', 'Emma Jackson', 'Emoni Lam Sam', 'Gator Robinson', 'Jayda Koontz', 'Kayla Lee', 'Kayli Counts', 'Kiki Mashhoud', 'Maalia Cherry', 'Maddie Rey', 'Malea Ricks', 'Megan Gregory', 'Mila Reddy', 'Mya McGowan', 'Olivia Pichardo', 'Rachel Del Busto', 'Sophia Everett', 'Xiomei Geluz'];
+const roster=()=>{try{const r=JSON.parse(ls.get('sbroster')||'null');if(Array.isArray(r)&&r.length)return r}catch(e){}return CAL};
+const BH=['Pitch#','Time','Type','Velo','Intended','X','Y','Actual'];
+/* ---------- the six regions (catcher's-view coordinates, 300 x 330; the strike zone is x 60-240, y 60-270; regions add ~30 units of shadow all around) ----------
+   Top 1 | 2, middle 3 | 4, low 5 | 6.  Odd = in to a righty, even = in to a lefty. Catcher's view puts the righty's inside on the left. */
+const XL=30,XM=150,XR=270,YR=[30,130,200,300];
+const rg=(x,y)=>x==null||x<XL||x>=XR||y<YR[0]||y>=YR[3]?0:(y<YR[1]?0:y<YR[2]?1:2)*2+(x<XM?1:2);
+const rowOf=k=>(k-1)>>1,sideOf=k=>(k-1)&1,RN=['Top','Middle','Low'];
+const rname=k=>k?RN[rowOf(k)]+' · in to '+(sideOf(k)?'LHH':'RHH'):'Outside the regions';
+const hit=r=>r.ar>0&&r.ar===r.ti,rowOK=r=>r.ar>0&&rowOf(r.ar)===rowOf(r.ti),sideOK=r=>r.ar>0&&sideOf(r.ar)===sideOf(r.ti);
+const today=()=>new Date().toLocaleDateString('en-CA');
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'pitcher';
+const avg=a=>{a=a.filter(v=>v!=null&&!isNaN(v));return a.length?a.reduce((x,y)=>x+y,0)/a.length:null},mx=a=>{a=a.filter(v=>v!=null&&!isNaN(v));return a.length?Math.max(...a):null};
+const f1=v=>v==null?'—':v.toFixed(1),fp=v=>v==null?'—':Math.round(v*100)+'%',rt=(a,b)=>b?a/b:null;
+const dayLabel=d=>{const t=new Date(d+'T12:00:00');return isNaN(t)?d:t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+/* ---------- api ---------- */
+async function api(q,opt={}){let r;try{r=await fetch('/api/bullpen'+(q||''),{...opt,headers:{'Content-Type':'application/json','x-passcode':PASS}})}catch(e){throw new Error('Could not reach the server.')}
+const t=await r.text();let j=null;try{j=JSON.parse(t)}catch(e){}
+if(!j)throw Object.assign(new Error(r.status==404?'The bullpen storage function was not found. Add api/bullpen.js to your project and redeploy.':'Unexpected response (HTTP '+r.status+').'),{status:r.status});
+if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
+/* ---------- state ---------- */
+let S=null,D={ty:'',ti:0,x:null,y:null,keep:false},V=ls.get('sbbv')||'catcher',tab='chart',METAS=[],PLIST=[],CACHE={};
+const rev={pit:'',from:'',to:'',off:new Set(),ty:new Set(),ti:0,mode:'hit',loaded:false,err:''};
+try{const s=JSON.parse(ls.get('sbb')||'null');if(s&&s.id&&Array.isArray(s.rows))S=s}catch(e){}
+const rowObj=(h,r)=>{const o={};h.forEach((k,i)=>o[k]=r[i]);return{t:o.Time,ty:o.Type,v:o.Velo===''||o.Velo==null?null:+o.Velo,ti:+o.Intended||0,x:o.X===''||o.X==null?null:+o.X,y:o.Y===''||o.Y==null?null:+o.Y,ar:+o.Actual||0}};
+/* ---------- saving ---------- */
+let syncT=null,busy=false,again=false,syncMsg='',syncBad=false,retryT=null;
+function setSync(m,bad){syncMsg=m;syncBad=!!bad;drawSync()}
+function drawSync(){const el=$('#sync');if(!el)return;const need=!PASS;
+el.innerHTML=`<span class="${syncBad?'bad':'ok'}">${E(syncMsg||(PASS?'Connected':'Not connected'))}</span>`+(need?`<span class="mut">Enter the team passcode to back up and view past bullpens:</span><input id="pw" type="password" placeholder="Passcode" autocomplete="off"><button class="go" id="pwb">Connect</button>`:'')}
+function local(){if(S)ls.set('sbb',JSON.stringify(S))}
+function dirty(){local();if(S)S.dirty=1;local();clearTimeout(syncT);syncT=setTimeout(push,900)}
+async function push(){if(!S)return;if(!PASS){setSync('Saved on this device only. Enter the passcode to back up.',1);return}
+if(busy){again=true;return}if(!S.rows.length&&!S.sy)return;busy=true;setSync('Saving…');const snap=S;
+try{await api('',{method:'POST',body:JSON.stringify({meta:{id:snap.id,pitcher:snap.pitcher,date:snap.date,notes:snap.notes||''},header:BH,rows:snap.rows.map((r,i)=>[i+1,r.t,r.ty,r.v??'',r.ti,r.x??'',r.y??'',r.ar])})});
+snap.sy=1;snap.dirty=0;local();setSync('Saved to the database · '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}));clearTimeout(retryT)}
+catch(e){if(e.status==401){PASS='';cfg.dbpass='';ls.set('sbcfg',JSON.stringify(cfg))}setSync('Not backed up yet ('+e.message+'). Saved on this device; will retry.',1);clearTimeout(retryT);retryT=setTimeout(push,15000)}
+busy=false;if(again){again=false;push()}}
+window.addEventListener('online',()=>{if(S&&S.dirty)push()});
+/* ---------- zone drawing ---------- */
+const dx=x=>V=='pitcher'?300-x:x;
+function rect(k){const o=sideOf(k)==0,x0=o?XL:XM,x1=o?XM:XR,y0=YR[rowOf(k)],y1=YR[rowOf(k)+1],a=dx(x0),b=dx(x1);return{x:Math.min(a,b),y:y0,w:Math.abs(b-a),h:y1-y0}}
+function base(opts){opts=opts||{};let g='<rect width="300" height="330" fill="#F3F5F8" rx="6"/>';
+for(let k=1;k<=6;k++){const r=rect(k);g+=`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${opts.sel==k?'rgba(253,181,21,.55)':opts.hot==k?'rgba(0,50,98,.14)':'#E3EBF5'}" stroke="#fff" stroke-width="2"/>`;
+g+=`<text x="${r.x+r.w/2}" y="${r.y+r.h/2+13}" font-size="38" font-weight="800" text-anchor="middle" fill="#003262" fill-opacity="${opts.faint?.2:.4}">${k}</text>`}
+g+=`<rect x="60" y="60" width="180" height="210" fill="none" stroke="#003262" stroke-width="2"/><line x1="150" x2="150" y1="30" y2="300" stroke="#003262" stroke-dasharray="4 4" stroke-opacity=".5"/>`;
+const L=V=='pitcher'?['IN to LHH (even)','IN to RHH (odd)']:['IN to RHH (odd)','IN to LHH (even)'];
+g+=`<text x="${XL+4}" y="20" font-size="11" font-weight="700" fill="#5B6778">${L[0]}</text><text x="${XR-4}" y="20" font-size="11" font-weight="700" text-anchor="end" fill="#5B6778">${L[1]}</text>`;return g}
+function pt(x){return V=='pitcher'?300-x:x}
+function svgPoint(svg,e){const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*300,y=(e.clientY-r.top)/r.height*330;return[V=='pitcher'?300-x:x,y]}
+/* ---------- chart tab ---------- */
+const lastV={};
+const pitchOpts=()=>{const R=roster(),x=PLIST.filter(n=>!R.includes(n));return[...R].sort((a,b)=>a.localeCompare(b)).concat(x)};
+function startCard(){const recent=sessList().slice(0,25);
+return`<div class="card"><h3>Start a bullpen</h3><div class="row"><label>Pitcher<select id="sps" style="min-width:230px"><option value="">Pick from the Cal roster…</option>${pitchOpts().map(n=>`<option>${E(n)}</option>`).join('')}<option value="__o">Someone else (type a name)…</option></select></label><label id="spo" hidden>Name<input id="sp" placeholder="Type a name" style="min-width:200px"></label><label>Date<input id="sd" type="date" value="${today()}"></label><label>Notes (optional)<input id="sn" placeholder="e.g. fastball command day" style="min-width:220px"></label><button class="go big" id="sgo">Start</button></div></div>
+<div class="card"><h3>Resume a session</h3>${recent.length?`<div class="row"><label>Session<select id="rs" style="min-width:300px">${recent.map(m=>`<option value="${E(m.id)}">${E(m.pitcher)} · ${dayLabel(m.date)} · ${m.pitches} pitches${m.notes?' · '+E(m.notes):''}</option>`).join('')}</select></label><button id="rsb">Resume</button></div>`:'<p class="mut">No saved sessions yet.</p>'}</div>`}
+function sessList(){const m=new Map();METAS.forEach(x=>m.set(x.id,x));if(S&&S.rows.length)m.set(S.id,{id:S.id,pitcher:S.pitcher,date:S.date,notes:S.notes,pitches:S.rows.length});return[...m.values()].sort((a,b)=>String(b.date)<String(a.date)?-1:String(b.date)>String(a.date)?1:b.id>a.id?1:-1)}
+function renderChart(){if(!S){$('#view').innerHTML=startCard();return}
+$('#view').innerHTML=`<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><div class="ttl">${E(S.pitcher)}</div><small>${dayLabel(S.date)}${S.notes?' · '+E(S.notes):''}</small></div>
+<div class="seg" title="Which way the zone is drawn. The numbers stay with the hitter's inside and outside."><button data-v="catcher" class="${V=='catcher'?'on':''}">Catcher's view</button><button data-v="pitcher" class="${V=='pitcher'?'on':''}">Pitcher's view</button></div><button id="endb">Switch pitcher / end session</button></div>
+<div class="kp" id="kp" style="margin-top:10px"></div></div>
+<div class="entry"><div class="card"><h3>1 · Pitch</h3><div class="chips" id="types">${T.map(t=>`<button data-t="${t}" class="${D.ty==t?'on':''}"><span class="sw" style="background:${col(t)}"></span>${t}</button>`).join('')}</div>
+<label>Velocity (mph) <span id="lastv" style="font-weight:400"></span><div class="row" style="gap:4px;flex-wrap:nowrap"><button id="vm" style="min-width:44px">−</button><input id="velo" type="number" inputmode="decimal" step="0.1" min="0" max="120" style="width:100px;font-size:18px;font-weight:700"><button id="vp" style="min-width:44px">+</button></div></label>
+<label class="chk" style="margin-top:10px"><input type="checkbox" id="keep" ${D.keep?'checked':''}> Keep the same target for the next pitch</label>
+<div class="row" style="margin-top:10px"><button class="go big" id="logb">Log pitch</button><button id="undob">Undo last</button></div><p id="hint" class="mut" style="margin:8px 0 0"></p><p id="lastp" style="margin:6px 0 0"></p></div>
+<div class="card"><h3>2 · Intended target <span class="pv">${V=='pitcher'?"PITCHER'S VIEW":"CATCHER'S VIEW"}</span></h3><svg id="zi" viewBox="0 0 300 330"></svg><small>Tap the region the catcher is setting up for.</small></div>
+<div class="card"><h3>3 · Actual location <span class="pv">${V=='pitcher'?"PITCHER'S VIEW":"CATCHER'S VIEW"}</span></h3><svg id="za" viewBox="0 0 300 330"></svg><small id="areg">Tap where the pitch crossed the plate. The gold outline is the target.</small></div></div>
+<div class="card" id="logc"></div>`;
+updAll()}
+function drawInt(){const s=$('#zi');if(!s)return;s.innerHTML=base({sel:D.ti})}
+function drawAct(){const s=$('#za');if(!s)return;let g=base({hot:D.ti?0:0,faint:1});
+if(D.ti){const r=rect(D.ti);g+=`<rect x="${r.x+2}" y="${r.y+2}" width="${r.w-4}" height="${r.h-4}" fill="none" stroke="#FDB515" stroke-width="4" stroke-dasharray="8 5"/>`}
+S.rows.slice(-6).forEach((p,i,a)=>{if(p.x!=null)g+=`<circle cx="${pt(p.x)}" cy="${p.y}" r="6" fill="${col(p.ty)}" fill-opacity="${.25+.1*i}" stroke="#fff"/>`});
+if(D.x!=null)g+=`<circle cx="${pt(D.x)}" cy="${D.y}" r="11" fill="${D.ty?col(D.ty):'#003262'}" stroke="#FDB515" stroke-width="4"/>`;s.innerHTML=g;
+const a=$('#areg');if(a)a.textContent=D.x!=null?'Landed: region '+(rg(D.x,D.y)||'—')+' · '+rname(rg(D.x,D.y))+(D.ti?(rg(D.x,D.y)==D.ti?' ✓ hit the target':' ✗ missed the target'):''):'Tap where the pitch crossed the plate. The gold outline is the target.'}
+const ready=()=>!!(S&&D.ty&&D.ti&&D.x!=null);
+function updReady(){const b=$('#logb');if(!b)return;b.disabled=!ready();b.textContent='Log pitch #'+(S.rows.length+1);$('#undob').disabled=!S.rows.length;
+const miss=[!D.ty&&'a pitch type',!D.ti&&'an intended target',D.x==null&&'the actual location'].filter(Boolean);$('#hint').textContent=miss.length?'Still need: '+miss.join(', ')+'.':'Ready. Add velocity (optional) and log it.';
+const lv=lastV[D.ty];$('#lastv').textContent=lv!=null?'(last '+D.ty+': '+lv+')':''}
+function drawLog(){const c=$('#logc');if(!c)return;const R=S.rows;
+$('#kp').innerHTML=[['Pitches',R.length],['Hit target',fp(rt(R.filter(hit).length,R.length))],['Right height',fp(rt(R.filter(rowOK).length,R.length))],['Right side',fp(rt(R.filter(sideOK).length,R.length))],['Avg velo',f1(avg(R.map(r=>r.v)))],['Max velo',R.length?(mx(R.map(r=>r.v))??'—'):'—']].map(([l,v])=>`<div><small>${l}</small><b>${v}</b></div>`).join('');
+const last=R[R.length-1];$('#lastp').innerHTML=last?`<small>Last: #${R.length} ${E(last.ty)}${last.v!=null?' '+last.v+' mph':''} · aimed ${last.ti}, landed ${last.ar||'out'} <b class="${hit(last)?'ok':'bad'}">${hit(last)?'✓':'✗'}</b></small>`:'';
+c.innerHTML=`<h3>This session's pitches</h3>${R.length?`<div class="scroll wrap"><table><tr><th>#</th><th>Type</th><th>Velo</th><th>Aimed</th><th>Landed</th><th>Result</th><th></th></tr>${R.map((r,i)=>`<tr><td>${i+1}</td><td><span class="sw" style="background:${col(r.ty)}"></span>${E(r.ty)}</td><td>${r.v??'—'}</td><td>${r.ti}</td><td>${r.ar||'out'}</td><td class="${hit(r)?'ok':'bad'}">${hit(r)?'Hit':rowOK(r)?'Wrong side':sideOK(r)?'Wrong height':'Missed'}</td><td><button data-del="${i}" style="min-height:26px;padding:0 8px" title="Delete this pitch">×</button></td></tr>`).reverse().join('')}</table></div>`:'<p class="mut">No pitches yet.</p>'}`}
+function updAll(){drawInt();drawAct();drawLog();updReady()}
+function logPitch(){if(!ready())return;const v=$('#velo').value;S.rows.push({t:new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,19),ty:D.ty,v:v===''?null:+v,ti:D.ti,x:Math.round(D.x),y:Math.round(D.y),ar:rg(D.x,D.y)});
+if(v!=='')lastV[D.ty]=+v;D.x=D.y=null;$('#velo').value='';if(!$('#keep').checked)D.ti=0;updAll();dirty()}
+function startSession(p,d,n){const t=new Date(),hm=String(t.getHours()).padStart(2,'0')+String(t.getMinutes()).padStart(2,'0');S={id:slug(p)+'_'+d.replace(/-/g,'')+'_'+hm,pitcher:p,date:d,notes:n||'',rows:[],sy:0};D={ty:D.ty,ti:0,x:null,y:null,keep:D.keep};local();renderChart()}
+async function resume(id){try{let full;if(S&&S.id==id)return;const j=await api('?id='+encodeURIComponent(id));full=j;S={id,pitcher:j.meta.pitcher,date:j.meta.date,notes:j.meta.notes||'',rows:j.rows.map(r=>rowObj(j.header,r)),sy:1};D={ty:D.ty,ti:0,x:null,y:null,keep:D.keep};local();renderChart();setSync('Resumed · '+S.rows.length+' pitches')}catch(e){setSync(e.message,1)}}
+/* ---------- review tab ---------- */
+function allMetas(){return sessList()}
+async function loadRev(){if(!PASS){rev.err='Enter the passcode above to load saved bullpens.';return}
+try{const j=await api('');METAS=j.sessions||[];rev.err='';rev.loaded=true;PLIST=[...new Set([...PLIST,...METAS.map(m=>m.pitcher)])].sort();
+if(!rev.pit){const f=allMetas()[0];rev.pit=f?f.pitcher:'*'}
+const need=allMetas().filter(m=>!CACHE[m.id]&&!(S&&S.id==m.id)).map(m=>m.id);
+for(let i=0;i<need.length;i+=15){const k=await api('?ids='+need.slice(i,i+15).join(','));(k.sessions||[]).forEach(s=>CACHE[s.meta.id]={meta:s.meta,rows:s.rows.map(r=>rowObj(s.header,r))})}}
+catch(e){rev.err=e.message}}
+function revSessions(){return allMetas().filter(m=>(rev.pit=='*'||m.pitcher==rev.pit)&&(!rev.from||m.date>=rev.from)&&(!rev.to||m.date<=rev.to))}
+const rowsOfSess=m=>S&&S.id==m.id?S.rows:(CACHE[m.id]?CACHE[m.id].rows:[]);
+function revRows(){const ss=revSessions().filter(m=>!rev.off.has(m.id)),out=[];ss.forEach(m=>rowsOfSess(m).forEach((r,i)=>{if(!rev.ty.has(r.ty))out.push({...r,pitcher:m.pitcher,date:m.date,sid:m.id,n:i+1})}));return out}
+let ZP=[];
+function revSvg(R){ZP=R;let g=base({faint:1});if(rev.ti){const r=rect(rev.ti);g+=`<rect x="${r.x+2}" y="${r.y+2}" width="${r.w-4}" height="${r.h-4}" fill="none" stroke="#FDB515" stroke-width="4" stroke-dasharray="8 5"/>`}
+R.forEach((p,i)=>{if(p.x!=null&&(!rev.ti||p.ti==rev.ti))g+=`<circle class="zd" data-zi="${i}" cx="${pt(p.x)}" cy="${p.y}" r="7" fill="${rev.mode=='hit'?(hit(p)?'#16A34A':'#DC2626'):col(p.ty)}" fill-opacity=".8" stroke="#fff" stroke-width="1.5"/>`});return`<svg viewBox="0 0 300 330">${g}</svg>`}
+function matrix(R){let h='<tr><th rowspan="2">Aimed at</th><th colspan="7">Where it landed</th><th rowspan="2">#</th><th rowspan="2">Hit %</th></tr><tr>'+[1,2,3,4,5,6].map(k=>`<th>${k}</th>`).join('')+'<th>Out</th></tr>';
+for(let t=1;t<=6;t++){const a=R.filter(r=>r.ti==t);h+=`<tr><td><b>${t}</b> <small>${rname(t)}</small></td>`+[1,2,3,4,5,6,0].map(k=>{const n=a.filter(r=>r.ar==k).length,p=a.length?n/a.length:0;return`<td style="background:rgba(0,50,98,${(p*.85).toFixed(2)});color:${p>.5?'#fff':'inherit'};${k==t?'outline:2px solid #FDB515;outline-offset:-2px;font-weight:800':''}">${n||''}${n&&a.length>1?' <small style="color:inherit;opacity:.8">'+Math.round(p*100)+'%</small>':''}</td>`}).join('')+`<td>${a.length}</td><td><b>${a.length?fp(a.filter(hit).length/a.length):'—'}</b></td></tr>`}
+return`<div class="wrap"><table>${h}</table></div>`}
+function revView(){const sess=revSessions(),R=revRows(),pits=[...new Set(allMetas().map(m=>m.pitcher))].sort(),types=[...new Set(allMetas().flatMap(m=>rowsOfSess(m).map(r=>r.ty)))];
+const tyOn=new Set(types.filter(t=>!rev.ty.has(t)));
+let h=`<div class="card noprint"><h3>Filters</h3><div class="row"><label>Pitcher<select id="rp"><option value="*" ${rev.pit=='*'?'selected':''}>All pitchers</option>${pits.map(p=>`<option ${p==rev.pit?'selected':''}>${E(p)}</option>`).join('')}</select></label><label>From<input type="date" id="rf" value="${rev.from}"></label><label>To<input type="date" id="rt" value="${rev.to}"></label><button id="rcsv">Export CSV</button></div>
+<div class="chips sm">${types.map(t=>`<button data-ty="${E(t)}" class="${rev.ty.has(t)?'off':''}"><span class="sw" style="background:${col(t)}"></span>${E(t)}</button>`).join('')}</div></div>`;
+if(rev.err)h+=`<div class="card"><p class="bad">${E(rev.err)}</p></div>`;
+if(!sess.length)return h+'<div class="card"><p class="mut">No bullpen sessions match.</p></div>';
+const n=R.length,byT=types.filter(t=>R.some(r=>r.ty==t));
+h+=`<div class="card"><h3>${rev.pit=='*'?'All pitchers':E(rev.pit)} · ${R.length} pitches · ${sess.filter(m=>!rev.off.has(m.id)).length} session${sess.length>1?'s':''}</h3><div class="kp">${[['Hit target',fp(rt(R.filter(hit).length,n))],['Right height',fp(rt(R.filter(rowOK).length,n))],['Right side',fp(rt(R.filter(sideOK).length,n))],['Landed in regions',fp(rt(R.filter(r=>r.ar>0).length,n))],['Avg velo',f1(avg(R.map(r=>r.v)))],['Max velo',mx(R.map(r=>r.v))??'—']].map(([l,v])=>`<div><small>${l}</small><b>${v}</b></div>`).join('')}</div>
+<small>Hit target = landed in the region aimed at. Right height = the same top / middle / low band. Right side = the same in or away half. Landed in regions = in the zone or its shadow.</small></div>`;
+h+=`<div class="cols"><div class="card"><h3>Aimed vs. landed</h3>${matrix(R)}<small>Counts and row percentages. Gold outline = hit the target. Row 1 = top in to a righty, 2 = top in to a lefty, 3 and 4 = middle, 5 and 6 = low.</small></div>
+<div class="card"><h3>Where they landed <span class="pv">${V=='pitcher'?"PITCHER'S VIEW":"CATCHER'S VIEW"}</span></h3><div class="row noprint"><label>Aimed at<select id="rti"><option value="0">Every target</option>${[1,2,3,4,5,6].map(k=>`<option value="${k}" ${rev.ti==k?'selected':''}>Region ${k} · ${rname(k)}</option>`).join('')}</select></label><div class="seg"><button data-mode="hit" class="${rev.mode=='hit'?'on':''}">Hit / miss</button><button data-mode="type" class="${rev.mode=='type'?'on':''}">Pitch type</button></div><div class="seg"><button data-v="catcher" class="${V=='catcher'?'on':''}">Catcher</button><button data-v="pitcher" class="${V=='pitcher'?'on':''}">Pitcher</button></div></div>${revSvg(R)}<small>${rev.mode=='hit'?'<span class="ok">● hit target</span> · <span class="bad">● missed</span>':byT.map(t=>`<span style="color:${col(t)}">● ${E(t)}</span>`).join(' ')} · hover or tap a dot. Gold dashed box = the target region chosen above.</small></div></div>`;
+h+=`<div class="card"><h3>By pitch type</h3><div class="wrap"><table><tr><th>Pitch</th><th>#</th><th>Avg velo</th><th>Max velo</th><th>Hit target</th><th>Right height</th><th>Right side</th><th>In regions</th></tr>${byT.map(t=>{const a=R.filter(r=>r.ty==t);return`<tr><td><span class="sw" style="background:${col(t)}"></span>${E(t)}</td><td>${a.length}</td><td>${f1(avg(a.map(r=>r.v)))}</td><td>${mx(a.map(r=>r.v))??'—'}</td><td>${fp(rt(a.filter(hit).length,a.length))}</td><td>${fp(rt(a.filter(rowOK).length,a.length))}</td><td>${fp(rt(a.filter(sideOK).length,a.length))}</td><td>${fp(rt(a.filter(r=>r.ar>0).length,a.length))}</td></tr>`}).join('')}</table></div></div>`;
+h+=`<div class="card"><h3>Sessions</h3><div class="wrap"><table><tr><th class="noprint">Include</th><th>Date</th><th>Pitcher</th><th>Notes</th><th>#</th><th>Hit target</th><th>Avg velo</th><th class="noprint"></th></tr>${sess.map(m=>{const a=rowsOfSess(m);return`<tr><td class="noprint"><input type="checkbox" data-inc="${E(m.id)}" ${rev.off.has(m.id)?'':'checked'} style="min-height:0;width:18px;height:18px"></td><td>${dayLabel(m.date)}</td><td>${E(m.pitcher)}</td><td style="text-align:left;white-space:normal">${E(m.notes||'')}</td><td>${m.pitches}</td><td>${fp(rt(a.filter(hit).length,a.length))}</td><td>${f1(avg(a.map(r=>r.v)))}</td><td class="noprint"><button data-open="${E(m.id)}" style="min-height:28px">Continue</button> <button data-rm="${E(m.id)}" style="min-height:28px" class="bad">Delete</button></td></tr>`}).join('')}</table></div></div>`;
+return h}
+async function renderRev(){$('#view').innerHTML='<div class="card"><p class="mut">Loading…</p></div>';await loadRev();if(rev.ty.size==0){}drawRev()}
+function drawRev(){if(tab!='rev')return;$('#view').innerHTML=revView()}
+/* ---------- tooltip ---------- */
+(function(){const t=document.createElement('div');t.style.cssText='position:fixed;z-index:50;pointer-events:none;display:none;background:#003262;color:#fff;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.45;box-shadow:0 4px 14px rgba(0,0,0,.3);max-width:240px;border-left:4px solid #FDB515';document.body.appendChild(t);
+const place=e=>{const w=t.offsetWidth,h=t.offsetHeight;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-6)x=e.clientX-w-14;if(y+h>innerHeight-6)y=e.clientY-h-14;t.style.left=Math.max(4,x)+'px';t.style.top=Math.max(4,y)+'px'};
+const show=(e,d)=>{const p=ZP[+d.dataset.zi];if(!p)return;t.innerHTML=`<b>${E(p.ty)}${p.v!=null?' · '+p.v+' mph':''}</b><br>Aimed: region ${p.ti} <small style="color:#cfe">(${rname(p.ti)})</small><br>Landed: ${p.ar?'region '+p.ar+' <small style="color:#cfe">('+rname(p.ar)+')</small>':'outside the regions'} <b>${hit(p)?'✓':'✗'}</b><br><span style="opacity:.75">${E(p.pitcher)} · ${dayLabel(p.date)} · pitch ${p.n}</span>`;t.style.display='block';place(e)};
+document.addEventListener('mouseover',e=>{const d=e.target.closest&&e.target.closest('.zd');if(d)show(e,d)});
+document.addEventListener('mousemove',e=>{if(t.style.display=='block')place(e)});
+document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('.zd'))t.style.display='none'});
+document.addEventListener('click',e=>{const d=e.target.closest&&e.target.closest('.zd');t.style.display='none';if(d)show(e,d)})})();
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{const b=e.target.closest('button');const z=e.target.closest('svg');
+if(z&&z.id=='zi'){const[x,y]=svgPoint(z,e),k=rg(x,y);if(k){D.ti=k;drawInt();drawAct();updReady()}return}
+if(z&&z.id=='za'){const[x,y]=svgPoint(z,e);D.x=Math.max(0,Math.min(299,x));D.y=Math.max(0,Math.min(329,y));drawAct();updReady();return}
+if(!b)return;const d=b.dataset;
+if(d.tab){tab=d.tab;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==tab));tab=='chart'?renderChart():renderRev();return}
+if(b.id=='pwb'){const v=$('#pw').value.trim();if(!v)return;PASS=v;cfg.dbpass=v;ls.set('sbcfg',JSON.stringify(cfg));setSync('Connecting…');try{const j=await api('');METAS=j.sessions||[];PLIST=[...new Set(METAS.map(m=>m.pitcher))].sort();setSync('Connected');if(S&&(S.dirty||!S.sy))push();tab=='chart'?renderChart():renderRev()}catch(er){PASS='';setSync(er.message,1)}return}
+if(b.id=='pr'){print();return}
+if(tab=='chart'){
+if(d.t){D.ty=d.t;document.querySelectorAll('#types button').forEach(x=>x.classList.toggle('on',x.dataset.t==D.ty));drawAct();updReady();return}
+if(d.v&&b.closest('.seg')){V=d.v;ls.set('sbbv',V);renderChart();return}
+if(b.id=='vm'||b.id=='vp'){const i=$('#velo');i.value=Math.max(0,(+i.value||+lastV[D.ty]||50)+(b.id=='vp'?1:-1));return}
+if(b.id=='logb'){logPitch();return}
+if(b.id=='undob'){if(S.rows.length){S.rows.pop();updAll();dirty()}return}
+if(d.del!=null){S.rows.splice(+d.del,1);updAll();dirty();return}
+if(b.id=='endb'){if(S.dirty)await push();S=null;ls.set('sbb','');renderChart();return}
+if(b.id=='sgo'){const o=$('#sps').value=='__o',p=(o?$('#sp').value:$('#sps').value).trim();if(!p){(o?$('#sp'):$('#sps')).focus();return}startSession(p,$('#sd').value||today(),$('#sn').value.trim());return}
+if(b.id=='rsb'){resume($('#rs').value);return}}
+else{
+if(d.ty!=null){rev.ty.has(d.ty)?rev.ty.delete(d.ty):rev.ty.add(d.ty);drawRev();return}
+if(d.mode){rev.mode=d.mode;drawRev();return}
+if(d.v&&b.closest('.seg')){V=d.v;ls.set('sbbv',V);drawRev();return}
+if(b.id=='rcsv'){const R=revRows(),c=v=>/[",\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v,lines=[['Pitcher','Date','Pitch#','Type','Velo','Intended','Actual','Hit target','X','Y'],...R.map(r=>[r.pitcher,r.date,r.n,r.ty,r.v??'',r.ti,r.ar||'out',hit(r)?'Y':'N',r.x??'',r.y??''])].map(a=>a.map(c).join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines],{type:'text/csv'}));a.download='bullpen-'+(rev.pit=='*'?'all':slug(rev.pit))+'.csv';document.body.appendChild(a);a.click();a.remove();return}
+if(d.open){const id=d.open;tab='chart';document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==tab));if(S&&S.id==id){renderChart();return}if(S&&S.dirty)await push();resume(id);return}
+if(d.rm){const m=allMetas().find(x=>x.id==d.rm);if(!m||!confirm('Delete the '+dayLabel(m.date)+' bullpen for '+m.pitcher+'? This cannot be undone.'))return;try{await api('?id='+encodeURIComponent(m.id),{method:'DELETE'});if(S&&S.id==m.id){S=null;ls.set('sbb','')}delete CACHE[m.id];METAS=METAS.filter(x=>x.id!=m.id);drawRev()}catch(er){rev.err=er.message;drawRev()}return}}});
+document.addEventListener('change',e=>{const t=e.target;
+if(t.id=='keep'){D.keep=t.checked;return}
+if(t.id=='sps'){$('#spo').hidden=t.value!='__o';if(t.value=='__o')$('#sp').focus();return}
+if(t.id=='rp'){rev.pit=t.value;rev.off=new Set();drawRev()}else if(t.id=='rf'){rev.from=t.value;drawRev()}else if(t.id=='rt'){rev.to=t.value;drawRev()}else if(t.id=='rti'){rev.ti=+t.value;drawRev()}
+else if(t.dataset&&t.dataset.inc){t.checked?rev.off.delete(t.dataset.inc):rev.off.add(t.dataset.inc);drawRev()}});
+document.addEventListener('input',e=>{if(e.target.id=='nts'&&S){S.notes=e.target.value;dirty()}});
+document.addEventListener('keydown',e=>{if(e.key=='Enter'){if(e.target.id=='velo'){e.preventDefault();logPitch()}if(e.target.id=='pw')$('#pwb').click()}});
+/* ---------- start ---------- */
+(async function(){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==tab));drawSync();renderChart();
+if(S&&S.dirty&&PASS)push();
+if(PASS){try{const j=await api('');METAS=j.sessions||[];PLIST=[...new Set(METAS.map(m=>m.pitcher))];setSync(syncMsg||'Connected');try{const r=await fetch('/api/rapsodo',{headers:{'x-passcode':PASS}}).then(r=>r.json());(r.sessions||[]).forEach(m=>{if(m.player)PLIST.push(m.player)})}catch(e){}PLIST=[...new Set(PLIST)].sort();if(!S)renderChart()}catch(e){setSync(e.message,1)}}})();
+</script></body></html>
