@@ -221,12 +221,49 @@ function renderData(){const sc=GAMES.filter(g=>g.type=='scrimmage').length;
 $('#view').innerHTML=`<div class="card"><h3>Load past data</h3><p>In your Google Sheet, open the <b>Pitches</b> tab and choose <b>File, Download, Comma Separated Values (.csv)</b>. Do the same for the <b>Games</b> tab if you want final scores. Games already in the database are replaced, so uploading the same file twice is safe.</p>
 <div class="row"><label>Pitches tab (.csv)<input type="file" id="fp" accept=".csv,text/csv"></label><label>Games tab (.csv, optional)<input type="file" id="fg" accept=".csv,text/csv"></label><label>These are<select id="utype"><option value="game">Games</option><option value="scrimmage">Scrimmages</option></select></label></div>
 <p id="upm" class="mut">Choose the Pitches file to begin.</p><button class="go" data-a="upload" id="upb" disabled>Upload to database</button></div>
-<div class="card"><h3>Games in the database (${GAMES.length}${sc?', '+sc+' scrimmages':''})</h3><div class="wrap"><table><tr><th style="cursor:default">Date</th><th style="cursor:default">Matchup</th><th style="cursor:default">Score</th><th style="cursor:default">Pitches</th><th style="cursor:default">Type</th><th style="cursor:default"></th></tr>${GAMES.map(g=>`<tr><td>${E(fmtDate(g.date))}</td><td>${E(g.away)} at ${E(g.home)}</td><td>${g.awayScore!==''&&g.awayScore!=null?E(g.awayScore)+'–'+E(g.homeScore):'—'}</td><td>${g.pitches}</td><td><select data-gt="${E(g.id)}"><option value="game" ${g.type!='scrimmage'?'selected':''}>Game</option><option value="scrimmage" ${g.type=='scrimmage'?'selected':''}>Scrimmage</option></select></td><td><button data-a="gdel" data-v="${E(g.id)}">Delete</button></td></tr>`).join('')||'<tr><td colspan="6">No games yet.</td></tr>'}</table></div>
+<div class="card"><h3>Games in the database (${GAMES.length}${sc?', '+sc+' scrimmages':''})</h3><div class="wrap"><table><tr><th style="cursor:default">Date</th><th style="cursor:default">Matchup</th><th style="cursor:default">Score</th><th style="cursor:default">Pitches</th><th style="cursor:default" title="Runs entered for pitchers vs. runs in the final score">Runs entered</th><th style="cursor:default">Type</th><th style="cursor:default"></th></tr>${GAMES.map(g=>`<tr><td>${E(fmtDate(g.date))}</td><td>${E(g.away)} at ${E(g.home)}</td><td>${g.awayScore!==''&&g.awayScore!=null?E(g.awayScore)+'–'+E(g.homeScore):'—'}</td><td>${g.pitches}</td><td>${runsCell(g)}</td><td><select data-gt="${E(g.id)}"><option value="game" ${g.type!='scrimmage'?'selected':''}>Game</option><option value="scrimmage" ${g.type=='scrimmage'?'selected':''}>Scrimmage</option></select></td><td><button data-a="gruns" data-v="${E(g.id)}">Runs</button> <button data-a="gdel" data-v="${E(g.id)}">Delete</button></td></tr>`).join('')||'<tr><td colspan="7">No games yet.</td></tr>'}</table></div><div id="runed"></div>
 <p><button data-a="dlall">Download everything as CSV (backup)</button></p></div>`}
 const dl=(name,text)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();a.remove()};
 const csvOut=a=>a.map(r=>r.map(c=>'"'+String(c??'').replace(/"/g,'""')+'"').join(',')).join('\n');
 async function doUpload(){const b=$('#upb');b.disabled=true;let ok=0;try{for(const g of up.list){$('#upm').textContent=`Uploading ${ok+1} of ${up.list.length}…`;await api('',{method:'POST',body:JSON.stringify({game:g.meta,header:g.header,rows:g.rows})});ok++}
 up={};await loadAll();st.tab='d';renderView();$('#upm').textContent=`Uploaded ${ok} game${ok==1?'':'s'}. They now appear in your stats.`}catch(e){$('#upm').textContent=`Stopped after ${ok} game${ok==1?'':'s'}: ${e.message}`;$('#upm').className='bad';b.disabled=false}}
+
+/* ---------- runs editor: add or fix runs and earned runs for each pitcher in a saved game ---------- */
+const rawOf=id=>RAW.find(x=>x.meta.id==id);
+function runsOf(g){const h=g.header,pi=h.indexOf('Pitcher'),ti=h.indexOf('Pitcher Team'),di=h.indexOf('Run Detail'),by=new Map();
+g.rows.forEach(r=>{const k=r[ti]+'|'+r[pi];if(!by.has(k))by.set(k,{name:r[pi],team:r[ti],n:0,R:0,ER:0});by.get(k).n++});
+let tot=0;if(di>=0)g.rows.forEach(r=>String(r[di]||'').split(';').filter(Boolean).forEach(x=>{const a=x.split('|');tot++;const e=[...by.values()].find(c=>c.name==a[1]);if(e){e.R++;if(a[0]=='E')e.ER++}}));
+return{list:[...by.values()],tot}}
+function runsCell(g){const f=rawOf(g.id);if(!f)return'—';const o=runsOf(f),sc=(+g.awayScore||0)+(+g.homeScore||0),has=g.awayScore!==''&&g.awayScore!=null;
+const bad=has&&o.tot!=sc,none=!o.tot;return`<span style="color:${none||bad?'#C42B2B':'#16A34A'};font-weight:600" title="${bad||none?'The runs entered for pitchers do not add up to the final score':'Runs entered match the final score'}">${o.tot}${has?' / '+sc:''}</span>`}
+function openRuns(id){const g=rawOf(id);if(!g)return;const o=runsOf(g),m=g.meta,cal=t=>/\b(cal|california|berkeley)\b/i.test(t||'');
+const L=o.list.sort((a,b)=>(cal(b.team)-cal(a.team))||(b.n-a.n));
+$('#runed').innerHTML=`<div class="card" style="margin-top:12px;border:2px solid #FDB515"><h3>Runs for ${E(m.away)} at ${E(m.home)} · ${E(fmtDate(m.date))}</h3>
+<p class="mut" style="margin:0 0 8px">Enter the runs (R) and earned runs (ER) charged to each pitcher in this game. Earned runs cannot be higher than runs.</p>
+<div class="wrap"><table><tr><th style="cursor:default">Pitcher</th><th style="cursor:default">Team</th><th style="cursor:default">Pitches</th><th style="cursor:default">R</th><th style="cursor:default">ER</th></tr>${L.map((c,i)=>`<tr><td><b>${E(c.name)}</b></td><td>${E(c.team)}</td><td>${c.n}</td><td><input type="number" min="0" max="40" value="${c.R}" data-rr="${i}" data-f="R" style="width:64px;min-height:34px"></td><td><input type="number" min="0" max="40" value="${c.ER}" data-rr="${i}" data-f="ER" style="width:64px;min-height:34px"></td></tr>`).join('')}</table></div>
+<div class="row" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end"><label>Final score · ${E(m.away)}<input type="number" min="0" id="rsa" value="${E(m.awayScore??'')}" style="width:80px;min-height:34px"></label><label>${E(m.home)}<input type="number" min="0" id="rsh" value="${E(m.homeScore??'')}" style="width:80px;min-height:34px"></label><button class="go" data-a="rsave" data-v="${E(id)}">Save runs</button><button data-a="rcancel">Cancel</button></div>
+<p id="rchk" class="mut" style="margin:8px 0 0"></p><p id="rmsg" style="margin:6px 0 0"></p>
+<small>Saving changes only the pitchers whose numbers you edit. Runs that were charted live keep their RBI details unless you change that pitcher's numbers (then that pitcher's RBI credits are cleared).</small></div>`;
+window.__rl=L;window.__rg=id;chkRuns();$('#runed').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function chkRuns(){const L=window.__rl||[],el=$('#rchk');if(!el)return;const rd={};document.querySelectorAll('[data-rr]').forEach(i=>{const k=+i.dataset.rr;(rd[k]=rd[k]||{})[i.dataset.f]=+i.value||0});
+const g=rawOf(window.__rg),m=g.meta,cal=t=>/\b(cal|california|berkeley)\b/i.test(t||''),byTeam={};L.forEach((c,i)=>{byTeam[c.team]=(byTeam[c.team]||0)+(rd[i]?rd[i].R:c.R)});
+const hs=$('#rsh').value,as=$('#rsa').value,sc=t=>t==m.home?hs:as,opp=t=>t==m.home?as:hs;
+el.innerHTML=Object.entries(byTeam).map(([t,r])=>{const o=opp(t),bad=o!==''&&+o!=r;return`<span style="color:${bad?'#C42B2B':'inherit'}">${E(t)} pitchers: <b>${r}</b> runs charged${o!==''?' · opponent scored <b>'+E(o)+'</b>'+(bad?' (does not match)':' ✓'):''}</span>`}).join('<br>')}
+async function saveRuns(id){const g=rawOf(id),L=window.__rl,h=[...g.header],rows=g.rows.map(r=>[...r]);
+const ix=k=>{let i=h.indexOf(k);if(i<0){h.push(k);rows.forEach(r=>r.push(''));i=h.length-1}return i},ri=ix('Runs'),di=ix('Run Detail'),pi=h.indexOf('Pitcher'),ti=h.indexOf('Pitcher Team');
+const val={};document.querySelectorAll('[data-rr]').forEach(i=>{const k=+i.dataset.rr;(val[k]=val[k]||{})[i.dataset.f]=Math.max(0,Math.round(+i.value||0))});
+for(const k in val)if(val[k].ER>val[k].R){$('#rmsg').innerHTML='<span class="bad">Earned runs cannot be higher than runs for '+E(L[k].name)+'.</span>';return}
+let changed=0;
+L.forEach((c,i)=>{const v=val[i];if(!v||(v.R==c.R&&v.ER==c.ER))return;changed++;
+rows.forEach(r=>{const d=String(r[di]||'').split(';').filter(Boolean).filter(x=>x.split('|')[1]!=c.name);r[di]=d.join(';');r[ri]=d.length||''});
+let last=-1;rows.forEach((r,j)=>{if(r[pi]==c.name&&r[ti]==c.team)last=j});if(last<0)return;
+const add=[];for(let j=0;j<v.ER;j++)add.push('E|'+c.name+'|-');for(let j=0;j<v.R-v.ER;j++)add.push('U|'+c.name+'|-');
+const d=String(rows[last][di]||'').split(';').filter(Boolean).concat(add);rows[last][di]=d.join(';');rows[last][ri]=d.length||''});
+const meta={...g.meta},a=$('#rsa').value,hh=$('#rsh').value;if(a!=='')meta.awayScore=String(a);if(hh!=='')meta.homeScore=String(hh);
+const scoreChanged=meta.awayScore!=g.meta.awayScore||meta.homeScore!=g.meta.homeScore;
+if(!changed&&!scoreChanged){$('#rmsg').textContent='Nothing changed.';return}
+$('#rmsg').textContent='Saving…';
+try{await api('',{method:'POST',body:JSON.stringify({game:meta,header:h,rows})});await loadAll();renderView();$('#runed').innerHTML='';setSt('Saved runs for '+meta.away+' at '+meta.home+'.')}catch(e){$('#rmsg').innerHTML='<span class="bad">'+E(e.message)+'</span>'}}
 /* ---------- events ---------- */
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,v=b.dataset.v;
 if(a=='typ'){st.typ=v;refreshGames()}
@@ -242,7 +279,9 @@ else if(a=='glast'){st.selG=new Set(avail().slice(0,5).map(g=>g.id));updFbar();r
 else if(a=='tcsv')dl('team-stats.csv',csvOut(lastTable));
 else if(a=='upload')doUpload();
 else if(a=='dlall'){const hdr=[...new Set(RAW.flatMap(g=>g.header))],out=[[...hdr,'Game Type']];RAW.forEach(g=>{const ix={};g.header.forEach((k,i)=>ix[k]=i);g.rows.forEach(r=>out.push([...hdr.map(k=>ix[k]==null?'':r[ix[k]]),g.meta.type||'game']))});dl('all-pitches.csv',csvOut(out))}
+else if(a=='gruns')openRuns(v);else if(a=='rcancel')$('#runed').innerHTML='';else if(a=='rsave')saveRuns(v);
 else if(a=='gdel'){const g=GAMES.find(x=>x.id==v);if(!confirm('Delete '+g.away+' at '+g.home+' ('+fmtDate(g.date)+') and all of its pitches? This cannot be undone.'))return;try{await api('?id='+encodeURIComponent(v),{method:'DELETE'});await loadAll();renderView()}catch(x){setSt(x.message,1)}}});
+document.addEventListener('input',e=>{if(e.target.dataset&&(e.target.dataset.rr!=null||e.target.id=='rsa'||e.target.id=='rsh'))chkRuns()});
 document.addEventListener('change',async e=>{const t=e.target;
 if(t.id=='df'){st.from=t.value;refreshGames()}else if(t.id=='dt'){st.to=t.value;refreshGames()}
 else if(t.id=='tm'){st.team=t.value;refreshGames()}
