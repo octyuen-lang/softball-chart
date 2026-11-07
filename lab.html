@@ -39,7 +39,7 @@ svg{display:block;width:100%;max-width:400px;margin:auto}
 <div id="gate" class="card" hidden><h3>Team passcode</h3><p>Enter the team passcode to load the shared database.</p><div class="row"><label>Passcode<input id="pw" type="password" autocomplete="off"></label><button class="go" id="pwb">Connect</button></div><p id="gmsg" class="bad"></p></div>
 <div id="app" hidden>
 <div class="card"><div class="row"><div><small>Games to include</small><div class="seg" id="typseg"><button data-a="typ" data-v="game">Games</button><button data-a="typ" data-v="scrimmage">Scrimmages</button><button data-a="typ" data-v="all">All</button></div></div><span id="st" class="mut"></span></div></div>
-<div class="tabs" id="tabs"><button data-a="tab" data-v="pl">Link Rapsodo &amp; games</button><button data-a="tab" data-v="sq">Tunneling &amp; sequencing</button><button data-a="tab" data-v="eo">Expected outcomes</button><button data-a="tab" data-v="sh">Pitch shapes</button><button data-a="tab" data-v="wp">Win probability</button></div>
+<div class="tabs" id="tabs"><button data-a="tab" data-v="pl">Link Rapsodo &amp; games</button><button data-a="tab" data-v="sq">Tunneling &amp; sequencing</button><button data-a="tab" data-v="eo">Expected outcomes</button><button data-a="tab" data-v="sh">Pitch shapes</button><button data-a="tab" data-v="wp">Win probability</button><button data-a="tab" data-v="sb">wOBA &amp; run values</button></div>
 <div id="view"></div>
 </div></main>
 <script>
@@ -79,7 +79,7 @@ try{LINKS=(await call('rapsodo','?links=1')).links||{}}catch(e){}try{TMAP=((awai
 setSt(GAMES.length+' games · '+PIT.length+' charted pitches · '+RAP.length+' Rapsodo pitches')}
 const setSt=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
 /* ---------- state ---------- */
-const S={tab:'pl',typ:'game',seq:{pit:'*',scope:'cal',group:'type',min:3,d:25},eo:{scope:'cal',pit:'*',bat:'*',ty:'*',side:'*',cnt:'*',metric:'whiff',cell:null},sh:{pit:'*',spin:true,mv:'traj'},lv:{pit:'*'}};
+const S={tab:'pl',typ:'game',seq:{pit:'*',scope:'cal',group:'type',min:3,d:25},eo:{scope:'cal',pit:'*',bat:'*',ty:'*',side:'*',cnt:'*',metric:'whiff',cell:null},sh:{pit:'*',spin:true,mv:'traj'},lv:{pit:'*'},sb:{mode:'mlb',scope:'cal',min:10}};
 const setPath=(k,v)=>{const p=k.split('.');let o=S;p.slice(0,-1).forEach(x=>o=o[x]);o[p[p.length-1]]=v};
 const typeOK=p=>S.typ=='all'||p.gt==S.typ;
 const pool=scope=>PIT.filter(p=>typeOK(p)&&(scope=='cal'?cal(p.pt):scope=='opp'?!cal(p.pt):true));
@@ -315,8 +315,51 @@ const sit=s=>`${s.half=='Top'?'T':'B'}${s.inn}, ${s.o} out${s.o==1?'':'s'}, ${s.
 h+=`<div class="card"><h3>Pitches that mattered most</h3><div class="wrap"><table><thead><tr><th>Game</th><th>Situation</th><th>Pitch</th><th>Result</th><th>Moved win chance for Cal</th></tr></thead><tbody>${mom.map(z=>{const c=cal(z.x.pt)?-z.wpaBat:z.wpaBat;return`<tr><td>${E(z.x.date)} ${E(z.x.away)} at ${E(z.x.home)}</td><td style="text-align:left">${E(sit(z.x.st))}</td><td style="text-align:left"><span class="sw" style="background:${col(z.p.ty)}"></span>${E(z.p.ty)} ${E(z.p.cnt)} · ${E(z.p.pit)} to ${E(z.p.bat)}</td><td style="text-align:left">${E(z.p.par||z.p.res)}</td><td class="${c>0?'pos':'neg'}">${pp(c)}</td></tr>`}).join('')||'<tr><td colspan="5" class="mut">Nothing yet.</td></tr>'}</tbody></table></div><small>A pitch is credited by how the expected result of the at-bat changed with the count, and the last pitch by what actually happened.</small></div></div>`;return h}
 
 /* ---------- render & events ---------- */
+
+/* ---------- wOBA & run values ---------- */
+const MLBW={BB:.69,HBP:.72,'1B':.89,'2B':1.27,'3B':1.62,HR:2.10},SEV=['BB','HBP','1B','2B','3B','HR'],SEVL={BB:'Walk',HBP:'Hit by pitch','1B':'Single','2B':'Double','3B':'Triple',HR:'Home run',OUT:'Out (any)'};
+const MLBRE={'000':[.50,.27,.11],'100':[.90,.54,.23],'010':[1.14,.70,.33],'110':[1.50,.94,.45],'001':[1.35,.96,.36],'101':[1.84,1.30,.54],'011':[2.05,1.38,.60],'111':[2.30,1.55,.75]};
+const sev=r=>({Single:'1B',Double:'2B',Triple:'3B','Home Run':'HR',BB:'BB',HBP:'HBP'}[r]||'OUT');
+function sabData(){const rowsBy=groupBy(PIT.filter(typeOK),p=>p.game),ALL=[],ST=[];let total=0,used=0;
+rowsBy.forEach((rows,gid)=>{total++;const pas=[...groupBy(rows,p=>p.pa).entries()].sort((a,b)=>a[0]-b[0]).map(([pa,a])=>{a.sort((x,y)=>x.n-y.n);const f=a[0];return{f,bat:f.bat,bt:f.bt,pt:f.pt,ev:sev((a.find(p=>p.par)||{}).par||''),has:!!(a.find(p=>p.par)),gid}}).filter(x=>x.has);
+pas.forEach(x=>ALL.push(x));
+if(!pas.length||!pas.every(x=>x.f.outs!=null&&/^[01]{3}$/.test(x.f.bases)&&x.f.hs!=null&&x.f.as!=null&&x.f.inn!=null&&(x.f.half=='Top'||x.f.half=='Bottom')))return;
+const m=GM[gid]||{},fin={hs:m.homeScore===''||m.homeScore==null?null:+m.homeScore,as:m.awayScore===''||m.awayScore==null?null:+m.awayScore};used++;
+const key=x=>x.f.inn+'|'+x.f.half;
+pas.forEach((x,i)=>{const side=x.f.half=='Top'?'as':'hs',nx=pas[i+1],same=nx&&key(nx)==key(x);let j=i+1;while(j<pas.length&&key(pas[j])==key(x))j++;
+const endS=j<pas.length?pas[j].f[side]:fin[side];if(endS==null||isNaN(endS))return;
+x.rem=endS-x.f[side];x.runs=same?nx.f[side]-x.f[side]:x.rem;x.same=same;x.nx=same?nx:null;x.bs=x.f.bases;x.o=Math.min(2,x.f.outs);ST.push(x)})});
+/* run expectancy by base-out state: observed average, shrunk toward a scaled MLB table */
+const obs={};ST.forEach(x=>{const k=x.bs+x.o,c=obs[k]||(obs[k]={n:0,s:0});c.n++;c.s+=x.rem});
+const z=obs['0000'];const sc=z&&z.n>=10?Math.max(.5,Math.min(3,(z.s/z.n)/.5)):1,RE={};
+Object.keys(MLBRE).forEach(b=>[0,1,2].forEach(o=>{const c=obs[b+o]||{n:0,s:0},pr=MLBRE[b][o]*sc;RE[b+o]={v:(c.s+15*pr)/(c.n+15),n:c.n}}));
+return{ALL,ST,RE,used,total,sc}}
+function sabWeights(D){const lgPA=D.ALL.length,cnt={};['OUT',...SEV].forEach(e=>cnt[e]=D.ALL.filter(x=>x.ev==e).length);
+const by={};D.ST.forEach(x=>(by[x.ev]=by[x.ev]||[]).push(x.rv));const mean=a=>a&&a.length?sum(a)/a.length:null,out=mean(by.OUT);
+const own={},delta={},n={};SEV.forEach(e=>{n[e]=(by[e]||[]).length;delta[e]=n[e]&&out!=null?mean(by[e])-out:null});
+const hits=SEV.reduce((a,e)=>a+(e=='BB'||e=='HBP'||true?cnt[e]:0),0),obp=lgPA?hits/lgPA:null;
+let raw=0,rawN=0;SEV.forEach(e=>{if(delta[e]!=null){raw+=delta[e]*cnt[e];rawN+=cnt[e]}});
+const have=out!=null&&D.ST.length>=30;let c=null;
+if(have){const wsum=SEV.reduce((a,e)=>a+(delta[e]!=null?delta[e]*cnt[e]:MLBW[e]/1.2*cnt[e]),0);c=wsum?obp*lgPA/wsum:null;
+SEV.forEach(e=>{const w=(delta[e]!=null?delta[e]:MLBW[e]/1.2)*c;own[e]=(n[e]*w+20*MLBW[e])/(n[e]+20)});
+const t=SEV.reduce((a,e)=>a+own[e]*cnt[e],0);if(t){const k=obp*lgPA/t;SEV.forEach(e=>own[e]*=k);c=c*k}}
+return{cnt,own:have?own:null,delta,n,c,obp,have}}
+function tabSab(){const q=S.sb,D=sabData();
+D.ST.forEach(x=>{if(x.nx){const b=D.RE[x.nx.f.bases+Math.min(2,x.nx.f.outs)].v,a=D.RE[x.bs+x.o].v;x.rv=x.runs+b-a}else{const a=D.RE[x.bs+x.o].v;x.rv=x.runs-a}});
+const W=sabWeights(D),mode=q.mode=='own'&&W.have?'own':'mlb',w=mode=='own'?W.own:MLBW,scale=mode=='own'?W.c:1.2;
+const sw=pas=>{const ct={};['OUT',...SEV].forEach(e=>ct[e]=0);pas.forEach(x=>ct[x.ev]++);const PA=pas.length,H=ct['1B']+ct['2B']+ct['3B']+ct.HR,AB=PA-ct.BB-ct.HBP;return{PA,H,AB,ct,avg:ratio(H,AB),obp:ratio(H+ct.BB+ct.HBP,PA),slg:ratio(ct['1B']+2*ct['2B']+3*ct['3B']+4*ct.HR,AB),woba:PA?SEV.reduce((a,e)=>a+w[e]*ct[e],0)/PA:null}};
+const lg=sw(D.ALL);let h=`<div class="card"><h3>wOBA &amp; run values</h3><div class="row">${seg('sb.mode',[['mlb','MLB weights'],['own','Weights from our data']],mode,'Weights used')}${seg('sb.scope',[['cal','Cal batters'],['all','Everyone']],q.scope,'Batters')}${sel('sb.min',[3,5,10,15,20,30].map(String),String(q.min),'Minimum PA')}</div>
+<div class="kp" style="margin-top:10px"><div><b>${lg.PA}</b><small>Plate appearances</small></div><div><b>${D.used} of ${D.total}</b><small>Games with base/out state</small></div><div><b>${f3(lg.obp)}</b><small>League OBP</small></div><div><b>${f3(lg.woba)}</b><small>League wOBA (${mode=='own'?'our':'MLB'} weights)</small></div></div>
+${mode=='mlb'&&q.mode=='own'?'<p class="bad">Not enough games with base and out information yet to build weights from our data. Showing the MLB weights instead. Games charted from now on add what is needed.</p>':''}
+<small>wOBA weights each way of reaching base by how many runs it is worth, on the OBP scale. MLB weights are a placeholder: softball has more bunts and singles and fewer home runs. "Weights from our data" come from the run value of every plate appearance (change in run expectancy plus runs scored), shrunk toward the MLB numbers when an event is rare.</small></div>`;
+h+=`<div class="cols"><div class="card"><h3>Weights</h3><div class="wrap"><table><tr><th>Event</th><th>Count</th><th>Seen with state</th><th>Run value over an out</th><th>Our weight</th><th>MLB weight</th></tr>${SEV.map(e=>`<tr><td>${SEVL[e]}</td><td>${W.cnt[e]}</td><td>${W.n[e]}</td><td>${W.delta[e]==null?'—':f3(W.delta[e])}</td><td>${W.own?f3(W.own[e]):'—'}</td><td>${f3(MLBW[e])}</td></tr>`).join('')}</table></div><small>${W.have?'Our weights are scaled so league wOBA equals league OBP (scale '+f2(W.c)+').':'Our weights need at least 30 plate appearances from games with base and out information.'}</small></div>
+<div class="card"><h3>Run expectancy by base-out state</h3><div class="wrap"><table><tr><th>Runners</th><th>0 out</th><th>1 out</th><th>2 out</th></tr>${['000','100','010','110','001','101','011','111'].map(b=>`<tr><td>${b=='000'?'Bases empty':['1st','2nd','3rd'].filter((_,i)=>b[i]=='1').join(' + ')}</td>${[0,1,2].map(o=>`<td>${f2(D.RE[b+o].v)} <small class="mut">(${D.RE[b+o].n})</small></td>`).join('')}</tr>`).join('')}</table></div><small>Expected runs scored from that situation to the end of the inning. In brackets: how many of our plate appearances started there. Cells with few are pulled toward a scaled MLB table.</small></div></div>`;
+const byB=groupBy(D.ALL.filter(x=>q.scope=='all'||cal(x.bt)),x=>x.bat),re24={};D.ST.forEach(x=>{re24[x.bat+'|'+x.bt]=(re24[x.bat+'|'+x.bt]||0)+x.rv});
+const rows=[...byB.entries()].map(([n,a])=>({n,...sw(a),re:a.some(x=>x.rv!=null)?sum(D.ST.filter(x=>x.bat==n&&(q.scope=='all'||cal(x.bt))).map(x=>x.rv)):null,nst:D.ST.filter(x=>x.bat==n&&(q.scope=='all'||cal(x.bt))).length})).filter(r=>r.PA>=+q.min).sort((a,b)=>b.woba-a.woba);
+h+=`<div class="card"><h3>Batters by wOBA</h3>${rows.length?`<div class="wrap"><table><tr><th>Batter</th><th>PA</th><th>AVG</th><th>OBP</th><th>SLG</th><th>wOBA</th><th title="Runs above an average hitter, from wOBA">wRAA</th><th title="Runs added by the plate appearances in games with base/out information">RE24</th></tr>${rows.map(r=>`<tr><td>${E(r.n)}</td><td>${r.PA}</td><td>${f3(r.avg)}</td><td>${f3(r.obp)}</td><td>${f3(r.slg)}</td><td><b>${f3(r.woba)}</b></td><td>${sg1((r.woba-lg.woba)/scale*r.PA)}</td><td>${r.nst?sg1(r.re)+' <small class="mut">('+r.nst+' PA)</small>':'—'}</td></tr>`).join('')}<tr style="font-weight:700"><td>League</td><td>${lg.PA}</td><td>${f3(lg.avg)}</td><td>${f3(lg.obp)}</td><td>${f3(lg.slg)}</td><td>${f3(lg.woba)}</td><td></td><td></td></tr></table></div>`:'<p class="mut">No batters have the minimum plate appearances yet.</p>'}<small>wRAA = (batter wOBA − league wOBA) ÷ scale × PA. RE24 uses only plate appearances from games that carry bases and outs, so it covers fewer PAs than wOBA. Small samples swing a lot: treat these as a guide until the spring.</small></div>`;
+return h}
 function render(){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.tab));document.querySelectorAll('#typseg button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.typ));
-const f={pl:tabLink,sq:tabSeq,eo:tabEO,sh:tabSh,wp:tabWP}[S.tab];try{$('#view').innerHTML=f()}catch(e){$('#view').innerHTML=`<div class="card"><p class="bad">Something went wrong building this view: ${E(e.message)}</p></div>`;console.error(e)}}
+const f={pl:tabLink,sq:tabSeq,eo:tabEO,sh:tabSh,wp:tabWP,sb:tabSab}[S.tab];try{$('#view').innerHTML=f()}catch(e){$('#view').innerHTML=`<div class="card"><p class="bad">Something went wrong building this view: ${E(e.message)}</p></div>`;console.error(e)}}
 document.addEventListener('click',async e=>{const t=e.target;let b;
 if(b=t.closest('[data-a="tab"]')){S.tab=b.dataset.v;render();return}
 if(b=t.closest('[data-a="typ"]')){S.typ=b.dataset.v;render();return}
