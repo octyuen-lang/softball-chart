@@ -43,7 +43,7 @@ th{background:#003262;color:#fff;font-size:11px;text-transform:uppercase;letter-
 <div id="empty" class="card" hidden><h3>No games yet</h3><p>The database is empty. <a href="stats.html?tab=d">Upload past data</a> from your Google Sheet, or <a href="chart.html">chart a game</a> and it will appear here automatically.</p></div>
 <div id="body">
 <div class="card"><h3>Season snapshot</h3><div id="kpi"></div></div>
-<div class="card"><h3>Cal pitchers</h3><div class="wrap" id="lp"></div><small>All pitchers with at least one charted pitch. Click a name for the full breakdown.</small></div>
+<div class="card"><h3>Cal pitchers</h3><div class="wrap" id="lp"></div><small>All pitchers with at least one charted pitch. R and ER come from the runs entered for each game (Data tab, Runs). FPS % = first-pitch strikes, Ahead % = pitches thrown ahead in the count.</small></div>
 <div class="card"><h3>Cal batting leaders</h3><div id="lb" class="cols"></div><small id="lbn"></small></div>
 <div class="card"><h3>Recent games</h3><div class="wrap" id="rg"></div></div>
 <div class="card"><h3>Opponents</h3><div class="wrap" id="op"></div></div>
@@ -63,13 +63,21 @@ const t=await r.text();let j=null;try{j=JSON.parse(t)}catch(e){}
 if(!j)throw Object.assign(new Error(r.status==404?'The database is not set up on this site yet: the /api/games function was not found. Upload the api folder and redeploy.':'Unexpected response (HTTP '+r.status+').'),{status:r.status});
 if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
 function norm(g){const h=g.header,m=g.meta,ix={};h.forEach((k,i)=>ix[k]=i);const v=(r,k)=>ix[k]==null?'':r[ix[k]];
-return g.rows.map(r=>({game:m.id,pa:+v(r,'PA'),n:+v(r,'Pitch#'),bat:v(r,'Batter'),bt:v(r,'Batting Team'),pit:v(r,'Pitcher'),pt:v(r,'Pitcher Team'),res:v(r,'Pitch Result'),par:v(r,'PA Result')||''})).filter(p=>p.pit&&p.bat)}
+return g.rows.map(r=>({game:m.id,pa:+v(r,'PA'),n:+v(r,'Pitch#'),bat:v(r,'Batter'),bt:v(r,'Batting Team'),pit:v(r,'Pitcher'),pt:v(r,'Pitcher Team'),res:v(r,'Pitch Result'),cnt:String(v(r,'Count')||'0-0'),ht:v(r,'Hit Type')||'',bs:String(v(r,'Bases')||''),ou:(v(r,'Outs')===''?null:+v(r,'Outs')),par:v(r,'PA Result')||'',rd:String(v(r,'Run Detail')||'').split(';').filter(Boolean).map(x=>{const a=x.split('|');return{e:a[0],pn:a[1]||'',rbi:a[2]&&a[2]!='-'?a[2]:''}})})).filter(p=>p.pit&&p.bat)}
 const setSt=(t,bad)=>{$('#st').textContent=t;$('#st').className=bad?'bad':'mut'};
 async function loadAll(){setSt('Loading…');const l=await api('');GAMES=l.games||[];ROWS=[];
 for(let off=0;off<GAMES.length;off+=20){const j=await api('?all=1&offset='+off+'&limit=20');(j.games||[]).forEach(g=>ROWS.push(...norm(g)))}setSt('')}
+
+/* plate discipline basics: swing %, whiff %, quality at-bats, how often the hitter reaches a hitter's count */
+const HB={Single:1,Double:1,Triple:1,'Home Run':1},DEC=['Ball','Called Strike','Swinging Strike','Foul','In Play'];
+const hBk=c=>{const[b,s]=String(c||'0-0').split('-').map(Number);return c=='0-0'?'first':s>b?'behind':(b>s&&s<2)?'ahead':'even'},pBk=c=>{const k=hBk(c);return k=='ahead'?'behind':k=='behind'?'ahead':k};
+function paGroups(L){const m=new Map();L.forEach(p=>{const k=p.game+'|'+p.pa;(m.get(k)||m.set(k,[]).get(k)).push(p)});return[...m.values()].map(a=>{a.sort((x,y)=>x.n-y.n);return{ps:a,last:a[a.length-1],par:(a.find(p=>p.par)||{}).par||''}}).filter(g=>g.par)}
+function isQab(g){const l=g.last,par=g.par;return(l.res=='In Play'&&l.ht=='Line Drive')||(HB[par]&&(l.ht=='Line Drive'||par=='Double'||par=='Triple'||par=='Home Run'))||par=='BB'||par=='HBP'||(g.ps.length>=8&&!(par=='K'&&l.res=='Called Strike'))||(l.ht=='Bunt'&&((/^(Out|Fielder's Choice)$/.test(par)&&/1/.test(l.bs)&&l.ou!=null&&l.ou<2)||par=='Single'))||(par!='Error'&&g.ps.some(p=>p.rd.some(r=>r.rbi&&r.rbi==l.bat)))}
+function disc(L){const G=paGroups(L),PA=G.length,dec=L.filter(p=>DEC.includes(p.res)).length,fp1=L.filter(p=>p.n==1),ah=L.filter(p=>pBk(p.cnt)=='ahead').length;
+return{qabP:ratio(G.filter(isQab).length,PA),reach:ratio(G.filter(g=>g.ps.some(p=>hBk(p.cnt)=='ahead')).length,PA),swp:ratio(L.filter(p=>SWG.includes(p.res)).length,dec),kp:ratio(G.filter(g=>g.par=='K').length,PA),bp:ratio(G.filter(g=>g.par=='BB').length,PA),fps:ratio(fp1.filter(p=>STRK.includes(p.res)).length,fp1.length),ahead:ratio(ah,L.length)}}
 function core(L){const pa=L.filter(p=>p.par),c=k=>pa.filter(p=>p.par==k).length,h1=c('Single'),h2=c('Double'),h3=c('Triple'),hr=c('Home Run'),bb=c('BB'),hb=c('HBP'),k=c('K'),PA=pa.length,AB=PA-bb-hb,H=h1+h2+h3+hr,TB=h1+2*h2+3*h3+4*hr;
 return{PA,AB,H,hr,bb,k,ba:ratio(H,AB),obp:ratio(H+bb+hb,PA),slg:ratio(TB,AB)}}
-function agg(L){const c=core(L),sw=L.filter(p=>SWG.includes(p.res)).length,wh=L.filter(p=>p.res=='Swinging Strike').length;return{...c,n:L.length,sp:ratio(L.filter(p=>STRK.includes(p.res)).length,L.length),whp:ratio(wh,sw)}}
+function agg(L){const c=core(L),d=disc(L),sw=L.filter(p=>SWG.includes(p.res)).length,wh=L.filter(p=>p.res=='Swinging Strike').length;return{...c,n:L.length,sp:ratio(L.filter(p=>STRK.includes(p.res)).length,L.length),whp:ratio(wh,sw),...d}}
 const inScope=g=>(typ=='all'||(g.type||'game')==typ)&&(!since||fmtDate(g.date)>=since);
 const by=(L,k)=>{const m={};L.forEach(p=>(m[p[k]]=m[p[k]]||[]).push(p));return m};
 const leaders=(title,items,fmt,link)=>`<div><ul class="ld"><b>${title}</b>${items.length?items.map((x,i)=>`<li><span>${i+1}. <a href="${link(x.name)}">${E(x.name)}</a></span><span>${fmt(x)}</span></li>`).join(''):'<li class="mut">Not enough data</li>'}</ul></div>`;
@@ -82,13 +90,15 @@ const B=agg(R.filter(p=>cal(p.bt))),P=agg(R.filter(p=>cal(p.pt)));
 const k=(v,lb)=>`<div><b>${v}</b><small>${lb}</small></div>`;
 $('#kpi').innerHTML=`<div class="kgrp">Team</div><div class="kp">${k(gs.length,'Games')}${k(w+'-'+l+(t?'-'+t:''),'Record')}${k(rf+' / '+ra,'Runs for / against')}${k(R.length.toLocaleString(),'Pitches charted')}</div>
 <div class="kgrp">Cal batting</div><div class="kp">${k(f3(B.ba),'BA')}${k(f3(B.obp),'OBP')}${k(f3(B.slg),'SLG')}${k(B.hr,'HR')}${k(B.bb,'BB')}${k(B.k,'K')}</div>
+<div class="kgrp">Cal plate discipline</div><div class="kp">${k(fp(B.swp),'Swing %')}${k(fp(B.whp),'Whiff %')}${k(fp(B.kp),'K %')}${k(fp(B.bp),'BB %')}${k(fp(B.qabP),'Quality AB %')}${k(fp(B.reach),'Reach hitter-ahead count')}</div>
 <div class="kgrp">Cal pitching</div><div class="kp">${k(f3(P.ba),'BAA')}${k(fp(P.sp),'Strike %')}${k(fp(P.whp),'Whiff %')}${k(P.k,'K')}${k(P.bb,'BB')}${k(P.H,'H allowed')}</div>`;
 const MINPA=2*gs.length,pm=by(R.filter(p=>cal(p.pt)),'pit'),bm=by(R.filter(p=>cal(p.bt)),'bat');
-const PL=Object.entries(pm).map(([name,L])=>({name,g:new Set(L.map(p=>p.game)).size,...agg(L)})).sort((a,b)=>b.n-a.n),BL=Object.entries(bm).map(([name,L])=>({name,...agg(L)})).filter(x=>x.PA>=MINPA);
+const chg={};R.forEach(p=>p.rd.forEach(r=>{if(cal(p.pt)){const c=chg[r.pn]=chg[r.pn]||{R:0,ER:0};c.R++;if(r.e=='E')c.ER++}}));
+const PL=Object.entries(pm).map(([name,L])=>({name,g:new Set(L.map(p=>p.game)).size,...agg(L),R:(chg[name]||{R:0}).R,ER:(chg[name]||{ER:0}).ER})).sort((a,b)=>b.n-a.n),BL=Object.entries(bm).map(([name,L])=>({name,...agg(L)})).filter(x=>x.PA>=MINPA);
 const top=(A,key,asc,n=5)=>A.filter(x=>x[key]!=null).sort((a,b)=>asc?a[key]-b[key]:b[key]-a[key]).slice(0,n);
 const bl=n=>'stats.html?tab=b&player='+encodeURIComponent(n);
-$('#lp').innerHTML=PL.length?`<table><thead><tr><th>Pitcher</th><th>G</th><th>Pitches</th><th>BF</th><th>H</th><th>BB</th><th>K</th><th>BAA</th><th>Strike %</th><th>Whiff %</th></tr></thead><tbody>${PL.map(x=>`<tr><td><a href="stats.html?tab=p&player=${encodeURIComponent(x.name)}">${E(x.name)}</a></td><td>${x.g}</td><td>${x.n}</td><td>${x.PA}</td><td>${x.H}</td><td>${x.bb}</td><td>${x.k}</td><td>${f3(x.ba)}</td><td>${fp(x.sp)}</td><td>${fp(x.whp)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">No Cal pitchers in this selection.</p>';
-$('#lb').innerHTML=leaders('Batting average',top(BL,'ba'),x=>f3(x.ba),bl)+leaders('On-base %',top(BL,'obp'),x=>f3(x.obp),bl)+leaders('Slugging',top(BL,'slg'),x=>f3(x.slg),bl)+leaders('Home runs',top(BL.filter(x=>x.hr>0),'hr'),x=>x.hr,bl);
+$('#lp').innerHTML=PL.length?`<table><thead><tr><th>Pitcher</th><th>G</th><th>Pitches</th><th>BF</th><th>H</th><th>BB</th><th>K</th><th>R</th><th>ER</th><th>BAA</th><th>Strike %</th><th>Whiff %</th><th>FPS %</th><th>Ahead %</th></tr></thead><tbody>${PL.map(x=>`<tr><td><a href="stats.html?tab=p&player=${encodeURIComponent(x.name)}">${E(x.name)}</a></td><td>${x.g}</td><td>${x.n}</td><td>${x.PA}</td><td>${x.H}</td><td>${x.bb}</td><td>${x.k}</td><td>${x.R}</td><td>${x.ER}</td><td>${f3(x.ba)}</td><td>${fp(x.sp)}</td><td>${fp(x.whp)}</td><td>${fp(x.fps)}</td><td>${fp(x.ahead)}</td></tr>`).join('')}</tbody></table>`:'<p class="mut">No Cal pitchers in this selection.</p>';
+$('#lb').innerHTML=leaders('Batting average',top(BL,'ba'),x=>f3(x.ba),bl)+leaders('On-base %',top(BL,'obp'),x=>f3(x.obp),bl)+leaders('Slugging',top(BL,'slg'),x=>f3(x.slg),bl)+leaders('Quality AB %',top(BL,'qabP'),x=>fp(x.qabP),bl)+leaders('Home runs',top(BL.filter(x=>x.hr>0),'hr'),x=>x.hr,bl);
 $('#lbn').textContent=`Batters with at least ${MINPA} plate appearances (2 per game × ${gs.length} game${gs.length==1?'':'s'}).`;
 const pc={};R.forEach(p=>pc[p.game]=(pc[p.game]||0)+1);
 const recent=[...gs].sort((a,b)=>fmtDate(b.date).localeCompare(fmtDate(a.date))).slice(0,10);
